@@ -1,0 +1,37 @@
+{
+  "eval_set_id": "basic_eval",
+  "name": "Caveman Compressor Evaluation",
+  "description": "Core cases for terse technical compression.",
+  "eval_cases": [
+    {
+      "eval_id": "compress_incident_update",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "The API gateway is intermittently returning 504 errors during peak traffic windows, and we need the platform team to investigate whether the upstream inventory service is saturating its connection pool."}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "compress_release_note",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Before we deploy the new billing workflow, please verify that the migration is idempotent, that failed payment events are retried exactly once, and that no customer identifiers are written to application logs."}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}

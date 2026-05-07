@@ -1,0 +1,148 @@
+{
+  "eval_set_id": "basic_eval",
+  "name": "Tutorial & Debug Core Scenarios",
+  "description": "Covers tutorial guidance and terminal error diagnosis — the two primary modes of the agent.",
+  "eval_cases": [
+    {
+      "eval_id": "greeting_and_modes",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Hello! What can you help me with?"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tutorial_install_step",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "How do I install Google ADK and agents-cli?"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tutorial_scaffold_step",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "How do I create a new ADK agent project?"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tutorial_add_tool",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "How do I add a custom tool to my ADK agent?"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "debug_module_not_found",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{
+              "text": "I'm getting this error:\n\nTraceback (most recent call last):\n  File \"app/agent.py\", line 5, in <module>\n    from google.adk.agents import Agent\nModuleNotFoundError: No module named 'google.adk'"
+            }]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "debug_auth_error",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{
+              "text": "agents-cli run fails with:\n\ngoogle.auth.exceptions.DefaultCredentialsError: Your default credentials were not found. To set up Application Default Credentials, see https://cloud.google.com/docs/authentication/external/set-up-adc"
+            }]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "debug_model_404",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{
+              "text": "I'm seeing: 404 models/gemini-flash-latest is not found for API version v1, or is not supported for generateContent"
+            }]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tutorial_codex_cli",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "How do I use Codex CLI to help write my ADK agent code?"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "tutorial_full_workflow",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "I want to build my first AI agent from scratch. Walk me through the full process."}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}

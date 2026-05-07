@@ -1,0 +1,21 @@
+{
+  "criteria": {
+    "rubric_based_final_response_quality_v1": {
+      "threshold": 0.8,
+      "judgeModelOptions": {
+        "judgeModel": "gemini-flash-latest",
+        "numSamples": 1
+      },
+      "rubrics": [
+        {
+          "rubricId": "compression",
+          "rubricContent": { "textProperty": "The response is substantially shorter than the source text while preserving the core technical meaning." }
+        },
+        {
+          "rubricId": "technical_grunt_style",
+          "rubricContent": { "textProperty": "The response uses terse technical fragments with restrained caveman-style wording, without adding unrelated facts or general assistant commentary." }
+        }
+      ]
+    }
+  }
+}
