@@ -103,6 +103,19 @@ adk web
 
 `adk web` streams agent responses in real time and shows tool call traces in the browser — useful for inspecting exactly what your agent is doing at each step.
 
+## Screenshots
+
+### Terminal — Agent server logs
+![Terminal logs showing agents-cli running with live HTTP request traces](./assets/terminal-logs.png)
+
+### ADK Web UI — Tutorial mode
+![ADK web UI guiding through Step 1: Install the Tools with get_tutorial_step tool call](./assets/adk-web-tutorial.png)
+
+### ADK Web UI — Tool call traces
+![ADK web UI showing Step 2: Authentication with tool call trace panel open](./assets/adk-web-tool-trace.png)
+
+---
+
 ## References
 
 - [Google ADK Documentation](https://adk.dev/)
