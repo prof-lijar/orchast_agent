@@ -105,7 +105,7 @@ adk web
 
 ## Demo
 
-<video src="https://github.com/prof-lijar/orchast_agent/releases/download/v1.0.0/Recording.2026-05-07.201737.mp4" controls width="100%"></video>
+<video src="https://github.com/prof-lijar/orchast_agent/raw/master/assets/demo.mp4" controls width="100%"></video>
 
 > Full walkthrough of the `tutorial-debug-agent` running in the ADK web UI — tutorial mode, tool call traces, and live streaming responses.
 
