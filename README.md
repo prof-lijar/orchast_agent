@@ -63,6 +63,8 @@ A collection of AI agents built with [Google ADK](https://adk.dev/) (Agent Devel
 
 ## Quick Start
 
+### Option A — via Agents CLI
+
 ```bash
 # 1. Authenticate with GCP
 gcloud auth application-default login
@@ -78,6 +80,28 @@ agents-cli run "Your input here"
 # 4. Or launch the interactive playground
 agents-cli playground
 ```
+
+### Option B — via ADK CLI (`adk web`)
+
+The [ADK CLI](https://adk.dev/) ships its own web UI you can launch directly without Agents CLI.
+
+```bash
+# 1. Install ADK
+pip install google-adk
+
+# 2. Authenticate with GCP
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT_ID
+
+# 3. Pick an agent folder
+cd caveman-compressor   # or tutorial-debug-agent
+
+# 4. Launch the ADK web UI
+adk web
+# Opens at http://localhost:8000
+```
+
+`adk web` streams agent responses in real time and shows tool call traces in the browser — useful for inspecting exactly what your agent is doing at each step.
 
 ## References
 
