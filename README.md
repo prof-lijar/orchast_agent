@@ -103,14 +103,6 @@ adk web
 
 `adk web` streams agent responses in real time and shows tool call traces in the browser — useful for inspecting exactly what your agent is doing at each step.
 
-## Demo
-
-<video src="https://github.com/prof-lijar/orchast_agent/raw/master/assets/demo.mp4" controls width="100%"></video>
-
-> Full walkthrough of the `tutorial-debug-agent` running in the ADK web UI — tutorial mode, tool call traces, and live streaming responses.
-
----
-
 ## Screenshots
 
 ### Terminal — Agent server logs
