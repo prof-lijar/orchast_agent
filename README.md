@@ -2,6 +2,10 @@
 
 A collection of AI agents built with [Google ADK](https://adk.dev/) (Agent Development Kit) and scaffolded using [Google Agents CLI](https://pypi.org/project/google-agents-cli/). Each agent in this repo demonstrates a focused use case — from text compression to interactive developer tooling.
 
+<img width="1254" height="1254" alt="ChatGPT Image May 9, 2026, 09_32_21 PM" src="https://github.com/user-attachments/assets/f7f090c3-6d47-4e09-b1f4-b3afcf57fdc1" />
+
+
+
 ## What is Google ADK?
 
 [Google ADK](https://adk.dev/) is an open-source Python framework for building, evaluating, and deploying AI agents powered by Gemini models on Google Cloud. It provides:
