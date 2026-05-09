@@ -1,0 +1,217 @@
+{
+  "eval_set_id": "course_generator_eval",
+  "name": "Course Generator Evaluation",
+  "description": "Tests the Course Generator agent across 5 diverse course scenarios: beginner AI, advanced cybersecurity, short bootcamp, university semester, and corporate training.",
+  "eval_cases": [
+    {
+      "eval_id": "beginner_ai_course",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Generate a complete course package for: Course Title: Introduction to Artificial Intelligence, Course Description: A foundational course covering core AI concepts including search algorithms, knowledge representation, machine learning basics, and neural networks, Target Learners: Undergraduate computer science students with basic programming experience, Duration: 16 weeks, Difficulty Level: Beginner, Learning Goals: Understand fundamental AI concepts, Implement basic search algorithms, Apply machine learning techniques to simple problems, Evaluate AI solutions critically"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "validate_course_inputs",
+                "args": {
+                  "course_title": "Introduction to Artificial Intelligence",
+                  "course_description": "A foundational course covering core AI concepts including search algorithms, knowledge representation, machine learning basics, and neural networks",
+                  "target_learners": "Undergraduate computer science students with basic programming experience",
+                  "duration": "16 weeks",
+                  "difficulty_level": "Beginner",
+                  "learning_goals": "Understand fundamental AI concepts, Implement basic search algorithms, Apply machine learning techniques to simple problems, Evaluate AI solutions critically"
+                }
+              },
+              {
+                "name": "estimate_structure",
+                "args": {
+                  "duration": "16 weeks",
+                  "difficulty_level": "Beginner"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "advanced_cybersecurity_course",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Generate a complete course package for: Course Title: Advanced Cybersecurity, Course Description: An advanced course covering threat modeling, vulnerability analysis, penetration testing methodologies, incident response, and security architecture design for enterprise systems, Target Learners: Graduate students and security professionals with foundational networking and security knowledge, Duration: 12 weeks, Difficulty Level: Advanced, Learning Goals: Conduct comprehensive threat modeling for enterprise systems, Perform advanced vulnerability assessment and penetration testing, Design and implement incident response procedures, Architect secure enterprise network environments, Analyze malware behavior and develop countermeasures"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "validate_course_inputs",
+                "args": {
+                  "course_title": "Advanced Cybersecurity",
+                  "course_description": "An advanced course covering threat modeling, vulnerability analysis, penetration testing methodologies, incident response, and security architecture design for enterprise systems",
+                  "target_learners": "Graduate students and security professionals with foundational networking and security knowledge",
+                  "duration": "12 weeks",
+                  "difficulty_level": "Advanced",
+                  "learning_goals": "Conduct comprehensive threat modeling for enterprise systems, Perform advanced vulnerability assessment and penetration testing, Design and implement incident response procedures, Architect secure enterprise network environments, Analyze malware behavior and develop countermeasures"
+                }
+              },
+              {
+                "name": "estimate_structure",
+                "args": {
+                  "duration": "12 weeks",
+                  "difficulty_level": "Advanced"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "short_python_bootcamp",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Generate a complete course package for: Course Title: Python Programming Bootcamp, Course Description: An intensive 2-week bootcamp teaching Python from scratch including variables, control flow, functions, data structures, file I/O, and basic web scraping, Target Learners: Career changers and beginners with no prior programming experience, Duration: 2 weeks, Difficulty Level: Beginner, Learning Goals: Write Python programs using variables and control flow, Define and use functions and modules, Work with lists and dictionaries and file operations, Build a simple web scraper as a capstone project"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "validate_course_inputs",
+                "args": {
+                  "course_title": "Python Programming Bootcamp",
+                  "course_description": "An intensive 2-week bootcamp teaching Python from scratch including variables, control flow, functions, data structures, file I/O, and basic web scraping",
+                  "target_learners": "Career changers and beginners with no prior programming experience",
+                  "duration": "2 weeks",
+                  "difficulty_level": "Beginner",
+                  "learning_goals": "Write Python programs using variables and control flow, Define and use functions and modules, Work with lists and dictionaries and file operations, Build a simple web scraper as a capstone project"
+                }
+              },
+              {
+                "name": "estimate_structure",
+                "args": {
+                  "duration": "2 weeks",
+                  "difficulty_level": "Beginner"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "university_semester_course",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Generate a complete course package for: Course Title: Data Structures and Algorithms, Course Description: A comprehensive university course covering fundamental data structures (arrays, linked lists, trees, graphs, hash tables) and algorithm design techniques (sorting, searching, dynamic programming, greedy algorithms) with rigorous complexity analysis, Target Learners: Second-year computer science majors who have completed introductory programming courses, Duration: 16 weeks, Difficulty Level: Intermediate, Learning Goals: Implement and analyze fundamental data structures, Design efficient algorithms using standard paradigms, Perform time and space complexity analysis using Big-O notation, Solve complex computational problems by selecting appropriate data structures and algorithms"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "validate_course_inputs",
+                "args": {
+                  "course_title": "Data Structures and Algorithms",
+                  "course_description": "A comprehensive university course covering fundamental data structures (arrays, linked lists, trees, graphs, hash tables) and algorithm design techniques (sorting, searching, dynamic programming, greedy algorithms) with rigorous complexity analysis",
+                  "target_learners": "Second-year computer science majors who have completed introductory programming courses",
+                  "duration": "16 weeks",
+                  "difficulty_level": "Intermediate",
+                  "learning_goals": "Implement and analyze fundamental data structures, Design efficient algorithms using standard paradigms, Perform time and space complexity analysis using Big-O notation, Solve complex computational problems by selecting appropriate data structures and algorithms"
+                }
+              },
+              {
+                "name": "estimate_structure",
+                "args": {
+                  "duration": "16 weeks",
+                  "difficulty_level": "Intermediate"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "corporate_training_course",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Generate a complete course package for: Course Title: Cloud Architecture for Teams, Course Description: A 3-day intensive corporate training covering cloud computing fundamentals, AWS and GCP service selection, infrastructure as code, CI/CD pipelines, cost optimization, and security best practices for enterprise cloud deployments, Target Learners: Enterprise software engineers and DevOps professionals transitioning to cloud-native development, Duration: 3 days, Difficulty Level: Intermediate, Learning Goals: Design scalable cloud architectures using major cloud providers, Implement infrastructure as code using Terraform, Set up CI/CD pipelines for cloud deployments, Apply cloud security best practices and cost optimization strategies"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "validate_course_inputs",
+                "args": {
+                  "course_title": "Cloud Architecture for Teams",
+                  "course_description": "A 3-day intensive corporate training covering cloud computing fundamentals, AWS and GCP service selection, infrastructure as code, CI/CD pipelines, cost optimization, and security best practices for enterprise cloud deployments",
+                  "target_learners": "Enterprise software engineers and DevOps professionals transitioning to cloud-native development",
+                  "duration": "3 days",
+                  "difficulty_level": "Intermediate",
+                  "learning_goals": "Design scalable cloud architectures using major cloud providers, Implement infrastructure as code using Terraform, Set up CI/CD pipelines for cloud deployments, Apply cloud security best practices and cost optimization strategies"
+                }
+              },
+              {
+                "name": "estimate_structure",
+                "args": {
+                  "duration": "3 days",
+                  "difficulty_level": "Intermediate"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}

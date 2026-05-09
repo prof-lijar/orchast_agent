@@ -1,0 +1,88 @@
+{
+  "criteria": {
+    "rubric_based_tool_use_quality_v1": {
+      "threshold": 1.0,
+      "judge_model_options": {
+        "judge_model": "gemini-flash-latest",
+        "num_samples": 3
+      },
+      "rubrics": [
+        {
+          "rubric_id": "validates_inputs_first",
+          "rubric_content": {
+            "text_property": "The curriculum_designer sub-agent calls the validate_course_inputs tool with all six parameters (course_title, course_description, target_learners, duration, difficulty_level, learning_goals) before generating any course content."
+          }
+        },
+        {
+          "rubric_id": "estimates_structure",
+          "rubric_content": {
+            "text_property": "The curriculum_designer sub-agent calls the estimate_structure tool with the duration and difficulty_level parameters after validation and before generating curriculum content."
+          }
+        }
+      ]
+    },
+    "rubric_based_final_response_quality_v1": {
+      "threshold": 0.8,
+      "judge_model_options": {
+        "judge_model": "gemini-flash-latest",
+        "num_samples": 3
+      },
+      "rubrics": [
+        {
+          "rubric_id": "completeness",
+          "rubric_content": {
+            "text_property": "The final assembled response contains ALL ten required sections: (1) Course Overview, (2) Prerequisites & Self-Assessment, (3) Course Outline, (4) Learning Path Guide, (5) Lectures (with content summaries), (6) Recommended Resources (with reading schedules), (7) Assessments (quiz questions per module), (8) Assignments (with step-by-step instructions), (9) Grading Rubric, and (10) Feedback Comment Templates. Each section must be non-empty and substantive."
+          }
+        },
+        {
+          "rubric_id": "clarity",
+          "rubric_content": {
+            "text_property": "The response is well-organized with clear headings, consistent formatting, and logical structure. Content is easy to read and follow. Sections use appropriate formatting such as numbered lists, tables, or bullet points."
+          }
+        },
+        {
+          "rubric_id": "instructor_usefulness",
+          "rubric_content": {
+            "text_property": "The generated content is practical and ready-to-use for an instructor. Course materials are specific to the subject matter, not generic filler. Lectures have meaningful titles, objectives use action verbs, assignments have clear deliverables, and feedback comments are constructive and actionable."
+          }
+        },
+        {
+          "rubric_id": "lecture_content_depth",
+          "rubric_content": {
+            "text_property": "Each lecture includes a structured content summary of approximately 300-500 words containing: (a) key concepts and definitions, (b) a concrete example or analogy illustrating the main concept, and (c) 2-3 key takeaways. The content is specific to the course subject and written at the appropriate difficulty level for the target learners."
+          }
+        },
+        {
+          "rubric_id": "quiz_coverage",
+          "rubric_content": {
+            "text_property": "Quiz questions are provided for each module with 5-10 questions per module. Questions are distributed across Bloom's taxonomy levels (recall, application, analysis). Multiple-choice questions have exactly 4 options (A, B, C, D) with exactly one correct answer clearly marked. Short-answer questions include expected answers. Questions are directly grounded in the lecture content."
+          }
+        },
+        {
+          "rubric_id": "assignment_scaffolding",
+          "rubric_content": {
+            "text_property": "Each assignment includes step-by-step instructions (a numbered walkthrough), starter hints or scaffolding, expected deliverables, common pitfalls and tips, estimated effort in hours, and which learning goals it addresses. Assignments are progressively challenging."
+          }
+        },
+        {
+          "rubric_id": "resource_specificity",
+          "rubric_content": {
+            "text_property": "Recommended resources include specific chapters, sections, or page ranges (not just book titles). Each resource has a reading schedule indicating when to consume it relative to lectures (e.g., 'Read before Lecture 5'). Resources are real and well-known — no invented titles, ISBNs, or DOIs."
+          }
+        },
+        {
+          "rubric_id": "grading_rubric_quality",
+          "rubric_content": {
+            "text_property": "The grading rubric includes 4-6 clear criteria with percentage weights that sum to 100%. Each criterion has distinct performance descriptors for multiple levels (Excellent, Good, Satisfactory, Needs Improvement). The criteria are relevant to the course type and assignments."
+          }
+        },
+        {
+          "rubric_id": "alignment",
+          "rubric_content": {
+            "text_property": "All generated content is directly aligned with the specified course title, description, target learners, duration, difficulty level, and learning goals. The number of lectures, quizzes, and assignments is realistic for the specified duration. Content difficulty matches the stated difficulty level."
+          }
+        }
+      ]
+    }
+  }
+}
