@@ -4,6 +4,10 @@ A learner-ready course generation system built with [Google ADK](https://adk.dev
 
 Supports **multilingual** course generation (English, Burmese, Korean, etc.).
 
+## Demo
+
+[![Course Generator Demo](https://img.youtube.com/vi/s9GeHQhVFhM/maxresdefault.jpg)](https://youtu.be/s9GeHQhVFhM)
+
 ## Architecture
 
 ```
