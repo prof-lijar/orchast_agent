@@ -95,6 +95,35 @@ def execute_registered_tool(tool_name: str, input_data: str) -> str:
         return json.dumps({"error": f"Tool execution failed: {e}"})
 
 
+def fetch_webpage(url: str) -> str:
+    """Fetch the text content of a webpage. Use this when the user asks about a URL or website.
+
+    Args:
+        url: The full URL to fetch, e.g. 'https://example.com'.
+
+    Returns:
+        JSON string with the page title and text content, or an error message.
+    """
+    import re
+
+    import requests
+
+    try:
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Self-Evolving-Agent/0.1"})
+        resp.raise_for_status()
+        html = resp.text
+        title_match = re.search(r"<title>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
+        title = title_match.group(1).strip() if title_match else ""
+        text = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        text = text[:5000]
+        return json.dumps({"title": title, "content": text, "url": url})
+    except Exception as e:
+        return json.dumps({"error": f"Failed to fetch {url}: {e}"})
+
+
 async def create_downloadable_file(
     filename: str,
     content: str,
@@ -362,6 +391,8 @@ dynamic registry of tools. You can both use existing tools and create new ones.
 FIRST: Decide if the user's request needs a tool at all.
 - Simple questions (math, greetings, general knowledge, opinions, explanations) \
 → answer directly. Do NOT search the registry or create tools for these.
+- If the user provides a URL or asks about a website → call `fetch_webpage` \
+immediately to get the content. You CAN access websites.
 - ANY task that involves processing, transforming, analyzing, formatting, or \
 generating structured output from input data → follow the TOOL WORKFLOW below.
   Examples: counting words, counting sentences, formatting text, generating \
@@ -411,7 +442,9 @@ RULES:
 - When the user asks to "create a file", "download", or "save as", call \
 `create_downloadable_file` with the filename and content. This creates a \
 downloadable file in the chat UI. You can ALWAYS create downloadable files.
-- Never create tools that require file I/O, network access, or system commands.
+- Never create GENERATED tools that require file I/O, network access, or system \
+commands. But you CAN use your built-in tools (fetch_webpage, create_downloadable_file) \
+which are pre-approved and safe.
 """
 
 root_agent = Agent(
@@ -424,6 +457,7 @@ root_agent = Agent(
         execute_registered_tool,
         register_validated_tool,
         create_downloadable_file,
+        fetch_webpage,
     ],
     sub_agents=[tool_creation_pipeline],
 )
