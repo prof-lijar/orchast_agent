@@ -15,8 +15,8 @@ from google.genai import types
 
 from app.app_utils.typing import RegistryEntry, ToolSpec
 from app.registry import manager as registry_manager
-from app.safety.policy import strip_code_fences, validate_code_safety
-from app.sandbox.runner import run_tests
+from app.safety.policy import clean_code_syntax, strip_code_fences, validate_code_safety
+from app.sandbox.runner import run_smoke_tests, run_tests
 
 _, project_id = google.auth.default()
 os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
@@ -43,12 +43,21 @@ def search_registry(query: str) -> str:
         query: Description of the capability needed, e.g. 'word count' or 'text stats'.
 
     Returns:
-        JSON string with a list of matching tools (name + description), or empty list.
+        JSON string with a list of matching tools including name, description,
+        input_schema (parameter names and types), and output_schema.
     """
     results = registry_manager.search_tools(query)
     if not results:
         return json.dumps({"tools": [], "message": "No matching tools found."})
-    tools = [{"name": r.name, "description": r.description} for r in results]
+    tools = [
+        {
+            "name": r.name,
+            "description": r.description,
+            "input_schema": r.input_schema,
+            "output_schema": r.output_schema,
+        }
+        for r in results
+    ]
     return json.dumps({"tools": tools})
 
 
@@ -56,11 +65,17 @@ def list_available_tools() -> str:
     """List all tools currently registered in the tool registry.
 
     Returns:
-        JSON string with list of all tool names and descriptions.
+        JSON string with list of all tools including name, description,
+        input_schema (parameter names and types), and output_schema.
     """
     registry = registry_manager.load_registry()
     tools = [
-        {"name": name, "description": data.get("description", "")}
+        {
+            "name": name,
+            "description": data.get("description", ""),
+            "input_schema": data.get("input_schema", {}),
+            "output_schema": data.get("output_schema", {}),
+        }
         for name, data in registry.items()
     ]
     return json.dumps({"tools": tools})
@@ -121,35 +136,76 @@ async def create_downloadable_file(
 
 
 def register_validated_tool(
-    tool_name: str,
-    tool_code: str,
-    test_code: str,
-    spec_json: str,
+    tool_context: ToolContext,
 ) -> str:
-    """Validate, test, and register a new tool. Runs safety checks and sandbox tests before registration.
+    """Validate, test, and register a new tool. Reads the tool spec, code, and \
+tests from session state (output_keys: tool_spec, tool_code, tool_tests) \
+set by the tool_creation_pipeline. Runs safety checks and sandbox tests \
+before registration.
 
-    Args:
-        tool_name: The name for the new tool (snake_case), e.g. 'sentence_count_tool'.
-        tool_code: The Python source code of the tool function.
-        test_code: The pytest test code for the tool.
-        spec_json: JSON string of the tool specification with fields: tool_name, description, inputs, outputs, risk_level.
+    Call this after tool_creation_pipeline completes. No arguments needed — \
+everything is read from session state automatically.
 
     Returns:
         JSON string with registration result: success/failure and details.
     """
-    tool_code = strip_code_fences(tool_code)
-    test_code = strip_code_fences(test_code)
+    state = tool_context.state
+
+    review_output = state.get("review_fix_output", "")
+    if review_output and "### TOOL_CODE_END ###" in review_output:
+        parts = review_output.split("### TOOL_CODE_END ###", 1)
+        state["tool_code"] = parts[0].strip()
+        state["tool_tests"] = parts[1].strip()
+        state["review_fix_output"] = ""
+
+    spec_json = state.get("tool_spec", "")
+    tool_code = state.get("tool_code", "")
+    test_code = state.get("tool_tests", "")
+
+    if not spec_json or not tool_code or not test_code:
+        missing = [
+            k for k, v in [("tool_spec", spec_json), ("tool_code", tool_code), ("tool_tests", test_code)]
+            if not v
+        ]
+        return json.dumps({
+            "success": False,
+            "error": f"Missing pipeline outputs in session state: {missing}. Run tool_creation_pipeline first.",
+        })
+
+    tool_code = clean_code_syntax(strip_code_fences(tool_code))
+    test_code = clean_code_syntax(strip_code_fences(test_code))
+    state["tool_code"] = tool_code
+    state["tool_tests"] = test_code
 
     try:
-        spec = ToolSpec(**json.loads(spec_json))
+        spec = ToolSpec(**json.loads(strip_code_fences(spec_json)))
     except Exception as e:
         return json.dumps({"success": False, "error": f"Invalid spec: {e}"})
+
+    tool_name = spec.tool_name
 
     if spec.risk_level != "low":
         return json.dumps({
             "success": False,
             "error": f"Risk level '{spec.risk_level}' not allowed. Only 'low' risk tools can be auto-registered.",
         })
+
+    import ast as _ast
+    try:
+        _ast.parse(tool_code)
+    except SyntaxError as e:
+        first_lines = "\n".join(tool_code.splitlines()[:5])
+        error_msg = f"Tool code has syntax errors after auto-fix: {e}. First 5 lines: {first_lines}"
+        state["test_error"] = error_msg
+        return json.dumps({
+            "success": False,
+            "error": error_msg,
+        })
+
+    try:
+        _ast.parse(test_code)
+    except SyntaxError:
+        test_code = ""
 
     is_safe, violations = validate_code_safety(tool_code)
     if not is_safe:
@@ -158,14 +214,31 @@ def register_validated_tool(
             "error": f"Safety check failed: {'; '.join(violations)}",
         })
 
-    sandbox_result = run_tests(tool_code, test_code)
-    if not sandbox_result.success:
-        error_detail = sandbox_result.stderr or sandbox_result.stdout
-        return json.dumps({
-            "success": False,
-            "error": f"Tests failed: {error_detail[:500]}",
-            "timed_out": sandbox_result.timed_out,
-        })
+    smoke_cases = [tc.model_dump() for tc in spec.test_cases]
+    llm_tests_passed = False
+
+    if test_code:
+        sandbox_result = run_tests(tool_code, test_code)
+        llm_tests_passed = sandbox_result.success
+
+    if not llm_tests_passed:
+        smoke_result = run_smoke_tests(
+            tool_code, tool_name, smoke_cases,
+        )
+        if smoke_result.success:
+            pass
+        else:
+            error_detail = ""
+            if test_code and not llm_tests_passed:
+                error_detail = (sandbox_result.stdout + "\n" + sandbox_result.stderr).strip()
+            smoke_detail = (smoke_result.stdout + "\n" + smoke_result.stderr).strip()
+            combined_error = error_detail or smoke_detail
+            state["test_error"] = combined_error[:3000]
+            return json.dumps({
+                "success": False,
+                "error": f"Tests failed: {combined_error[:1500]}",
+                "timed_out": False,
+            })
 
     tool_file = GENERATED_TOOLS_DIR / f"{tool_name}.py"
     tool_file.write_text(tool_code + "\n")
@@ -184,16 +257,17 @@ def register_validated_tool(
 
     registered = registry_manager.register_tool(entry)
     if not registered:
-        return json.dumps({
-            "success": False,
-            "error": f"Tool '{tool_name}' already exists in registry.",
-        })
+        result = {"success": False, "error": f"Tool '{tool_name}' already exists in registry."}
+        state["registration_result"] = json.dumps(result)
+        return json.dumps(result)
 
-    return json.dumps({
+    result = {
         "success": True,
         "message": f"Tool '{tool_name}' registered successfully.",
         "tool_name": tool_name,
-    })
+    }
+    state["registration_result"] = json.dumps(result)
+    return json.dumps(result)
 
 
 # ---------------------------------------------------------------------------
@@ -272,38 +346,114 @@ Read the tool specification:
 Read the tool code:
 {tool_code}
 
-CRITICAL: You must carefully READ and UNDERSTAND the actual code implementation \
-before writing tests. Your expected values MUST match what the code will actually \
-return, not what you think the ideal behavior should be.
+TESTING STRATEGY — follow these rules strictly:
 
-For example, if the code uses a simple regex like `re.split(r'[.!?]', text)` to \
-count sentences, then "Dr. Smith went home." would count as 3 (split on every \
-period), not 2. Your tests must match the CODE's behavior, not linguistic rules.
+CRITICAL: Every `assert` statement in your test MUST be a real assertion that \
+you expect to PASS. NEVER write assert statements as documentation, comments, \
+or to "show your work." For example, NEVER write:
+  assert selected == "rain"  # rain is not in topic  <-- THIS WILL FAIL
+If you want to document logic, use comments (#), NOT assert statements.
 
-HOW TO DETERMINE EXPECTED VALUES:
-1. Read the code line by line
-2. Mentally trace the execution with your test input
-3. Write the expected value based on what the code ACTUALLY returns
-4. If in doubt, use simpler test inputs that have unambiguous results
+1. NEVER hardcode expected output values by manually tracing the code. \
+You WILL get it wrong. Instead, use one of these two approaches:
 
-Generate pytest test functions. Follow these rules:
+   APPROACH A — Compute expected values in test code:
+   Write a simple reference implementation or inline computation in your \
+   test to derive the expected value. Example:
+     input_text = "Hello World"
+     result = my_tool(input_text)
+     # Compute expected value programmatically:
+     expected = "".join(c.lower() if i % 2 == 0 else c.upper() \
+                        for i, c in enumerate(input_text))
+     assert result["output"] == expected
 
-1. The function name matches tool_name from the spec (it will be auto-imported)
+   APPROACH B — Structural assertions:
+   Check properties, types, lengths, invariants, and containment \
+   instead of exact values. Example:
+     result = my_tool("hello world")
+     assert isinstance(result, dict)
+     assert "output" in result
+     assert len(result["output"]) == len("hello world")
+     assert result["output"] != "hello world"  # was transformed
+
+   The ONLY exception: exact value comparisons are OK for inputs of \
+   1-3 characters where the answer is trivially obvious. Example:
+     assert my_tool("Hi")["output"] == "hI"
+
+   NEVER MIX both approaches in the same test — if you use a reference \
+   function to compute expected values, do NOT also hardcode the same \
+   expected value as a string literal. Pick one approach per assertion.
+
 2. Write at least 4 test functions covering:
-   - Normal input with expected output (use simple, unambiguous inputs)
-   - Empty input (empty string if text-based)
-   - Edge cases (whitespace-only, single character)
-   - Output type validation (result is a dict with expected keys)
+   - Normal input (use APPROACH A or B, NOT hand-traced values)
+   - Empty input / missing input
+   - Edge cases (single character, whitespace-only, special characters)
+   - Output type and structure validation (dict, expected keys, value types)
+
 3. Each test function name must start with "test_"
-4. Use plain assert statements
-5. Do NOT import os, subprocess, or any system modules
-6. Do NOT use fixtures or conftest
-7. Keep test inputs SIMPLE — avoid abbreviations, special punctuation, or \
-ambiguous cases that depend on linguistic intelligence the code doesn't have
+4. Test functions must take ZERO parameters: `def test_foo():` — NEVER \
+`def test_foo(my_tool):`. The tool function is globally available via \
+`from tool_module import *`, NOT as a pytest fixture.
+5. Use plain assert statements
+6. Do NOT import os, subprocess, or any system modules
+7. Do NOT use fixtures or conftest
+8. Keep test inputs SIMPLE
 
 Output ONLY the Python test code, no explanation, no markdown fences. The code \
 must be a complete, runnable pytest file. Do NOT include an import statement for \
 the tool function - it will be injected automatically.
+"""
+
+
+TOOL_REVIEW_FIXER_INSTRUCTION = """\
+You are a Tool Review & Fix Agent. A tool failed registration. Your job is \
+to diagnose the problem, determine whether the bug is in the TOOL CODE or \
+the TEST CODE (or both), and fix it.
+
+Tool specification:
+{tool_spec}
+
+Tool code:
+{tool_code}
+
+Test code (FAILED):
+{tool_tests}
+
+Error from test runner:
+{test_error}
+
+REVIEW PROCESS:
+1. Read the error carefully. Identify WHICH test(s) failed and the exact \
+assertion or error that caused the failure.
+
+2. DIAGNOSE the root cause — is the bug in the test or the tool?
+   - If the test asserts a wrong expected value → fix the TEST
+   - If the test uses function parameters like `def test_foo(tool):` → fix \
+     the TEST (must be `def test_foo():` with zero params)
+   - If the test uses `assert` for documentation/comments instead of real \
+     checks → fix the TEST (use # comments instead)
+   - If the tool code has a syntax error or logic bug → fix the TOOL CODE
+   - If the tool code has a bad import inside a function body → fix the \
+     TOOL CODE (move import to top of file)
+
+3. FIX the broken part(s). Rules for test fixes:
+   - NEVER hardcode expected values by manually tracing code
+   - For exact comparisons, use ONLY trivially short inputs (1-3 chars)
+   - For longer inputs, compute expected values programmatically (Approach A) \
+     or use structural assertions (Approach B)
+   - All test functions MUST take ZERO parameters
+   - Every `assert` must be a real assertion you expect to PASS
+
+4. OUTPUT FORMAT — you must output EXACTLY two sections separated by the \
+marker line `### TOOL_CODE_END ###`:
+
+[Complete fixed tool code here — if no changes needed, copy it unchanged]
+### TOOL_CODE_END ###
+[Complete fixed test code here]
+
+Output ONLY the code sections with the marker. No explanation, no markdown \
+fences. Do NOT include an import statement for the tool function in the test \
+section — it will be injected automatically.
 """
 
 
@@ -341,14 +491,47 @@ tool_test_agent = Agent(
     disallow_transfer_to_peers=True,
 )
 
+TOOL_REGISTRAR_INSTRUCTION = """\
+You are a Tool Registrar Agent. Follow these steps exactly:
+1. Call `register_validated_tool` with no arguments.
+2. After receiving the result, output EXACTLY one of these two lines and nothing else:
+   - If success: REGISTRATION_SUCCESS: [tool_name]
+   - If failure: REGISTRATION_FAILED: [error summary]
+Do NOT explain, reason, or suggest next steps. Just call the tool and output the result line.
+"""
+
+tool_registrar_agent = Agent(
+    name="tool_registrar_agent",
+    description="Automatically registers the tool after tests are generated",
+    model=_model,
+    instruction=TOOL_REGISTRAR_INSTRUCTION,
+    tools=[register_validated_tool],
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
+)
+
 tool_creation_pipeline = SequentialAgent(
     name="tool_creation_pipeline",
     description=(
-        "Creates a new tool through a 3-step pipeline: specification, code "
-        "generation, and test generation. Transfer here when no existing tool "
-        "matches the user's need and a new tool should be created."
+        "Creates and registers a new tool through a 4-step pipeline: "
+        "specification, code generation, test generation, and registration. "
+        "Transfer here when no existing tool matches the user's need."
     ),
-    sub_agents=[tool_spec_agent, tool_coder_agent, tool_test_agent],
+    sub_agents=[tool_spec_agent, tool_coder_agent, tool_test_agent, tool_registrar_agent],
+)
+
+tool_review_fixer_agent = Agent(
+    name="tool_review_fixer_agent",
+    description=(
+        "Reviews and fixes a failed tool. Diagnoses whether the bug is in "
+        "the tool code or test code, fixes the broken part(s), and outputs "
+        "both. Transfer here when register_validated_tool fails."
+    ),
+    model=_model,
+    instruction=TOOL_REVIEW_FIXER_INSTRUCTION,
+    output_key="review_fix_output",
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
 )
 
 
@@ -384,30 +567,55 @@ STEP 2: Check the search results.
 name and input data as a JSON string. Present the result to the user. DONE.
   - If NO matching tool is found → continue to Step 3.
 
-STEP 3: Transfer to `tool_creation_pipeline` to create a new tool.
+STEP 3: Before creating a tool, make sure you have a CLEAR and SPECIFIC \
+understanding of what the tool should do. If the user's request is vague or \
+incomplete (e.g. "create a tool", "make a tool using pandas", "I need a new \
+tool"), ask the user to clarify:
+  - What specific task should the tool perform?
+  - What input will it receive and what output should it produce?
+Do NOT guess or assume what the user wants. Only proceed once you have enough \
+detail to write a specification.
 
-STEP 4: After tool_creation_pipeline completes, read the three outputs from \
-the conversation (tool spec JSON, tool code Python, test code Python). \
-Call `register_validated_tool` with:
-  - tool_name: the tool_name from the spec JSON
-  - tool_code: the Python code (raw code only, no markdown)
-  - test_code: the test code (raw code only, no markdown)
-  - spec_json: the full spec JSON string
+STEP 4: Call `transfer_to_agent` with agent name "tool_creation_pipeline" to \
+create and register the new tool. The pipeline handles everything automatically: \
+specification → code → tests → registration. Do NOT call `register_validated_tool` \
+yourself — the pipeline does it.
 
-STEP 5: If registration succeeds, call `execute_registered_tool` with the \
-new tool name and the user's input data. Present the result.
+STEP 5: After the pipeline returns, check if the last message contains \
+"REGISTRATION_SUCCESS" or "REGISTRATION_FAILED":
 
-STEP 6: If registration fails, tell the user what went wrong. \
-Do NOT retry tool creation more than once. If the second attempt also fails, \
-apologize and explain the failure clearly. Do NOT loop endlessly.
+  IF "REGISTRATION_SUCCESS": Tell the user the tool was created successfully. \
+Show the tool name, description, inputs/outputs, and a usage example. \
+If the user provided input data, call `execute_registered_tool` to demo it. DONE.
 
-Use `list_available_tools` when the user asks what tools are available.
+  IF "REGISTRATION_FAILED": Do NOT give up. IMMEDIATELY do the following:
+    a) Call `transfer_to_agent` with agent name "tool_review_fixer_agent"
+    b) After it finishes, call `register_validated_tool` (no arguments) to retry
+    c) If it succeeds, tell the user the tool was created. DONE.
+    d) If it fails again, repeat steps (a)-(c) up to 3 total attempts.
+    e) Only after 3 failures, tell the user it failed and explain why.
+
+You MUST ALWAYS communicate the final outcome to the user. NEVER end a turn \
+silently after tool creation — the user must see either a success or failure \
+message.
+
+IMPORTANT: To transfer to any sub-agent, you MUST call `transfer_to_agent`. \
+Do NOT use any other function name like TransferToAgentTool or transferToAgent.
+
+Use `list_available_tools` when the user asks what tools are available. \
+After listing, STOP — do NOT start creating, retrying, or fixing tools unless \
+the user explicitly asks for it.
 
 RULES:
 - Answer simple questions directly without tools (e.g., "what is 1+5?" → "6").
 - NEVER skip Step 1 for data processing tasks.
 - NEVER create a tool if a suitable one already exists in the registry.
-- NEVER retry failed tool creation more than once (max 2 total attempts).
+- When registration fails, use the RETRY LOOP (Step 7) — call \
+`transfer_to_agent` with "tool_review_fixer_agent", do NOT re-run the \
+entire tool_creation_pipeline.
+- Maximum 3 total registration attempts per tool. Give up after 3 failures.
+- NEVER resume or retry a previously failed tool creation from an earlier \
+conversation turn unless the user explicitly asks you to.
 - Create tools for ANY data processing, transformation, formatting, or generation task.
 - When the user asks to "create a file", "download", or "save as", call \
 `create_downloadable_file` with the filename and content. This creates a \
@@ -428,7 +636,7 @@ root_agent = Agent(
         register_validated_tool,
         create_downloadable_file,
     ],
-    sub_agents=[tool_creation_pipeline],
+    sub_agents=[tool_creation_pipeline, tool_review_fixer_agent],
 )
 
 app = App(

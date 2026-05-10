@@ -77,11 +77,48 @@ def validate_code_safety(code: str) -> tuple[bool, list[str]]:
 
 
 def strip_code_fences(text: str) -> str:
-    """Remove markdown code fences and LLM artifacts from output."""
+    """Remove markdown code fences and LLM artifacts from output.
+
+    Tries multiple strategies to extract valid Python code:
+    1. Extract from markdown code fences if present
+    2. Strip non-code preamble/postamble by finding the first import or def
+    3. Fall back to the full stripped text
+    """
     text = re.sub(r"<ctrl\d+>", "", text)
-    text = re.sub(r"<[^>]+>", "", text)
+
     pattern = r"```(?:python)?\s*\n(.*?)```"
     match = re.search(pattern, text, re.DOTALL)
     if match:
         return match.group(1).strip()
-    return text.strip()
+
+    stripped = text.strip()
+
+    code_start = re.search(r"^(import |from |def |class |[A-Z_]+\s*=)", stripped, re.MULTILINE)
+    if code_start and code_start.start() > 0:
+        stripped = stripped[code_start.start():]
+
+    return stripped
+
+
+def clean_code_syntax(code: str) -> str:
+    """Try to fix syntax errors by trimming trailing non-Python text.
+
+    If ast.parse fails, progressively remove trailing lines until it parses.
+    Returns the longest parseable prefix of the code.
+    """
+    try:
+        ast.parse(code)
+        return code
+    except SyntaxError:
+        pass
+
+    lines = code.split("\n")
+    for end in range(len(lines) - 1, 0, -1):
+        candidate = "\n".join(lines[:end])
+        try:
+            ast.parse(candidate)
+            return candidate
+        except SyntaxError:
+            continue
+
+    return code

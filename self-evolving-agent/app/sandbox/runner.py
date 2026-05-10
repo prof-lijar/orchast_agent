@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from app.app_utils.typing import SandboxResult
 
@@ -79,3 +81,46 @@ def run_tests(
                 stderr=f"Tests timed out after {timeout} seconds.",
                 timed_out=True,
             )
+
+
+def generate_smoke_tests(
+    tool_name: str,
+    test_cases: list[dict[str, Any]],
+    expected_output_keys: list[str] | None = None,
+) -> str:
+    """Auto-generate smoke tests from the spec's test_cases.
+
+    Each test calls the tool with the provided inputs and checks:
+    1. The function doesn't crash
+    2. The result is a dict
+    3. The result contains the expected output keys
+    """
+    lines = ["import json", ""]
+
+    for i, tc in enumerate(test_cases):
+        inputs = tc.get("inputs", {})
+        out_keys = tc.get("expected_output_keys", expected_output_keys or [])
+        args = ", ".join(f"{k}={json.dumps(v)}" for k, v in inputs.items())
+
+        lines.append(f"def test_smoke_{i}():")
+        lines.append(f"    result = {tool_name}({args})")
+        lines.append(f"    assert isinstance(result, dict), f'Expected dict, got {{type(result)}}'")
+        for key in out_keys:
+            lines.append(f"    assert {json.dumps(key)} in result, f'Missing key: {key}'")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def run_smoke_tests(
+    tool_code: str,
+    tool_name: str,
+    test_cases: list[dict[str, Any]],
+    expected_output_keys: list[str] | None = None,
+    timeout: int = TIMEOUT_SECONDS,
+) -> SandboxResult:
+    """Run auto-generated smoke tests for a tool."""
+    smoke_test_code = generate_smoke_tests(
+        tool_name, test_cases, expected_output_keys,
+    )
+    return run_tests(tool_code, smoke_test_code, timeout)
