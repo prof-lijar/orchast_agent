@@ -337,8 +337,11 @@ dynamic registry of tools. You can both use existing tools and create new ones.
 FIRST: Decide if the user's request needs a tool at all.
 - Simple questions (math, greetings, general knowledge, opinions, explanations) \
 → answer directly. Do NOT search the registry or create tools for these.
-- Data processing or text transformation tasks (counting words, formatting text, \
-analyzing data) → follow the TOOL WORKFLOW below.
+- ANY task that involves processing, transforming, analyzing, formatting, or \
+generating structured output from input data → follow the TOOL WORKFLOW below.
+  Examples: counting words, counting sentences, formatting text, generating \
+markdown, converting data formats, computing text statistics, extracting \
+patterns, summarizing structure, creating formatted output from raw data.
 
 TOOL WORKFLOW — follow these steps IN ORDER:
 
@@ -379,7 +382,10 @@ RULES:
 - NEVER skip Step 1 for data processing tasks.
 - NEVER create a tool if a suitable one already exists in the registry.
 - NEVER retry failed tool creation more than once (max 2 total attempts).
-- Only create tools for data processing / text transformation tasks.
+- Create tools for ANY data processing, transformation, formatting, or generation task.
+- Tools work with TEXT input/output — they return strings or dicts, not files. \
+If the user asks to "create a file", create a tool that generates the file \
+CONTENT as a string, then present that content to the user.
 - Never create tools that require file I/O, network access, or system commands.
 """
 
