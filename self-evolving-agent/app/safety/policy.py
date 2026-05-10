@@ -82,6 +82,7 @@ def validate_code_safety(code: str) -> tuple[bool, list[str]]:
 def strip_code_fences(text: str) -> str:
     """Remove markdown code fences and LLM artifacts from output."""
     text = re.sub(r"<ctrl\d+>", "", text)
+    text = re.sub(r"<[^>]+>", "", text)
     pattern = r"```(?:python)?\s*\n(.*?)```"
     match = re.search(pattern, text, re.DOTALL)
     if match:
