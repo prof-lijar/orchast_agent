@@ -1,0 +1,179 @@
+{
+  "eval_set_id": "create_new_tool",
+  "name": "Create New Tool Evaluation",
+  "description": "Tests the full tool creation pipeline: the agent searches the registry, finds no match, transfers to the creation pipeline (spec, code, test), then registers and executes the new tool.",
+  "eval_cases": [
+    {
+      "eval_id": "sentence_count",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Count the number of sentences in this text: The sun rose over the mountain. Birds began to sing. A gentle breeze rustled through the trees. It was going to be a beautiful day."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {
+                  "query": "sentence count"
+                }
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "tool_creation_pipeline"
+                }
+              },
+              {
+                "name": "register_validated_tool",
+                "args": {}
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "character_count",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "How many characters are in the following text (including spaces)? Hello, World!"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {
+                  "query": "character count"
+                }
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "tool_creation_pipeline"
+                }
+              },
+              {
+                "name": "register_validated_tool",
+                "args": {}
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "text_statistics",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Give me text statistics for: Artificial intelligence is transforming the manufacturing industry. Predictive maintenance reduces downtime. Quality control uses computer vision. Robots handle repetitive tasks efficiently."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {}
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "tool_creation_pipeline"
+                }
+              },
+              {
+                "name": "register_validated_tool",
+                "args": {}
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "json_formatter",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Format this JSON string nicely: {\"name\":\"sensor_1\",\"temperature\":72.5,\"status\":\"active\",\"readings\":[1.2,3.4,5.6]}"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {}
+              },
+              {
+                "name": "transfer_to_agent",
+                "args": {
+                  "agent_name": "tool_creation_pipeline"
+                }
+              },
+              {
+                "name": "register_validated_tool",
+                "args": {}
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}

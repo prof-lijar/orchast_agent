@@ -1,0 +1,145 @@
+{
+  "eval_set_id": "use_existing_tool",
+  "name": "Use Existing Tool Evaluation",
+  "description": "Tests that the agent correctly searches the registry, finds pre-registered tools, and executes them with correct inputs.",
+  "eval_cases": [
+    {
+      "eval_id": "word_count_simple",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Count the words in this text: The quick brown fox jumps over the lazy dog"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {
+                  "query": "word count"
+                }
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {
+                  "tool_name": "word_count_tool",
+                  "input_data": "{\"text\": \"The quick brown fox jumps over the lazy dog\"}"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "word_count_empty",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "How many words are in an empty string: "
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {
+                  "query": "word count"
+                }
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {
+                  "tool_name": "word_count_tool",
+                  "input_data": "{\"text\": \"\"}"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "word_count_long_text",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Count the words in the following paragraph: Machine learning is a subset of artificial intelligence that focuses on building systems that learn from data. Instead of being explicitly programmed to perform a task, these systems use algorithms to parse data, learn from it, and make informed decisions. Deep learning, a further subset, uses neural networks with many layers to analyze various factors of data."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_registry",
+                "args": {
+                  "query": "word count"
+                }
+              },
+              {
+                "name": "execute_registered_tool",
+                "args": {
+                  "tool_name": "word_count_tool"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "list_tools",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What tools do you have available?"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "list_available_tools",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}
