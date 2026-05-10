@@ -95,34 +95,6 @@ def execute_registered_tool(tool_name: str, input_data: str) -> str:
         return json.dumps({"error": f"Tool execution failed: {e}"})
 
 
-def fetch_webpage(url: str) -> str:
-    """Fetch the text content of a webpage. Use this when the user asks about a URL or website.
-
-    Args:
-        url: The full URL to fetch, e.g. 'https://example.com'.
-
-    Returns:
-        JSON string with the page title and text content, or an error message.
-    """
-    import re
-
-    import requests
-
-    try:
-        resp = requests.get(url, timeout=15, headers={"User-Agent": "Self-Evolving-Agent/0.1"})
-        resp.raise_for_status()
-        html = resp.text
-        title_match = re.search(r"<title>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
-        title = title_match.group(1).strip() if title_match else ""
-        text = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
-        text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
-        text = re.sub(r"<[^>]+>", " ", text)
-        text = re.sub(r"\s+", " ", text).strip()
-        text = text[:5000]
-        return json.dumps({"title": title, "content": text, "url": url})
-    except Exception as e:
-        return json.dumps({"error": f"Failed to fetch {url}: {e}"})
-
 
 async def create_downloadable_file(
     filename: str,
@@ -246,8 +218,8 @@ edge, and boundary cases.
 Rules:
 - tool_name MUST be snake_case and end with "_tool"
 - risk_level MUST be "low" for v0.1
-- dependencies can ONLY include: re, json, math, string, collections, statistics, textwrap, itertools
-- Do NOT include os, subprocess, socket, requests, or any network/file/system imports
+- dependencies can include: re, json, math, string, collections, statistics, textwrap, itertools, requests, httpx, urllib
+- Do NOT include os, subprocess, socket, shutil, pathlib, or any shell/file-system imports
 
 Output ONLY the JSON object, no explanation, no markdown fences.
 
@@ -281,8 +253,8 @@ these rules strictly:
 2. Use type hints for all parameters and return type
 3. Include a Google-style docstring with Args and Returns sections
 4. Return a dictionary matching the output schema
-5. Only import from these allowed modules: re, json, math, string, collections, statistics, textwrap, itertools
-6. Do NOT import: os, subprocess, socket, shutil, pathlib, requests, httpx, urllib, sys
+5. Allowed imports: re, json, math, string, collections, statistics, textwrap, itertools, requests, httpx, urllib
+6. Do NOT import: os, subprocess, socket, shutil, pathlib, sys, paramiko, ftplib, smtplib
 7. Do NOT use: eval(), exec(), open(), __import__(), system(), popen(), compile(), globals(), locals()
 8. Handle edge cases gracefully (empty strings, None values)
 
@@ -391,8 +363,6 @@ dynamic registry of tools. You can both use existing tools and create new ones.
 FIRST: Decide if the user's request needs a tool at all.
 - Simple questions (math, greetings, general knowledge, opinions, explanations) \
 → answer directly. Do NOT search the registry or create tools for these.
-- If the user provides a URL or asks about a website → call `fetch_webpage` \
-immediately to get the content. You CAN access websites.
 - ANY task that involves processing, transforming, analyzing, formatting, or \
 generating structured output from input data → follow the TOOL WORKFLOW below.
   Examples: counting words, counting sentences, formatting text, generating \
@@ -442,9 +412,9 @@ RULES:
 - When the user asks to "create a file", "download", or "save as", call \
 `create_downloadable_file` with the filename and content. This creates a \
 downloadable file in the chat UI. You can ALWAYS create downloadable files.
-- Never create GENERATED tools that require file I/O, network access, or system \
-commands. But you CAN use your built-in tools (fetch_webpage, create_downloadable_file) \
-which are pre-approved and safe.
+- Never create generated tools that use dangerous system operations (file deletion, \
+shell commands, credential access). But tools that fetch URLs or read data are \
+allowed — use pre-registered tools in the registry for these when available.
 """
 
 root_agent = Agent(
@@ -457,7 +427,6 @@ root_agent = Agent(
         execute_registered_tool,
         register_validated_tool,
         create_downloadable_file,
-        fetch_webpage,
     ],
     sub_agents=[tool_creation_pipeline],
 )

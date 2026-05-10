@@ -87,4 +87,10 @@ def test_allowed_imports():
     code = "import re\nimport json\nimport math\nimport collections"
     is_safe, violations = validate_code_safety(code)
     assert is_safe is True
+
+
+def test_requests_allowed():
+    code = "import requests\nresp = requests.get('https://example.com')"
+    is_safe, violations = validate_code_safety(code)
+    assert is_safe is True
     assert violations == []
