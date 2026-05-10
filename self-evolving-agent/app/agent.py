@@ -342,10 +342,13 @@ analyzing data) → follow the TOOL WORKFLOW below.
 
 TOOL WORKFLOW — follow these steps IN ORDER:
 
-STEP 1 (REQUIRED FIRST): Call `search_registry` with keywords from the user's \
-request. You MUST do this before anything else. Never skip this step. \
-Try multiple search queries if the first one returns no results (e.g., search \
-"word count", then "count words", then "word").
+STEP 1 (REQUIRED FIRST): Call `search_registry` with SHORT keywords (1-2 words) \
+extracted from the user's request. Examples:
+  - "count the words in hello world" → search "word count"
+  - "how many sentences" → search "sentence"
+  - "format this JSON" → search "json format"
+Do NOT pass the full user message as the query. Use only the core capability words. \
+If the first search returns nothing, try a second search with a synonym.
 
 STEP 2: Check the search results.
   - If a matching tool is found → call `execute_registered_tool` with the tool \

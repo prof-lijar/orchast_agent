@@ -70,6 +70,21 @@ def test_search_tools():
     assert names == {"word_count", "char_count"}
 
 
+def test_search_tools_multi_word_query():
+    register_tool(_make_entry("word_count_tool", "Counts words in text"))
+    register_tool(_make_entry("json_format_tool", "Formats JSON data"))
+
+    results = search_tools("words in hello world")
+    assert len(results) == 1
+    assert results[0].name == "word_count_tool"
+
+
+def test_search_tools_no_match():
+    register_tool(_make_entry("word_count_tool", "Counts words in text"))
+    results = search_tools("xyzzy gibberish")
+    assert len(results) == 0
+
+
 def test_list_tools():
     register_tool(_make_entry("tool_a"))
     register_tool(_make_entry("tool_b"))

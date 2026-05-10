@@ -31,12 +31,13 @@ def find_tool(name: str) -> RegistryEntry | None:
 
 def search_tools(query: str) -> list[RegistryEntry]:
     registry = load_registry()
-    query_lower = query.lower()
+    query_words = query.lower().split()
     results = []
     for entry_data in registry.values():
         name = entry_data.get("name", "").lower()
         desc = entry_data.get("description", "").lower()
-        if query_lower in name or query_lower in desc:
+        searchable = f"{name} {desc}"
+        if any(word in searchable for word in query_words):
             results.append(RegistryEntry(**entry_data))
     return results
 
