@@ -10,6 +10,7 @@ import google.auth
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.apps import App
 from google.adk.models import Gemini
+from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
 from app.app_utils.typing import RegistryEntry, ToolSpec
@@ -92,6 +93,30 @@ def execute_registered_tool(tool_name: str, input_data: str) -> str:
         return json.dumps({"result": result})
     except Exception as e:
         return json.dumps({"error": f"Tool execution failed: {e}"})
+
+
+async def create_downloadable_file(
+    filename: str,
+    content: str,
+    tool_context: ToolContext,
+) -> str:
+    """Create a downloadable file for the user. The file will appear in the artifacts panel of the chat UI.
+
+    Args:
+        filename: The filename with extension, e.g. 'diploma.md', 'report.txt', 'data.json'.
+        content: The full text content of the file.
+
+    Returns:
+        JSON string confirming the file was created and is available for download.
+    """
+    artifact = types.Part.from_text(text=content)
+    version = await tool_context.save_artifact(filename=filename, artifact=artifact)
+    return json.dumps({
+        "success": True,
+        "filename": filename,
+        "version": version,
+        "message": f"File '{filename}' is now available for download in the artifacts panel.",
+    })
 
 
 def register_validated_tool(
@@ -383,9 +408,9 @@ RULES:
 - NEVER create a tool if a suitable one already exists in the registry.
 - NEVER retry failed tool creation more than once (max 2 total attempts).
 - Create tools for ANY data processing, transformation, formatting, or generation task.
-- Tools work with TEXT input/output — they return strings or dicts, not files. \
-If the user asks to "create a file", create a tool that generates the file \
-CONTENT as a string, then present that content to the user.
+- When the user asks to "create a file", "download", or "save as", call \
+`create_downloadable_file` with the filename and content. This creates a \
+downloadable file in the chat UI. You can ALWAYS create downloadable files.
 - Never create tools that require file I/O, network access, or system commands.
 """
 
@@ -398,6 +423,7 @@ root_agent = Agent(
         list_available_tools,
         execute_registered_tool,
         register_validated_tool,
+        create_downloadable_file,
     ],
     sub_agents=[tool_creation_pipeline],
 )
