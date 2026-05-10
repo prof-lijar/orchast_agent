@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 from app.app_utils.typing import SandboxResult
+
+PYTHON = sys.executable
 
 TIMEOUT_SECONDS = 30
 MAX_OUTPUT_SIZE = 10_000
@@ -18,7 +21,7 @@ def run_code(code: str, timeout: int = TIMEOUT_SECONDS) -> SandboxResult:
 
         try:
             result = subprocess.run(
-                ["python3", str(script_path)],
+                [PYTHON, str(script_path)],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
@@ -59,7 +62,7 @@ def run_tests(
 
         try:
             result = subprocess.run(
-                ["python3", "-m", "pytest", str(test_file), "-v", "--tb=short"],
+                [PYTHON, "-m", "pytest", str(test_file), "-v", "--tb=short"],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
