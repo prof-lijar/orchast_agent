@@ -246,19 +246,34 @@ Read the tool specification:
 Read the tool code:
 {tool_code}
 
-Generate pytest test functions that thoroughly validate the tool. Follow these \
-rules:
+CRITICAL: You must carefully READ and UNDERSTAND the actual code implementation \
+before writing tests. Your expected values MUST match what the code will actually \
+return, not what you think the ideal behavior should be.
 
-1. Import the tool function directly: the function name matches tool_name from the spec
+For example, if the code uses a simple regex like `re.split(r'[.!?]', text)` to \
+count sentences, then "Dr. Smith went home." would count as 3 (split on every \
+period), not 2. Your tests must match the CODE's behavior, not linguistic rules.
+
+HOW TO DETERMINE EXPECTED VALUES:
+1. Read the code line by line
+2. Mentally trace the execution with your test input
+3. Write the expected value based on what the code ACTUALLY returns
+4. If in doubt, use simpler test inputs that have unambiguous results
+
+Generate pytest test functions. Follow these rules:
+
+1. The function name matches tool_name from the spec (it will be auto-imported)
 2. Write at least 4 test functions covering:
-   - Normal input with expected output
+   - Normal input with expected output (use simple, unambiguous inputs)
    - Empty input (empty string if text-based)
-   - Edge cases (special characters, very long input, whitespace-only)
+   - Edge cases (whitespace-only, single character)
    - Output type validation (result is a dict with expected keys)
 3. Each test function name must start with "test_"
 4. Use plain assert statements
 5. Do NOT import os, subprocess, or any system modules
 6. Do NOT use fixtures or conftest
+7. Keep test inputs SIMPLE — avoid abbreviations, special punctuation, or \
+ambiguous cases that depend on linguistic intelligence the code doesn't have
 
 Output ONLY the Python test code, no explanation, no markdown fences. The code \
 must be a complete, runnable pytest file. Do NOT include an import statement for \
@@ -319,7 +334,13 @@ ROOT_INSTRUCTION = """\
 You are the Self-Evolving Agent, an intelligent orchestrator that manages a \
 dynamic registry of tools. You can both use existing tools and create new ones.
 
-MANDATORY WORKFLOW — follow these steps IN ORDER for every user request:
+FIRST: Decide if the user's request needs a tool at all.
+- Simple questions (math, greetings, general knowledge, opinions, explanations) \
+→ answer directly. Do NOT search the registry or create tools for these.
+- Data processing or text transformation tasks (counting words, formatting text, \
+analyzing data) → follow the TOOL WORKFLOW below.
+
+TOOL WORKFLOW — follow these steps IN ORDER:
 
 STEP 1 (REQUIRED FIRST): Call `search_registry` with keywords from the user's \
 request. You MUST do this before anything else. Never skip this step. \
@@ -331,8 +352,7 @@ STEP 2: Check the search results.
 name and input data as a JSON string. Present the result to the user. DONE.
   - If NO matching tool is found → continue to Step 3.
 
-STEP 3: Only if Step 1 returned NO matching tools AND the task involves data \
-processing or text transformation → transfer to `tool_creation_pipeline`.
+STEP 3: Transfer to `tool_creation_pipeline` to create a new tool.
 
 STEP 4: After tool_creation_pipeline completes, read the three outputs from \
 the conversation (tool spec JSON, tool code Python, test code Python). \
@@ -345,18 +365,19 @@ Call `register_validated_tool` with:
 STEP 5: If registration succeeds, call `execute_registered_tool` with the \
 new tool name and the user's input data. Present the result.
 
-STEP 6: If registration fails, tell the user what went wrong (safety violation \
-or test failure).
+STEP 6: If registration fails, tell the user what went wrong. \
+Do NOT retry tool creation more than once. If the second attempt also fails, \
+apologize and explain the failure clearly. Do NOT loop endlessly.
 
 Use `list_available_tools` when the user asks what tools are available.
 
 RULES:
-- NEVER skip Step 1. Always search the registry first.
-- NEVER transfer to tool_creation_pipeline without searching the registry first.
+- Answer simple questions directly without tools (e.g., "what is 1+5?" → "6").
+- NEVER skip Step 1 for data processing tasks.
 - NEVER create a tool if a suitable one already exists in the registry.
+- NEVER retry failed tool creation more than once (max 2 total attempts).
 - Only create tools for data processing / text transformation tasks.
 - Never create tools that require file I/O, network access, or system commands.
-- Present results clearly to the user.
 """
 
 root_agent = Agent(
