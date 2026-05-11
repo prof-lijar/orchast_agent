@@ -8,6 +8,20 @@ Built with [Google ADK](https://github.com/google/adk-python) (Agent Development
 
 ---
 
+## Research Context
+
+This project implements a **Self-Evolving Agent** architecture proposed by [Professor Jeonghoon Kang](https://github.com/jeonghoonkang). The system demonstrates continuous capability expansion — instead of being limited to predefined tools, the agent autonomously identifies gaps and extends itself.
+
+The architecture follows a multi-agent design:
+
+- **Root Orchestrator** coordinates the system and maintains the tool registry
+- **Specialized sub-agents** handle tool specification, code generation, and test generation
+- **Safety-first pipeline** ensures all generated code is validated before execution
+
+Long-term applications target **semiconductor manufacturing** and **process control** environments (BerePi, K-CTDM architecture), where the agent could dynamically create tools for sensor data processing, statistical analysis, and quality monitoring — all within strict safety constraints.
+
+---
+
 ## How It Works
 
 When a user sends a request, the agent follows this decision loop:
@@ -285,20 +299,6 @@ Search the web for "how to deploy an agent"
 ```
 
 The first prompt uses the pre-registered `word_count_tool`. The third prompt triggers the full tool creation pipeline. The fourth demonstrates tool updating with automatic version incrementing. The fifth deletes a tool from the registry and disk.
-
----
-
-## Research Context
-
-This project implements a **Self-Evolving Agent** architecture proposed by Professor Jeonghoon Kang. The system demonstrates continuous capability expansion — instead of being limited to predefined tools, the agent autonomously identifies gaps and extends itself.
-
-The architecture follows a multi-agent design:
-
-- **Root Orchestrator** coordinates the system and maintains the tool registry
-- **Specialized sub-agents** handle tool specification, code generation, and test generation
-- **Safety-first pipeline** ensures all generated code is validated before execution
-
-Long-term applications target **semiconductor manufacturing** and **process control** environments (BerePi, K-CTDM architecture), where the agent could dynamically create tools for sensor data processing, statistical analysis, and quality monitoring — all within strict safety constraints.
 
 ---
 
