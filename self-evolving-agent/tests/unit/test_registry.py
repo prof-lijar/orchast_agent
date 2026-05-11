@@ -6,12 +6,14 @@ import pytest
 from app.app_utils.typing import RegistryEntry
 from app.registry.manager import (
     REGISTRY_PATH,
+    delete_tool,
     find_tool,
     list_tools,
     load_registry,
     register_tool,
     save_registry,
     search_tools,
+    update_tool,
 )
 
 
@@ -98,3 +100,54 @@ def test_save_and_load_roundtrip():
     loaded = load_registry()
     assert "my_tool" in loaded
     assert loaded["my_tool"]["name"] == "my_tool"
+
+
+def test_update_existing_tool():
+    entry = _make_entry("my_tool", "Original description")
+    register_tool(entry)
+
+    updated_entry = _make_entry("my_tool", "Updated description")
+    assert update_tool(updated_entry) is True
+
+    found = find_tool("my_tool")
+    assert found.description == "Updated description"
+    assert found.version == 2
+
+
+def test_update_increments_version_from_current():
+    entry = _make_entry("my_tool")
+    register_tool(entry)
+
+    update_tool(_make_entry("my_tool", "v2"))
+    update_tool(_make_entry("my_tool", "v3"))
+
+    found = find_tool("my_tool")
+    assert found.version == 3
+    assert found.description == "v3"
+
+
+def test_update_nonexistent_returns_false():
+    assert update_tool(_make_entry("ghost_tool")) is False
+
+
+def test_delete_existing_tool():
+    entry = _make_entry("doomed_tool")
+    register_tool(entry)
+
+    assert delete_tool("doomed_tool") is True
+    assert find_tool("doomed_tool") is None
+    assert "doomed_tool" not in list_tools()
+
+
+def test_delete_nonexistent_returns_false():
+    assert delete_tool("ghost_tool") is False
+
+
+def test_delete_preserves_other_tools():
+    register_tool(_make_entry("keep_me"))
+    register_tool(_make_entry("delete_me"))
+
+    delete_tool("delete_me")
+
+    assert find_tool("keep_me") is not None
+    assert find_tool("delete_me") is None

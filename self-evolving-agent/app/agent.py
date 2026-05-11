@@ -270,6 +270,170 @@ everything is read from session state automatically.
     return json.dumps(result)
 
 
+def update_registered_tool(
+    tool_context: ToolContext,
+) -> str:
+    """Validate, test, and UPDATE an existing tool with new code. Reads the \
+tool spec, code, and tests from session state (set by the tool_creation_pipeline). \
+Runs safety checks and sandbox tests, then overwrites the existing registry \
+entry and .py file. The version number is incremented automatically.
+
+    Call this after tool_creation_pipeline completes for a tool update. \
+No arguments needed — everything is read from session state automatically.
+
+    Returns:
+        JSON string with update result: success/failure and details.
+    """
+    state = tool_context.state
+
+    review_output = state.get("review_fix_output", "")
+    if review_output and "### TOOL_CODE_END ###" in review_output:
+        parts = review_output.split("### TOOL_CODE_END ###", 1)
+        state["tool_code"] = parts[0].strip()
+        state["tool_tests"] = parts[1].strip()
+        state["review_fix_output"] = ""
+
+    spec_json = state.get("tool_spec", "")
+    tool_code = state.get("tool_code", "")
+    test_code = state.get("tool_tests", "")
+
+    if not spec_json or not tool_code or not test_code:
+        missing = [
+            k for k, v in [("tool_spec", spec_json), ("tool_code", tool_code), ("tool_tests", test_code)]
+            if not v
+        ]
+        return json.dumps({
+            "success": False,
+            "error": f"Missing pipeline outputs in session state: {missing}. Run tool_creation_pipeline first.",
+        })
+
+    tool_code = clean_code_syntax(strip_code_fences(tool_code))
+    test_code = clean_code_syntax(strip_code_fences(test_code))
+    state["tool_code"] = tool_code
+    state["tool_tests"] = test_code
+
+    try:
+        spec = ToolSpec(**json.loads(strip_code_fences(spec_json)))
+    except Exception as e:
+        return json.dumps({"success": False, "error": f"Invalid spec: {e}"})
+
+    tool_name = spec.tool_name
+
+    existing = registry_manager.find_tool(tool_name)
+    if existing is None:
+        return json.dumps({
+            "success": False,
+            "error": f"Tool '{tool_name}' not found in registry. Use register_validated_tool for new tools.",
+        })
+
+    if spec.risk_level != "low":
+        return json.dumps({
+            "success": False,
+            "error": f"Risk level '{spec.risk_level}' not allowed. Only 'low' risk tools can be auto-registered.",
+        })
+
+    import ast as _ast
+    try:
+        _ast.parse(tool_code)
+    except SyntaxError as e:
+        first_lines = "\n".join(tool_code.splitlines()[:5])
+        error_msg = f"Tool code has syntax errors after auto-fix: {e}. First 5 lines: {first_lines}"
+        state["test_error"] = error_msg
+        return json.dumps({"success": False, "error": error_msg})
+
+    try:
+        _ast.parse(test_code)
+    except SyntaxError:
+        test_code = ""
+
+    is_safe, violations = validate_code_safety(tool_code)
+    if not is_safe:
+        return json.dumps({
+            "success": False,
+            "error": f"Safety check failed: {'; '.join(violations)}",
+        })
+
+    smoke_cases = [tc.model_dump() for tc in spec.test_cases]
+    llm_tests_passed = False
+
+    if test_code:
+        sandbox_result = run_tests(tool_code, test_code)
+        llm_tests_passed = sandbox_result.success
+
+    if not llm_tests_passed:
+        smoke_result = run_smoke_tests(tool_code, tool_name, smoke_cases)
+        if not smoke_result.success:
+            error_detail = ""
+            if test_code and not llm_tests_passed:
+                error_detail = (sandbox_result.stdout + "\n" + sandbox_result.stderr).strip()
+            smoke_detail = (smoke_result.stdout + "\n" + smoke_result.stderr).strip()
+            combined_error = error_detail or smoke_detail
+            state["test_error"] = combined_error[:3000]
+            return json.dumps({
+                "success": False,
+                "error": f"Tests failed: {combined_error[:1500]}",
+                "timed_out": False,
+            })
+
+    tool_file = GENERATED_TOOLS_DIR / f"{tool_name}.py"
+    tool_file.write_text(tool_code + "\n")
+
+    entry = RegistryEntry(
+        name=tool_name,
+        description=spec.description,
+        module=f"app.tools.generated.{tool_name}",
+        function=tool_name,
+        input_schema=spec.inputs,
+        output_schema=spec.outputs,
+        risk_level=spec.risk_level,
+        created_at=existing.created_at,
+    )
+
+    updated = registry_manager.update_tool(entry)
+    if not updated:
+        result = {"success": False, "error": f"Failed to update tool '{tool_name}'."}
+        state["registration_result"] = json.dumps(result)
+        return json.dumps(result)
+
+    new_version = registry_manager.find_tool(tool_name).version
+    result = {
+        "success": True,
+        "message": f"Tool '{tool_name}' updated successfully to version {new_version}.",
+        "tool_name": tool_name,
+        "version": new_version,
+    }
+    state["registration_result"] = json.dumps(result)
+    return json.dumps(result)
+
+
+def delete_registered_tool(tool_name: str) -> str:
+    """Delete a tool from the registry and remove its source file.
+
+    Args:
+        tool_name: The exact name of the tool to delete, e.g. 'word_count_tool'.
+
+    Returns:
+        JSON string with deletion result: success/failure and details.
+    """
+    entry = registry_manager.find_tool(tool_name)
+    if entry is None:
+        return json.dumps({"success": False, "error": f"Tool '{tool_name}' not found in registry."})
+
+    tool_file = GENERATED_TOOLS_DIR / f"{tool_name}.py"
+    if tool_file.exists():
+        tool_file.unlink()
+
+    deleted = registry_manager.delete_tool(tool_name)
+    if not deleted:
+        return json.dumps({"success": False, "error": f"Failed to delete tool '{tool_name}' from registry."})
+
+    return json.dumps({
+        "success": True,
+        "message": f"Tool '{tool_name}' has been deleted from the registry and its source file removed.",
+        "tool_name": tool_name,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Sub-agent instructions
 # ---------------------------------------------------------------------------
@@ -331,6 +495,11 @@ these rules strictly:
 6. Do NOT import: os, subprocess, socket, shutil, pathlib, sys, paramiko, ftplib, smtplib
 7. Do NOT use: eval(), exec(), open(), __import__(), system(), popen(), compile(), globals(), locals()
 8. Handle edge cases gracefully (empty strings, None values)
+9. When the spec includes network dependencies (requests, httpx, urllib), you MUST \
+write REAL implementations that make actual HTTP calls. NEVER write placeholder, \
+mock, or simulated implementations. The sandbox allows outbound network requests. \
+For web search, use DuckDuckGo's HTML endpoint (https://html.duckduckgo.com/html/) \
+which requires no API key.
 
 Output ONLY the Python code, no explanation, no markdown fences. The code must \
 be a complete, runnable Python file with imports at the top and the function \
@@ -493,7 +662,9 @@ tool_test_agent = Agent(
 
 TOOL_REGISTRAR_INSTRUCTION = """\
 You are a Tool Registrar Agent. Follow these steps exactly:
-1. Call `register_validated_tool` with no arguments.
+1. Check the session state for "update_mode". If it is set to true, call \
+`update_registered_tool` with no arguments. Otherwise, call \
+`register_validated_tool` with no arguments.
 2. After receiving the result, output EXACTLY one of these two lines and nothing else:
    - If success: REGISTRATION_SUCCESS: [tool_name]
    - If failure: REGISTRATION_FAILED: [error summary]
@@ -502,10 +673,10 @@ Do NOT explain, reason, or suggest next steps. Just call the tool and output the
 
 tool_registrar_agent = Agent(
     name="tool_registrar_agent",
-    description="Automatically registers the tool after tests are generated",
+    description="Automatically registers or updates the tool after tests are generated",
     model=_model,
     instruction=TOOL_REGISTRAR_INSTRUCTION,
-    tools=[register_validated_tool],
+    tools=[register_validated_tool, update_registered_tool],
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -606,11 +777,38 @@ Use `list_available_tools` when the user asks what tools are available. \
 After listing, STOP — do NOT start creating, retrying, or fixing tools unless \
 the user explicitly asks for it.
 
+UPDATE TOOL WORKFLOW — when the user asks to update, edit, fix, or improve \
+an existing tool:
+
+STEP U1: Confirm which tool to update. Call `search_registry` or \
+`list_available_tools` to verify the tool exists.
+
+STEP U2: Set session state key "update_mode" to true. Then call \
+`transfer_to_agent` with agent name "tool_creation_pipeline". The pipeline \
+will generate a new spec, code, and tests. The registrar will detect \
+update_mode and call `update_registered_tool` instead of `register_validated_tool`.
+
+STEP U3: After the pipeline returns, check for "REGISTRATION_SUCCESS" or \
+"REGISTRATION_FAILED". Handle the same way as new tool creation (retry loop \
+with tool_review_fixer_agent if needed, up to 3 attempts).
+
+STEP U4: Tell the user the tool was updated with the new version number. \
+Reset "update_mode" to false.
+
+DELETE TOOL WORKFLOW — when the user asks to delete, remove, or unregister \
+a tool:
+
+STEP D1: Confirm which tool to delete. Call `search_registry` to verify it exists.
+
+STEP D2: Call `delete_registered_tool` with the exact tool name.
+
+STEP D3: Tell the user the tool was deleted.
+
 RULES:
 - Answer simple questions directly without tools (e.g., "what is 1+5?" → "6").
 - NEVER skip Step 1 for data processing tasks.
 - NEVER create a tool if a suitable one already exists in the registry.
-- When registration fails, use the RETRY LOOP (Step 7) — call \
+- When registration fails, use the RETRY LOOP (Step 5) — call \
 `transfer_to_agent` with "tool_review_fixer_agent", do NOT re-run the \
 entire tool_creation_pipeline.
 - Maximum 3 total registration attempts per tool. Give up after 3 failures.
@@ -634,6 +832,8 @@ root_agent = Agent(
         list_available_tools,
         execute_registered_tool,
         register_validated_tool,
+        update_registered_tool,
+        delete_registered_tool,
         create_downloadable_file,
     ],
     sub_agents=[tool_creation_pipeline, tool_review_fixer_agent],

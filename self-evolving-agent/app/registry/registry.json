@@ -262,5 +262,36 @@
     "risk_level": "low",
     "created_at": "2026-05-10T14:27:23.227529+00:00",
     "version": 1
+  },
+  "regex_text_search_tool": {
+    "name": "regex_text_search_tool",
+    "description": "Performs advanced text searching using a Regular Expression pattern against a given text content.",
+    "module": "app.tools.generated.regex_text_search_tool",
+    "function": "regex_text_search_tool",
+    "input_schema": {
+      "text_content": "string",
+      "pattern": "string"
+    },
+    "output_schema": {
+      "matches": "list of strings"
+    },
+    "risk_level": "low",
+    "created_at": "2026-05-11T02:25:59.102037+00:00",
+    "version": 1
+  },
+  "web_search_tool": {
+    "name": "web_search_tool",
+    "description": "Searches the web via DuckDuckGo and returns real results with title, URL, and snippet.",
+    "module": "app.tools.generated.web_search_tool",
+    "function": "web_search_tool",
+    "input_schema": {
+      "query": "string"
+    },
+    "output_schema": {
+      "search_results": "list of objects (title, url, snippet)"
+    },
+    "risk_level": "low",
+    "created_at": "2026-05-11T04:20:04.658445+00:00",
+    "version": 2
   }
 }

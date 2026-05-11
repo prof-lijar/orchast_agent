@@ -51,6 +51,27 @@ def register_tool(entry: RegistryEntry) -> bool:
     return True
 
 
+def update_tool(entry: RegistryEntry) -> bool:
+    registry = load_registry()
+    if entry.name not in registry:
+        return False
+    old_version = registry[entry.name].get("version", 1)
+    data = entry.model_dump()
+    data["version"] = old_version + 1
+    registry[entry.name] = data
+    save_registry(registry)
+    return True
+
+
+def delete_tool(name: str) -> bool:
+    registry = load_registry()
+    if name not in registry:
+        return False
+    del registry[name]
+    save_registry(registry)
+    return True
+
+
 def list_tools() -> list[str]:
     registry = load_registry()
     return list(registry.keys())

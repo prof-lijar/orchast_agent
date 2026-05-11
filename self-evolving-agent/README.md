@@ -17,30 +17,23 @@ User Request
      ↓
 Root Orchestrator Agent
      ↓
-Search Tool Registry
-     ↓
-┌─── Tool exists? ───────────────────┐
-│                                     │
-│  YES                            NO  │
-│   ↓                              ↓  │
-│  Execute                  Tool Creation Pipeline
-│  Registered               ┌──────────────────┐
-│  Tool                     │ 1. Spec Agent    │
-│   ↓                       │ 2. Coder Agent   │
-│  Return                   │ 3. Test Agent    │
-│  Result                   └──────────────────┘
-│                                  ↓
-│                           Safety Check (AST analysis)
-│                                  ↓
-│                           Sandbox Test Execution
-│                                  ↓
-│                           Register New Tool
-│                                  ↓
-│                           Execute & Return Result
-└─────────────────────────────────────┘
+┌─── What action? ───────────────────────────────────────┐
+│                                                         │
+│  USE             CREATE           UPDATE        DELETE   │
+│   ↓                ↓                ↓             ↓     │
+│  Search         Tool Creation   Tool Creation   Delete  │
+│  Registry       Pipeline        Pipeline        from    │
+│   ↓             (Spec→Code      (update_mode)   Registry│
+│  Execute         →Test→Register)     ↓          + File  │
+│  Tool                ↓          Overwrite                │
+│   ↓             Safety+Sandbox  Entry+File               │
+│  Return         Validation      (version++)              │
+│  Result              ↓                                   │
+│                 Register/Retry                           │
+└─────────────────────────────────────────────────────────┘
 ```
 
-The key insight: the agent **doesn't just answer questions** — it builds reusable tools that persist across sessions. Once a tool is created and registered, it's available for all future requests without regeneration.
+The key insight: the agent **doesn't just answer questions** — it builds, updates, and manages reusable tools that persist across sessions. Once a tool is created and registered, it's available for all future requests without regeneration.
 
 ---
 
@@ -48,16 +41,18 @@ The key insight: the agent **doesn't just answer questions** — it builds reusa
 
 ### Agents
 
-The system uses **4 ADK agents** coordinated by a root orchestrator:
+The system uses **6 ADK agents** coordinated by a root orchestrator:
 
 | Agent | Type | Role |
 |-------|------|------|
-| **Root Orchestrator** | `Agent` | Receives requests, searches registry, decides whether to use existing tools or create new ones |
+| **Root Orchestrator** | `Agent` | Receives requests, searches registry, decides whether to use existing tools, create, update, or delete them |
 | **Tool Spec Agent** | `Agent` | Converts a user need into a formal JSON tool specification (name, inputs, outputs, risk level, test cases) |
 | **Tool Coder Agent** | `Agent` | Generates safe Python code from the specification with type hints and docstrings |
 | **Tool Test Agent** | `Agent` | Creates pytest tests covering normal cases, edge cases, and invalid inputs |
+| **Tool Registrar Agent** | `Agent` | Calls register or update depending on mode, handles pipeline completion |
+| **Tool Review & Fix Agent** | `Agent` | Diagnoses and fixes failed tool code or tests for retry |
 
-The three creation agents are wired into a **SequentialAgent** pipeline that passes data through ADK session state (`output_key`):
+The creation agents are wired into a **SequentialAgent** pipeline that passes data through ADK session state (`output_key`):
 
 ```
 tool_spec_agent (output_key="tool_spec")
@@ -65,6 +60,8 @@ tool_spec_agent (output_key="tool_spec")
 tool_coder_agent (output_key="tool_code")  ← reads {tool_spec}
        ↓
 tool_test_agent (output_key="tool_tests")  ← reads {tool_spec} and {tool_code}
+       ↓
+tool_registrar_agent  ← calls register or update based on session state
 ```
 
 ### Tool Functions
@@ -74,13 +71,15 @@ Registry operations and tool execution are **deterministic tool functions** on t
 - `search_registry(query)` — keyword search across tool names and descriptions
 - `list_available_tools()` — list all registered tools
 - `execute_registered_tool(tool_name, input_data)` — dynamically import and call a registered tool
-- `register_validated_tool(tool_name, tool_code, test_code, spec_json)` — safety check → sandbox test → register
+- `register_validated_tool()` — safety check → sandbox test → register new tool
+- `update_registered_tool()` — safety check → sandbox test → overwrite existing tool (version incremented)
+- `delete_registered_tool(tool_name)` — remove tool from registry and delete its source file
 
 ### Supporting Modules
 
 | Module | What it does |
 |--------|-------------|
-| **Registry Manager** (`app/registry/manager.py`) | JSON-based tool storage with load, save, find, search, register, list operations |
+| **Registry Manager** (`app/registry/manager.py`) | JSON-based tool storage with load, save, find, search, register, update, delete, list operations |
 | **Safety Policy** (`app/safety/policy.py`) | AST-based import checking, keyword scanning, risk classification |
 | **Sandbox Runner** (`app/sandbox/runner.py`) | Subprocess-based restricted code execution with timeout and isolation |
 
@@ -95,7 +94,9 @@ Every generated tool passes through a **3-stage validation pipeline** before it 
 The safety policy parses generated code using Python's `ast` module and rejects any code that imports blocked modules or uses dangerous functions.
 
 **Blocked imports:**
-`os`, `subprocess`, `socket`, `shutil`, `pathlib`, `requests`, `httpx`, `urllib`, `paramiko`, `ftplib`, `smtplib`, `sys`, `ctypes`
+`os`, `subprocess`, `socket`, `shutil`, `pathlib`, `paramiko`, `ftplib`, `smtplib`, `sys`, `ctypes`
+
+**Allowed network imports:** `requests`, `httpx`, `urllib` (for web-fetching tools)
 
 **Blocked keywords:**
 `eval()`, `exec()`, `open()`, `__import__()`, `system()`, `popen()`, `compile()`, `globals()`, `locals()`
@@ -145,32 +146,47 @@ When a tool is registered, its Python source file is written to `app/tools/gener
 
 ---
 
-## Tool Creation Lifecycle
+## Tool Lifecycle
 
-Here's the full lifecycle when the agent creates a new tool:
+### Creating a Tool
 
 ```
 1. User asks: "Count the sentences in this paragraph."
 2. Root agent searches registry → no match found
 3. Root agent transfers to tool_creation_pipeline
-4. Tool Spec Agent generates JSON specification:
-   {
-     "tool_name": "sentence_count_tool",
-     "description": "Counts sentences in text.",
-     "inputs": {"text": "string"},
-     "outputs": {"sentence_count": "integer"},
-     "dependencies": ["re"],
-     "risk_level": "low",
-     "test_cases": [...]
-   }
+4. Tool Spec Agent generates JSON specification
 5. Tool Coder Agent generates Python function from spec
 6. Tool Test Agent generates pytest tests
-7. Root agent calls register_validated_tool:
+7. Tool Registrar Agent calls register_validated_tool:
    a. Safety policy checks code (AST import scan + keyword scan)
    b. Sandbox runs tests in isolated subprocess
    c. If all pass: writes .py file, adds to registry
+   d. If tests fail: Review & Fix Agent diagnoses and retries (up to 3 attempts)
 8. Root agent calls execute_registered_tool with user's input
 9. User gets the result — and the tool is now permanently available
+```
+
+### Updating a Tool
+
+```
+1. User asks: "Update the web_search_tool to also return snippets."
+2. Root agent verifies the tool exists in registry
+3. Root agent sets update_mode and transfers to tool_creation_pipeline
+4. Pipeline generates new spec, code, and tests
+5. Tool Registrar Agent calls update_registered_tool:
+   a. Same safety + sandbox validation as creation
+   b. Overwrites existing .py file and registry entry
+   c. Version number is incremented automatically
+6. User sees the updated tool with its new version
+```
+
+### Deleting a Tool
+
+```
+1. User asks: "Delete the fake_error_generator_tool."
+2. Root agent verifies the tool exists
+3. Root agent calls delete_registered_tool
+4. Tool's .py file is removed and registry entry is deleted
 ```
 
 ---
@@ -256,7 +272,19 @@ Count the words in: The quick brown fox jumps over the lazy dog.
 Count the number of sentences in this text: Hello world. How are you? I am fine. Thanks for asking.
 ```
 
-The first prompt uses the pre-registered `word_count_tool`. The third prompt triggers the full tool creation pipeline — you'll see the agent design a spec, write code, generate tests, validate in sandbox, register the tool, and execute it.
+```
+Update the word_count_tool to also return the character count.
+```
+
+```
+Delete the fake_error_generator_tool.
+```
+
+```
+Search the web for "how to deploy an agent"
+```
+
+The first prompt uses the pre-registered `word_count_tool`. The third prompt triggers the full tool creation pipeline. The fourth demonstrates tool updating with automatic version incrementing. The fifth deletes a tool from the registry and disk.
 
 ---
 
