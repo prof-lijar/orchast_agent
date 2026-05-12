@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import json
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -26,8 +27,9 @@ os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 _agent_model = os.environ.get("AGENT_MODEL")
 if _agent_model:
     _model = LiteLlm(
-        model=f"ollama_chat/{_agent_model}",
-        api_base="http://localhost:11434",
+        model=f"openai/{_agent_model}",
+        api_base="http://localhost:11434/v1",
+        api_key="ollama",
         think=False,
         num_ctx=8192,
         repeat_penalty=1.2,
@@ -637,6 +639,74 @@ section — it will be injected automatically.
 
 
 # ---------------------------------------------------------------------------
+# Callback to save uploaded files to disk so file-path tools can use them
+# ---------------------------------------------------------------------------
+
+UPLOAD_DIR = Path(tempfile.gettempdir()) / "adk_uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+def _save_uploaded_files(callback_context, llm_request):
+    """Detect inline file uploads and save them to disk.
+
+    Appends a system hint with the saved file path so the model can pass it
+    to file-based tools like csv_read_tool.
+    """
+    contents = llm_request.contents
+    if not contents:
+        return None
+    last_user = None
+    for content in reversed(contents):
+        if content.role == "user":
+            last_user = content
+            break
+    if not last_user or not last_user.parts:
+        return None
+    saved = []
+    for part in last_user.parts:
+        blob = getattr(part, "inline_data", None)
+        if not blob:
+            continue
+        mime = getattr(blob, "mime_type", "") or ""
+        data = getattr(blob, "data", None)
+        if not data:
+            continue
+        ext = _mime_to_ext(mime)
+        filename = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+        filepath = UPLOAD_DIR / filename
+        if isinstance(data, str):
+            import base64
+            data = base64.b64decode(data)
+        filepath.write_bytes(data)
+        saved.append(str(filepath))
+    if saved:
+        paths = ", ".join(saved)
+        llm_request.contents.append(
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(
+                    text=f"[SYSTEM] The user uploaded file(s) saved at: {paths}\n"
+                    f"Use this file path when calling tools that need a file_path parameter."
+                )],
+            )
+        )
+    return None
+
+
+def _mime_to_ext(mime: str) -> str:
+    mapping = {
+        "text/csv": ".csv",
+        "application/json": ".json",
+        "text/plain": ".txt",
+        "application/pdf": ".pdf",
+        "image/png": ".png",
+        "image/jpeg": ".jpg",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    }
+    return mapping.get(mime, ".bin")
+
+
+# ---------------------------------------------------------------------------
 # Callback to prevent local models from looping on tool calls
 # ---------------------------------------------------------------------------
 
@@ -943,7 +1013,12 @@ _root_sub_agents = (
     if _agent_model
     else [tool_creation_pipeline, tool_review_fixer_agent]
 )
-_root_before_model = _limit_tool_loops if _agent_model else None
+def _root_before_model_local(callback_context, llm_request):
+    _save_uploaded_files(callback_context, llm_request)
+    return _limit_tool_loops(callback_context, llm_request)
+
+
+_root_before_model = _root_before_model_local if _agent_model else None
 _root_tools = [
     search_registry,
     execute_registered_tool,

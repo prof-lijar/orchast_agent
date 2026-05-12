@@ -153,5 +153,22 @@
     "risk_level": "low",
     "created_at": "2026-05-12T06:09:36.077199+00:00",
     "version": 1
+  },
+  "csv_formatter_tool": {
+    "name": "csv_formatter_tool",
+    "description": "Reads a CSV file and returns a formatted string representation of the data based on specified columns and row limits.",
+    "module": "app.tools.generated.csv_formatter_tool",
+    "function": "csv_formatter_tool",
+    "input_schema": {
+      "file_path": "string",
+      "columns": "list",
+      "row_limit": "integer"
+    },
+    "output_schema": {
+      "formatted_data": "string"
+    },
+    "risk_level": "low",
+    "created_at": "2026-05-12T07:55:10.636773+00:00",
+    "version": 1
   }
 }

@@ -230,7 +230,6 @@ self-evolving-agent/
 │   │   └── policy.py               # Static analysis + risk classification
 │   └── tools/
 │       └── generated/              # Auto-generated tool Python files
-│           └── word_count_tool.py   # Example: pre-registered tool
 ├── tests/
 │   ├── unit/
 │   │   ├── test_registry.py        # Registry CRUD tests
@@ -269,11 +268,82 @@ uv run pytest tests/unit/ -v
 
 ### Run the Agent (Interactive Playground)
 
+**With Gemini (default):**
+
 ```bash
-uv run adk web . --port 8765
+agents-cli playground --port 8080
 ```
 
-Then open `http://localhost:8765` in your browser and select the `app` agent.
+Open `http://localhost:8080` in your browser and select the `app` agent.
+
+**With a local LLM (Ollama):**
+
+```bash
+AGENT_MODEL=qwen3:32b agents-cli playground --port 8080
+```
+
+---
+
+### Running with Local LLM Models (Ollama)
+
+The agent supports local LLM models through [Ollama](https://ollama.com/) using its OpenAI-compatible API. This lets you run the entire system offline or on your own GPU server.
+
+#### Prerequisites
+
+1. Install [Ollama](https://ollama.com/download) on your machine or GPU server
+2. Pull a model:
+   ```bash
+   ollama pull qwen3:32b
+   ```
+
+#### How It Works
+
+The agent connects to Ollama through its OpenAI-compatible endpoint (`/v1/`), using ADK's `LiteLlm` wrapper:
+
+```python
+LiteLlm(
+    model="openai/qwen3:32b",
+    api_base="http://localhost:11434/v1",
+    api_key="ollama",       # dummy key — Ollama doesn't require auth
+    num_ctx=8192,            # increase for large inputs or file processing
+    repeat_penalty=1.2,
+    temperature=0.7,
+)
+```
+
+Set the `AGENT_MODEL` environment variable to any Ollama model name — the agent handles the rest.
+
+#### Tested Models
+
+| Model | Tool Calling | Tool Creation | Notes |
+|-------|:---:|:---:|-------|
+| **qwen3:32b** | Works well | Works well | Recommended for local use |
+| **gemma4:31b** | Works | Partial | May loop on tool calls; safety callbacks handle this |
+
+> Local models vary in their function-calling reliability. The agent includes a `_limit_tool_loops` callback that detects and breaks tool-call loops common with smaller models.
+
+#### Remote GPU Server
+
+If Ollama runs on a remote server, use SSH port forwarding:
+
+```bash
+# Terminal 1: forward Ollama port from remote GPU server
+ssh -L 11434:localhost:11434 user@gpu-server
+
+# Terminal 2: run the agent
+AGENT_MODEL=qwen3:32b agents-cli playground --port 8080
+```
+
+#### Local Model Adaptations
+
+When `AGENT_MODEL` is set, the agent automatically adjusts:
+
+- **Simplified instructions** — shorter, more direct prompt optimized for local models
+- **Registry embedded in prompt** — the full tool registry is included in the system instruction so the model can see all tools without calling `search_registry`
+- **Tool loop prevention** — `_limit_tool_loops` callback detects when a model calls the same tool repeatedly and forces a text response with the result
+- **File upload handling** — uploaded files are saved to `/tmp/adk_uploads/` and the file path is injected into the conversation for file-based tools (e.g., `csv_read_tool`)
+
+---
 
 ### Example Prompts
 
@@ -299,18 +369,13 @@ Update the word_count_tool to also return the character count.
 Delete the fake_error_generator_tool.
 ```
 
-```
-Search the web for "how to deploy an agent"
-```
-
-The first prompt uses the pre-registered `word_count_tool`. The third prompt triggers the full tool creation pipeline. The fourth demonstrates tool updating with automatic version incrementing. The fifth deletes a tool from the registry and disk.
-
 ---
 
 ## Technology Stack
 
 - **[Google ADK](https://github.com/google/adk-python)** — Agent framework (Agent, SequentialAgent, App)
-- **Gemini** — LLM backbone for tool specification, code generation, and test generation
+- **Gemini / Local LLMs** — LLM backbone (Gemini via Vertex AI, or any Ollama model via OpenAI-compatible API)
+- **[Ollama](https://ollama.com/)** — Local LLM inference server
 - **Python `ast` module** — Static safety analysis of generated code
 - **`subprocess`** — Sandbox isolation for test execution
 - **Pydantic** — Data models and validation
