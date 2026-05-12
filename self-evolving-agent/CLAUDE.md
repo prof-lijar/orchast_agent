@@ -25,8 +25,8 @@ Uses Google ADK with a multi-agent architecture: Root Orchestrator → Tool Crea
 ## Safety Rules
 
 - Never execute generated code without sandbox validation
-- Blocked imports: os, subprocess, socket, shutil, pathlib, sys, ctypes, paramiko, ftplib, smtplib
-- Allowed network imports: requests, httpx, urllib (unblocked for web-fetching tools)
+- Blocked imports: subprocess, socket, sys, ctypes, paramiko, ftplib, smtplib
+- Allowed imports: os, pathlib, shutil, csv, pandas, requests, httpx, urllib (file + network access)
 - All generated tools must pass tests before registration
 - Only low-risk tools allowed in v0.1
 

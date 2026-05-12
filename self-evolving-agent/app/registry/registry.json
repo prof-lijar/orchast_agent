@@ -1,19 +1,4 @@
 {
-  "word_count_tool": {
-    "name": "word_count_tool",
-    "description": "Counts words in a text string.",
-    "module": "app.tools.generated.word_count_tool",
-    "function": "word_count_tool",
-    "input_schema": {
-      "text": "string"
-    },
-    "output_schema": {
-      "word_count": "integer"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T00:00:00+00:00",
-    "version": 1
-  },
   "url_fetch_tool": {
     "name": "url_fetch_tool",
     "description": "Fetches the text content of a specified URL using an HTTP GET request.",
@@ -27,58 +12,6 @@
     },
     "risk_level": "low",
     "created_at": "2026-05-10T11:54:13.355091+00:00",
-    "version": 1
-  },
-  "json_column_mean_tool": {
-    "name": "json_column_mean_tool",
-    "description": "Calculates the arithmetic mean of a specified numerical column within a JSON array of objects.",
-    "module": "app.tools.generated.json_column_mean_tool",
-    "function": "json_column_mean_tool",
-    "input_schema": {
-      "records_json": "string",
-      "column_name": "string"
-    },
-    "output_schema": {
-      "mean": "float"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T12:33:20.388036+00:00",
-    "version": 1
-  },
-  "json_column_median_tool": {
-    "name": "json_column_median_tool",
-    "description": "Calculates the median of a specified numerical column within a JSON array of objects.",
-    "module": "app.tools.generated.json_column_median_tool",
-    "function": "json_column_median_tool",
-    "input_schema": {
-      "records_json": "string",
-      "column_name": "string"
-    },
-    "output_schema": {
-      "median": "float"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T12:34:43.953814+00:00",
-    "version": 1
-  },
-  "json_column_describe_tool": {
-    "name": "json_column_describe_tool",
-    "description": "Calculates summary statistics (count, mean, min, max, and sample standard deviation) for a specified numerical column in a JSON array of objects.",
-    "module": "app.tools.generated.json_column_describe_tool",
-    "function": "json_column_describe_tool",
-    "input_schema": {
-      "records_json": "string",
-      "column_name": "string"
-    },
-    "output_schema": {
-      "count": "integer",
-      "mean": "float",
-      "stdev": "float",
-      "min": "float",
-      "max": "float"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T12:38:46.197469+00:00",
     "version": 1
   },
   "text_to_ascii_art_tool": {
@@ -111,19 +44,6 @@
     "created_at": "2026-05-10T12:59:40.127886+00:00",
     "version": 1
   },
-  "ai_research_dataset_example_tool": {
-    "name": "ai_research_dataset_example_tool",
-    "description": "Provides a sample JSON array representing typical AI model performance results (e.g., accuracy, loss, F1-score) for testing data analysis tools.",
-    "module": "app.tools.generated.ai_research_dataset_example_tool",
-    "function": "ai_research_dataset_example_tool",
-    "input_schema": {},
-    "output_schema": {
-      "sample_dataset_json": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T13:04:36.970983+00:00",
-    "version": 1
-  },
   "morse_code_encoder_tool": {
     "name": "morse_code_encoder_tool",
     "description": "Translates an input string (A-Z, 0-9, and spaces) into its corresponding standard International Morse code representation, using a slash (/) to separate words.",
@@ -137,22 +57,6 @@
     },
     "risk_level": "low",
     "created_at": "2026-05-10T13:41:18.775779+00:00",
-    "version": 1
-  },
-  "first_n_sentence_summary_tool": {
-    "name": "first_n_sentence_summary_tool",
-    "description": "Extracts the first N sentences from an input text using simple sentence boundary detection.",
-    "module": "app.tools.generated.first_n_sentence_summary_tool",
-    "function": "first_n_sentence_summary_tool",
-    "input_schema": {
-      "text": "string",
-      "num_sentences": "integer"
-    },
-    "output_schema": {
-      "summary": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T13:49:21.599426+00:00",
     "version": 1
   },
   "url_slugifier_tool": {
@@ -170,21 +74,6 @@
     "created_at": "2026-05-10T13:57:26.860033+00:00",
     "version": 1
   },
-  "keyword_extractor_tool": {
-    "name": "keyword_extractor_tool",
-    "description": "Extracts relevant keywords from a block of text by normalizing and tokenizing the input.",
-    "module": "app.tools.generated.keyword_extractor_tool",
-    "function": "keyword_extractor_tool",
-    "input_schema": {
-      "text": "string"
-    },
-    "output_schema": {
-      "keywords": "list_of_strings"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T14:10:21.485058+00:00",
-    "version": 1
-  },
   "python_syntax_detector_tool": {
     "name": "python_syntax_detector_tool",
     "description": "Checks a given string of Python code for syntax errors and provides diagnostic feedback.",
@@ -199,36 +88,6 @@
     },
     "risk_level": "low",
     "created_at": "2026-05-10T14:13:17.515078+00:00",
-    "version": 1
-  },
-  "mood_to_music_tool": {
-    "name": "mood_to_music_tool",
-    "description": "Recommends a music style, playlist theme, or song vibe based on a user-provided mood.",
-    "module": "app.tools.generated.mood_to_music_tool",
-    "function": "mood_to_music_tool",
-    "input_schema": {
-      "mood": "string"
-    },
-    "output_schema": {
-      "recommendation": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T14:16:39.072347+00:00",
-    "version": 1
-  },
-  "fake_error_generator_tool": {
-    "name": "fake_error_generator_tool",
-    "description": "Generates funny, fake computer error messages based on a user-provided theme or context.",
-    "module": "app.tools.generated.fake_error_generator_tool",
-    "function": "fake_error_generator_tool",
-    "input_schema": {
-      "theme": "string"
-    },
-    "output_schema": {
-      "error_message": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T14:19:25.164166+00:00",
     "version": 1
   },
   "social_media_post_generator_tool": {
@@ -263,35 +122,36 @@
     "created_at": "2026-05-10T14:27:23.227529+00:00",
     "version": 1
   },
-  "regex_text_search_tool": {
-    "name": "regex_text_search_tool",
-    "description": "Performs advanced text searching using a Regular Expression pattern against a given text content.",
-    "module": "app.tools.generated.regex_text_search_tool",
-    "function": "regex_text_search_tool",
+  "translation_tool": {
+    "name": "translation_tool",
+    "description": "Translates text from a specified source language to a target language.",
+    "module": "app.tools.generated.translation_tool",
+    "function": "translation_tool",
     "input_schema": {
-      "text_content": "string",
-      "pattern": "string"
+      "text": "string",
+      "source_language": "string",
+      "target_language": "string"
     },
     "output_schema": {
-      "matches": "list of strings"
+      "translated_text": "string"
     },
     "risk_level": "low",
-    "created_at": "2026-05-11T02:25:59.102037+00:00",
+    "created_at": "2026-05-11T11:27:53.139240+00:00",
     "version": 1
   },
-  "web_search_tool": {
-    "name": "web_search_tool",
-    "description": "Searches the web via DuckDuckGo and returns real results with title, URL, and snippet.",
-    "module": "app.tools.generated.web_search_tool",
-    "function": "web_search_tool",
+  "fortune_teller_tool": {
+    "name": "fortune_teller_tool",
+    "description": "Generates a fictional fortune based on a user's birthdate using deterministic pseudo-random logic.",
+    "module": "app.tools.generated.fortune_teller_tool",
+    "function": "fortune_teller_tool",
     "input_schema": {
-      "query": "string"
+      "birthdate": "string"
     },
     "output_schema": {
-      "search_results": "list of objects (title, url, snippet)"
+      "fortune": "string"
     },
     "risk_level": "low",
-    "created_at": "2026-05-11T04:20:04.658445+00:00",
-    "version": 2
+    "created_at": "2026-05-12T06:09:36.077199+00:00",
+    "version": 1
   }
 }

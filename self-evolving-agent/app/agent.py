@@ -9,7 +9,7 @@ from pathlib import Path
 import google.auth
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.apps import App
-from google.adk.models import Gemini
+from google.adk.models import Gemini, LiteLlm
 from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
@@ -23,10 +23,21 @@ os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
-_model = Gemini(
-    model="gemini-flash-latest",
-    retry_options=types.HttpRetryOptions(attempts=3),
-)
+_agent_model = os.environ.get("AGENT_MODEL")
+if _agent_model:
+    _model = LiteLlm(
+        model=f"ollama_chat/{_agent_model}",
+        api_base="http://localhost:11434",
+        think=False,
+        num_ctx=8192,
+        repeat_penalty=1.2,
+        temperature=0.7,
+    )
+else:
+    _model = Gemini(
+        model="gemini-flash-latest",
+        retry_options=types.HttpRetryOptions(attempts=3),
+    )
 
 GENERATED_TOOLS_DIR = Path(__file__).parent / "tools" / "generated"
 
@@ -93,21 +104,24 @@ def execute_registered_tool(tool_name: str, input_data: str) -> str:
     """
     entry = registry_manager.find_tool(tool_name)
     if entry is None:
-        return json.dumps({"error": f"Tool '{tool_name}' not found in registry."})
+        return f"Tool '{tool_name}' not found in registry."
 
     try:
         inputs = json.loads(input_data)
     except json.JSONDecodeError as e:
-        return json.dumps({"error": f"Invalid input JSON: {e}"})
+        return f"Invalid input JSON for '{tool_name}': {e}"
 
     try:
         importlib.invalidate_caches()
         module = importlib.import_module(entry.module)
         func = getattr(module, entry.function)
         result = func(**inputs)
-        return json.dumps({"result": result})
+        if isinstance(result, dict):
+            parts = [f"{k}: {v}" for k, v in result.items()]
+            return f"Tool '{tool_name}' result — " + ", ".join(parts)
+        return f"Tool '{tool_name}' result — {result}"
     except Exception as e:
-        return json.dumps({"error": f"Tool execution failed: {e}"})
+        return f"Tool '{tool_name}' failed: {e}"
 
 
 
@@ -417,7 +431,7 @@ def delete_registered_tool(tool_name: str) -> str:
     """
     entry = registry_manager.find_tool(tool_name)
     if entry is None:
-        return json.dumps({"success": False, "error": f"Tool '{tool_name}' not found in registry."})
+        return f"Tool '{tool_name}' not found in registry."
 
     tool_file = GENERATED_TOOLS_DIR / f"{tool_name}.py"
     if tool_file.exists():
@@ -425,13 +439,9 @@ def delete_registered_tool(tool_name: str) -> str:
 
     deleted = registry_manager.delete_tool(tool_name)
     if not deleted:
-        return json.dumps({"success": False, "error": f"Failed to delete tool '{tool_name}' from registry."})
+        return f"Failed to delete tool '{tool_name}' from registry."
 
-    return json.dumps({
-        "success": True,
-        "message": f"Tool '{tool_name}' has been deleted from the registry and its source file removed.",
-        "tool_name": tool_name,
-    })
+    return f"Tool '{tool_name}' has been deleted successfully."
 
 
 # ---------------------------------------------------------------------------
@@ -456,8 +466,8 @@ edge, and boundary cases.
 Rules:
 - tool_name MUST be snake_case and end with "_tool"
 - risk_level MUST be "low" for v0.1
-- dependencies can include: re, json, math, string, collections, statistics, textwrap, itertools, requests, httpx, urllib
-- Do NOT include os, subprocess, socket, shutil, pathlib, or any shell/file-system imports
+- dependencies can include: re, json, math, string, collections, statistics, textwrap, itertools, requests, httpx, urllib, os, pathlib, shutil, csv, pandas
+- Do NOT include subprocess, socket, sys, ctypes, paramiko, ftplib, smtplib
 
 Output ONLY the JSON object, no explanation, no markdown fences.
 
@@ -491,8 +501,8 @@ these rules strictly:
 2. Use type hints for all parameters and return type
 3. Include a Google-style docstring with Args and Returns sections
 4. Return a dictionary matching the output schema
-5. Allowed imports: re, json, math, string, collections, statistics, textwrap, itertools, requests, httpx, urllib
-6. Do NOT import: os, subprocess, socket, shutil, pathlib, sys, paramiko, ftplib, smtplib
+5. Allowed imports: re, json, math, string, collections, statistics, textwrap, itertools, requests, httpx, urllib, os, pathlib, shutil, csv, pandas
+6. Do NOT import: subprocess, socket, sys, ctypes, paramiko, ftplib, smtplib
 7. Do NOT use: eval(), exec(), open(), __import__(), system(), popen(), compile(), globals(), locals()
 8. Handle edge cases gracefully (empty strings, None values)
 9. When the spec includes network dependencies (requests, httpx, urllib), you MUST \
@@ -564,7 +574,7 @@ You WILL get it wrong. Instead, use one of these two approaches:
 `def test_foo(my_tool):`. The tool function is globally available via \
 `from tool_module import *`, NOT as a pytest fixture.
 5. Use plain assert statements
-6. Do NOT import os, subprocess, or any system modules
+6. Do NOT import subprocess, socket, sys, ctypes, or paramiko
 7. Do NOT use fixtures or conftest
 8. Keep test inputs SIMPLE
 
@@ -627,6 +637,59 @@ section — it will be injected automatically.
 
 
 # ---------------------------------------------------------------------------
+# Callback to prevent local models from looping on tool calls
+# ---------------------------------------------------------------------------
+
+
+def _limit_tool_loops(callback_context, llm_request):
+    """Prevent small local models from looping on tool calls."""
+    contents = llm_request.contents
+    if not contents:
+        return None
+    recent_calls = []
+    last_tool_result = ""
+    for content in reversed(contents):
+        if not content.parts:
+            break
+        calls = [p.function_call.name for p in content.parts if getattr(p, "function_call", None)]
+        if calls:
+            recent_calls.extend(calls)
+        elif any(getattr(p, "function_response", None) for p in content.parts):
+            for p in content.parts:
+                fr = getattr(p, "function_response", None)
+                if fr and hasattr(fr, "response"):
+                    resp = fr.response
+                    if isinstance(resp, dict):
+                        last_tool_result = resp.get("result", str(resp))
+                    else:
+                        last_tool_result = str(resp)
+                    break
+            continue
+        else:
+            break
+    should_strip = (
+        len(recent_calls) >= 3
+        or (len(recent_calls) >= 2 and recent_calls[0] == recent_calls[1])
+    )
+    if should_strip:
+        llm_request.tools_dict = {}
+        if llm_request.config and llm_request.config.tools:
+            llm_request.config.tools = []
+        hint = last_tool_result or "The tool already returned a result above."
+        llm_request.contents.append(
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(
+                    text=f"[SYSTEM] The tool result is: {hint}\n"
+                    f"Now tell the user the answer in plain language. "
+                    f"Do NOT call any functions."
+                )],
+            )
+        )
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Sub-agent definitions (Phases 7-9)
 # ---------------------------------------------------------------------------
 
@@ -671,12 +734,18 @@ You are a Tool Registrar Agent. Follow these steps exactly:
 Do NOT explain, reason, or suggest next steps. Just call the tool and output the result line.
 """
 
+LOCAL_TOOL_REGISTRAR_INSTRUCTION = """\
+Call `register_validated_tool` with no arguments. \
+Then output REGISTRATION_SUCCESS or REGISTRATION_FAILED. Nothing else.
+"""
+
 tool_registrar_agent = Agent(
     name="tool_registrar_agent",
     description="Automatically registers or updates the tool after tests are generated",
     model=_model,
-    instruction=TOOL_REGISTRAR_INSTRUCTION,
-    tools=[register_validated_tool, update_registered_tool],
+    instruction=LOCAL_TOOL_REGISTRAR_INSTRUCTION if _agent_model else TOOL_REGISTRAR_INSTRUCTION,
+    tools=[register_validated_tool] if _agent_model else [register_validated_tool, update_registered_tool],
+    before_model_callback=_limit_tool_loops if _agent_model else None,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -823,20 +892,80 @@ shell commands, credential access). But tools that fetch URLs or read data are \
 allowed — use pre-registered tools in the registry for these when available.
 """
 
+def _local_root_instruction(ctx):
+    """Dynamic instruction that embeds the current registry into the prompt."""
+    registry = registry_manager.load_registry()
+    tool_lines = []
+    for i, (name, data) in enumerate(registry.items(), 1):
+        desc = data.get("description", "")
+        inputs = data.get("input_schema", {})
+        params = ", ".join(f"{k}: {v}" for k, v in inputs.items()) if inputs else "none"
+        tool_lines.append(f'{i}. "{name}" — {desc} (params: {params})')
+    tool_list = "\n".join(tool_lines) if tool_lines else "(no tools registered yet)"
+
+    return f"""\
+You are the Self-Evolving Agent. You manage a registry of tools.
+
+You can ONLY call these 4 functions:
+  1. search_registry(query) — find a registered tool by keyword
+  2. execute_registered_tool(tool_name, input_data) — run a registered tool
+  3. delete_registered_tool(tool_name) — delete a tool
+  4. create_downloadable_file(filename, content) — create a file for download
+You CANNOT call anything else. Any other name will fail.
+
+RULES:
+- After calling a function and getting a result, respond to the user immediately.
+- Simple questions (math, greetings, chat) → answer directly, no function calls.
+
+== Tool Registry (DATA, not callable functions) ==
+{tool_list}
+== End Registry ==
+
+HOW TO ANSWER "list tools" or "what tools":
+Read the registry above and list them to the user. No function call needed.
+
+HOW TO USE A TOOL FROM THE REGISTRY:
+Always call execute_registered_tool. Never call the tool name directly.
+Example: user says "count words in hello world"
+→ call execute_registered_tool(tool_name="word_count_tool", input_data='{{"text": "hello world"}}')
+
+HOW TO CREATE A NEW TOOL:
+Call transfer_to_agent(agent_name="tool_creation_pipeline").
+
+HOW TO DELETE A TOOL:
+Call delete_registered_tool(tool_name="the_tool_name").
+"""
+
+
+_root_instruction = _local_root_instruction if _agent_model else ROOT_INSTRUCTION
+_root_sub_agents = (
+    [tool_creation_pipeline]
+    if _agent_model
+    else [tool_creation_pipeline, tool_review_fixer_agent]
+)
+_root_before_model = _limit_tool_loops if _agent_model else None
+_root_tools = [
+    search_registry,
+    execute_registered_tool,
+    delete_registered_tool,
+    create_downloadable_file,
+] if _agent_model else [
+    search_registry,
+    list_available_tools,
+    execute_registered_tool,
+    register_validated_tool,
+    update_registered_tool,
+    delete_registered_tool,
+    create_downloadable_file,
+]
+
 root_agent = Agent(
     name="root_agent",
     model=_model,
-    instruction=ROOT_INSTRUCTION,
-    tools=[
-        search_registry,
-        list_available_tools,
-        execute_registered_tool,
-        register_validated_tool,
-        update_registered_tool,
-        delete_registered_tool,
-        create_downloadable_file,
-    ],
-    sub_agents=[tool_creation_pipeline, tool_review_fixer_agent],
+    instruction=_root_instruction,
+    before_model_callback=_root_before_model,
+    tools=_root_tools,
+    sub_agents=_root_sub_agents,
 )
 
 app = App(

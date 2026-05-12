@@ -4,11 +4,8 @@ import ast
 import re
 
 BLOCKED_IMPORTS: frozenset[str] = frozenset({
-    "os",
     "subprocess",
     "socket",
-    "shutil",
-    "pathlib",
     "paramiko",
     "ftplib",
     "smtplib",
@@ -19,7 +16,6 @@ BLOCKED_IMPORTS: frozenset[str] = frozenset({
 BLOCKED_KEYWORDS: frozenset[str] = frozenset({
     "eval(",
     "exec(",
-    "open(",
     "__import__(",
     "system(",
     "popen(",

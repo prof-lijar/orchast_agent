@@ -1,5 +1,3 @@
-import json
-
 from app.agent import execute_registered_tool
 from app.tools.generated.word_count_tool import word_count_tool
 
@@ -30,20 +28,17 @@ def test_word_count_with_newlines():
 
 
 def test_dynamic_import_execute():
-    result_json = execute_registered_tool(
+    result = execute_registered_tool(
         "word_count_tool", '{"text": "hello world"}'
     )
-    result = json.loads(result_json)
-    assert result["result"]["word_count"] == 2
+    assert "word_count: 2" in result
 
 
 def test_dynamic_import_missing_tool():
-    result_json = execute_registered_tool("nonexistent_tool", '{"text": "hi"}')
-    result = json.loads(result_json)
-    assert "error" in result
+    result = execute_registered_tool("nonexistent_tool", '{"text": "hi"}')
+    assert "not found" in result
 
 
 def test_dynamic_import_bad_json():
-    result_json = execute_registered_tool("word_count_tool", "not json")
-    result = json.loads(result_json)
-    assert "error" in result
+    result = execute_registered_tool("word_count_tool", "not json")
+    assert "Invalid input JSON" in result

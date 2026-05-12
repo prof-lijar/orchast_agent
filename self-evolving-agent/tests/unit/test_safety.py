@@ -19,11 +19,28 @@ def word_count(text: str) -> dict:
     assert violations == []
 
 
-def test_blocked_import_os():
-    code = "import os\nos.system('rm -rf /')"
+def test_os_now_allowed():
+    code = "import os\nfiles = os.listdir('.')"
     is_safe, violations = validate_code_safety(code)
-    assert is_safe is False
-    assert any("os" in v for v in violations)
+    assert is_safe is True
+
+
+def test_pathlib_now_allowed():
+    code = "from pathlib import Path\np = Path('.')"
+    is_safe, violations = validate_code_safety(code)
+    assert is_safe is True
+
+
+def test_shutil_now_allowed():
+    code = "import shutil\nshutil.copy('a.txt', 'b.txt')"
+    is_safe, violations = validate_code_safety(code)
+    assert is_safe is True
+
+
+def test_open_now_allowed():
+    code = "f = open('file.txt')\ndata = f.read()"
+    is_safe, violations = validate_code_safety(code)
+    assert is_safe is True
 
 
 def test_blocked_import_subprocess():
@@ -33,11 +50,11 @@ def test_blocked_import_subprocess():
     assert any("subprocess" in v for v in violations)
 
 
-def test_blocked_from_import():
-    code = "from os.path import join"
-    violations = check_imports(code)
-    assert len(violations) > 0
-    assert any("os" in v for v in violations)
+def test_blocked_import_sys():
+    code = "import sys\nsys.exit(1)"
+    is_safe, violations = validate_code_safety(code)
+    assert is_safe is False
+    assert any("sys" in v for v in violations)
 
 
 def test_blocked_keyword_exec():
@@ -50,12 +67,6 @@ def test_blocked_keyword_eval():
     code = "result = eval('2+2')"
     violations = check_keywords(code)
     assert any("eval" in v for v in violations)
-
-
-def test_blocked_keyword_open():
-    code = "f = open('file.txt')"
-    violations = check_keywords(code)
-    assert any("open" in v for v in violations)
 
 
 def test_syntax_error_code():
