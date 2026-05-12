@@ -46,11 +46,11 @@ Root Orchestrator Agent
 │                 Register/Retry                           │
 └─────────────────────────────────────────────────────────┘
 
+```
+
 ### Diagram
 <img width="1448" height="1086" alt="ChatGPT Image May 12, 2026, 11_25_26 AM" src="https://github.com/user-attachments/assets/2cd106d8-496c-4bb1-b626-91ca2d305fca" />
 
-
-```
 
 The key insight: the agent **doesn't just answer questions** — it builds, updates, and manages reusable tools that persist across sessions. Once a tool is created and registered, it's available for all future requests without regeneration.
 
