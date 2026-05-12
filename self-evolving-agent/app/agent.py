@@ -42,6 +42,7 @@ else:
     )
 
 GENERATED_TOOLS_DIR = Path(__file__).parent / "tools" / "generated"
+OUTPUT_DIR = Path(__file__).parent / "output"
 
 
 # ---------------------------------------------------------------------------
@@ -118,6 +119,20 @@ def execute_registered_tool(tool_name: str, input_data: str) -> str:
         module = importlib.import_module(entry.module)
         func = getattr(module, entry.function)
         result = func(**inputs)
+
+        if isinstance(result, dict) and "files" in result and isinstance(result["files"], dict):
+            project_name = result.get("project_name", "project")
+            project_dir = OUTPUT_DIR / project_name
+            written = []
+            for fpath, content in result["files"].items():
+                full = project_dir / Path(fpath).name
+                full.parent.mkdir(parents=True, exist_ok=True)
+                full.write_text(str(content), encoding="utf-8")
+                written.append(str(full))
+            result = {k: v for k, v in result.items() if k != "files"}
+            result["files_written"] = written
+            result["output_directory"] = str(project_dir)
+
         if isinstance(result, dict):
             parts = [f"{k}: {v}" for k, v in result.items()]
             return f"Tool '{tool_name}' result — " + ", ".join(parts)
@@ -805,7 +820,9 @@ Do NOT explain, reason, or suggest next steps. Just call the tool and output the
 """
 
 LOCAL_TOOL_REGISTRAR_INSTRUCTION = """\
-Call `register_validated_tool` with no arguments. \
+Check the session state for "update_mode". If it is set to true, call \
+`update_registered_tool` with no arguments. Otherwise, call \
+`register_validated_tool` with no arguments. \
 Then output REGISTRATION_SUCCESS or REGISTRATION_FAILED. Nothing else.
 """
 
@@ -814,7 +831,7 @@ tool_registrar_agent = Agent(
     description="Automatically registers or updates the tool after tests are generated",
     model=_model,
     instruction=LOCAL_TOOL_REGISTRAR_INSTRUCTION if _agent_model else TOOL_REGISTRAR_INSTRUCTION,
-    tools=[register_validated_tool] if _agent_model else [register_validated_tool, update_registered_tool],
+    tools=[register_validated_tool, update_registered_tool],
     before_model_callback=_limit_tool_loops if _agent_model else None,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
