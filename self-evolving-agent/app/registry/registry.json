@@ -59,21 +59,6 @@
     "created_at": "2026-05-10T13:41:18.775779+00:00",
     "version": 1
   },
-  "url_slugifier_tool": {
-    "name": "url_slugifier_tool",
-    "description": "Converts a text string into a URL-safe, lowercase, hyphenated slug, removing non-alphanumeric characters.",
-    "module": "app.tools.generated.url_slugifier_tool",
-    "function": "url_slugifier_tool",
-    "input_schema": {
-      "text": "string"
-    },
-    "output_schema": {
-      "slug": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T13:57:26.860033+00:00",
-    "version": 1
-  },
   "python_syntax_detector_tool": {
     "name": "python_syntax_detector_tool",
     "description": "Checks a given string of Python code for syntax errors and provides diagnostic feedback.",
@@ -137,21 +122,6 @@
     },
     "risk_level": "low",
     "created_at": "2026-05-11T11:27:53.139240+00:00",
-    "version": 1
-  },
-  "fortune_teller_tool": {
-    "name": "fortune_teller_tool",
-    "description": "Generates a fictional fortune based on a user's birthdate using deterministic pseudo-random logic.",
-    "module": "app.tools.generated.fortune_teller_tool",
-    "function": "fortune_teller_tool",
-    "input_schema": {
-      "birthdate": "string"
-    },
-    "output_schema": {
-      "fortune": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-12T06:09:36.077199+00:00",
     "version": 1
   },
   "csv_formatter_tool": {
