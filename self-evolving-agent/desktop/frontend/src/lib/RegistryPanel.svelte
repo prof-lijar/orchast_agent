@@ -7,7 +7,7 @@
   let loading = $state(false);
   let error = $state("");
 
-  const API_BASE = "http://127.0.0.1:8001";
+  const API_BASE = "";
 
   async function fetchRegistry() {
     if (!backendOnline) return;

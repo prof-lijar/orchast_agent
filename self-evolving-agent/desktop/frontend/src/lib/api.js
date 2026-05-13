@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8001";
+const API_BASE = "";
 
 export async function createSession(appName = "app") {
   const res = await fetch(`${API_BASE}/apps/${appName}/users/user/sessions`, {
@@ -11,20 +11,17 @@ export async function createSession(appName = "app") {
 }
 
 export async function sendMessage(appName, userId, sessionId, message) {
-  const res = await fetch(
-    `${API_BASE}/apps/${appName}/users/${userId}/sessions/${sessionId}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        app_name: appName,
-        user_id: userId,
-        session_id: sessionId,
-        new_message: { role: "user", parts: [{ text: message }] },
-        streaming: false,
-      }),
-    }
-  );
+  const res = await fetch(`${API_BASE}/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app_name: appName,
+      user_id: userId,
+      session_id: sessionId,
+      new_message: { role: "user", parts: [{ text: message }] },
+      streaming: false,
+    }),
+  });
   if (!res.ok) throw new Error(`Failed to send message: ${res.status}`);
   return res.json();
 }
