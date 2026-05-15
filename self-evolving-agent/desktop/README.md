@@ -48,7 +48,7 @@ Use this when you don't need the native desktop shell, or when accessing a remot
 ```sh
 # Terminal 1 — Start the backend
 cd /path/to/self-evolving-agent
-ALLOW_ORIGINS=http://localhost:5173 uv run dev
+ALLOW_ORIGINS=http://localhost:5173 uv run python -m app.fast_api_app
 
 # Terminal 2 — Start the Vite dev server
 cd desktop/frontend
@@ -57,7 +57,7 @@ npm run dev
 
 Open `http://localhost:5173` in your browser.
 
-The `uv run dev` command runs the custom FastAPI app which includes both ADK routes and the model switcher API. Environment variables:
+The `uv run python -m app.fast_api_app` command runs the custom FastAPI app which includes both ADK routes and the model switcher API. Environment variables:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
@@ -67,7 +67,7 @@ The `uv run dev` command runs the custom FastAPI app which includes both ADK rou
 Example with a custom port:
 
 ```sh
-ALLOW_ORIGINS=http://localhost:5173 PORT=9000 uv run dev
+ALLOW_ORIGINS=http://localhost:5173 PORT=9000 uv run python -m app.fast_api_app
 ```
 
 > **Note:** If Vite picks a different port (e.g. `5174`, `5175`), update `ALLOW_ORIGINS` to match.
@@ -93,14 +93,14 @@ Then open `http://localhost:5174` on your local machine.
 When accessing through a forwarded port (e.g. `localhost:5174`), include the forwarded origin in `--allow-origins`:
 
 ```sh
-ALLOW_ORIGINS=http://localhost:5174 uv run dev
+ALLOW_ORIGINS=http://localhost:5174 uv run python -m app.fast_api_app
 ```
 
 ### Option B: Desktop mode (zero-native)
 
 ```sh
 # Start the backend first
-ALLOW_ORIGINS=http://localhost:5173 uv run dev
+ALLOW_ORIGINS=http://localhost:5173 uv run python -m app.fast_api_app
 
 # Then launch the desktop app
 zig build dev          # dev mode (hot-reload frontend + native shell)
@@ -129,7 +129,7 @@ zero-native doctor --manifest app.zon   # check setup
 | `sendMessage()` | `POST /run` | Send a message and get agent response |
 | `checkBackendHealth()` | `GET /list-apps` | Health check (3 s timeout) |
 | `listApps()` | `GET /list-apps` | List available ADK apps |
-| `fetchModels()` | `GET /api/models` | List available models (requires `uv run dev`) |
+| `fetchModels()` | `GET /api/models` | List available models (requires `uv run python -m app.fast_api_app`) |
 | `fetchCurrentModel()` | `GET /api/models/current` | Get active model name |
 | `switchModel()` | `POST /api/models/switch` | Switch all agents to a different model |
 
@@ -140,7 +140,7 @@ All API paths are proxied to the backend at `http://127.0.0.1:8081`:
 - `/apps` — session management
 - `/run` — agent execution
 - `/list-apps` — app listing and health
-- `/api` — model switcher (only available with `uv run dev`)
+- `/api` — model switcher (only available with `uv run python -m app.fast_api_app`)
 
 ## Web Engines
 

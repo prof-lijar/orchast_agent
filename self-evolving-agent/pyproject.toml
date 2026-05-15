@@ -73,9 +73,6 @@ deprecated = "ignore"
 [tool.codespell]
 skip = "uv.lock,.venv"
 
-[tool.uv.scripts]
-dev = "sh -c 'uvicorn app.fast_api_app:app --host 0.0.0.0 --port ${PORT:-8081}'"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
