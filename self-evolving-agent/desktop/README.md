@@ -12,7 +12,7 @@ zero-native shell (system WebView)
         └── StatusBar   — backend / bridge health
               │
               ▼  (Vite proxy)
-        ADK dev server (:8001)
+        ADK dev server (:8081)
 ```
 
 The frontend proxies `/apps`, `/run`, and `/list-apps` to the ADK backend so the browser never talks to a different origin.
@@ -20,8 +20,8 @@ The frontend proxies `/apps`, `/run`, and `/list-apps` to the ADK backend so the
 ## Prerequisites
 
 - Node.js (v22+) and npm
-- [zero-native](https://github.com/nicosql/zero-native) installed globally
-- The Self-Evolving Agent backend running (`uv run adk web --port 8001` from the project root)
+- [zero-native](https://github.com/nicosql/zero-native) installed globally (desktop mode only)
+- The Self-Evolving Agent backend running (see below)
 
 ## Setup
 
@@ -39,11 +39,45 @@ The build defaults to this zero-native framework path:
 
 Override with `-Dzero-native-path=/path/to/zero-native` if needed.
 
-## Commands
+## Running
+
+### Option A: Browser mode
+
+Use this when you don't need the native desktop shell, or when accessing a remote server.
+
+```sh
+# Terminal 1 — Start the ADK backend
+cd /path/to/self-evolving-agent
+uv run adk web --port 8081 --allow-origins "http://localhost:5173"
+
+# Terminal 2 — Start the Vite dev server
+cd desktop/frontend
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
+
+#### Remote server access
+
+If the backend and frontend run on a remote server, forward the ports via SSH:
+
+```sh
+ssh -L 5174:localhost:5173 -L 8081:localhost:8081 user@remote-server
+```
+
+Then open `http://localhost:5174` on your local machine.
+
+When accessing through a forwarded port (e.g. `localhost:5174`), include the forwarded origin in `--allow-origins`:
+
+```sh
+uv run adk web --port 8081 --allow-origins "http://localhost:5174"
+```
+
+### Option B: Desktop mode (zero-native)
 
 ```sh
 # Start the ADK backend first
-uv run adk web --port 8001
+uv run adk web --port 8081 --allow-origins "http://localhost:5173"
 
 # Then launch the desktop app
 zig build dev          # dev mode (hot-reload frontend + native shell)
@@ -75,7 +109,7 @@ zero-native doctor --manifest app.zon   # check setup
 
 ### Vite proxy (`frontend/vite.config.js`)
 
-All API paths are proxied to the ADK backend at `http://127.0.0.1:8001`:
+All API paths are proxied to the ADK backend at `http://127.0.0.1:8081`:
 
 - `/apps` — session management
 - `/run` — agent execution

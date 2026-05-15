@@ -6,20 +6,19 @@ export default defineConfig({
   server: {
     host: "localhost",
     port: 5173,
-    cors: {
-      origin: "http://localhost:5173",
-    },
+    cors: true,
+    allowedHosts: "all",
     proxy: {
       "/apps": {
-        target: "http://127.0.0.1:8001",
+        target: "http://127.0.0.1:8081",
         changeOrigin: true,
       },
       "/list-apps": {
-        target: "http://127.0.0.1:8001",
+        target: "http://127.0.0.1:8081",
         changeOrigin: true,
       },
       "/run": {
-        target: "http://127.0.0.1:8001",
+        target: "http://127.0.0.1:8081",
         changeOrigin: true,
       },
     },
