@@ -9,6 +9,7 @@ from google.cloud import logging as google_cloud_logging
 from pydantic import BaseModel
 
 from app.agent import get_current_model_name, switch_model
+from app.registry import manager as registry_manager
 from app.app_utils.telemetry import setup_telemetry
 
 setup_telemetry()
@@ -78,6 +79,42 @@ async def switch_model_endpoint(body: SwitchModelRequest):
         return result
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/registry")
+async def list_registry():
+    registry = registry_manager.load_registry()
+    tools = []
+    for name, data in registry.items():
+        tools.append({
+            "name": name,
+            "description": data.get("description", ""),
+            "input_schema": data.get("input_schema", {}),
+            "output_schema": data.get("output_schema", {}),
+            "risk_level": data.get("risk_level", ""),
+            "version": data.get("version", 1),
+            "created_at": data.get("created_at", ""),
+        })
+    return {"tools": tools}
+
+
+@app.get("/api/registry/search")
+async def search_registry(q: str = ""):
+    if not q:
+        return {"tools": []}
+    results = registry_manager.search_tools(q)
+    tools = [
+        {
+            "name": r.name,
+            "description": r.description,
+            "input_schema": r.input_schema,
+            "output_schema": r.output_schema,
+            "risk_level": r.risk_level,
+            "version": r.version,
+        }
+        for r in results
+    ]
+    return {"tools": tools}
 
 
 if __name__ == "__main__":

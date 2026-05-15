@@ -1,4 +1,6 @@
 <script>
+  import { fetchRegistry } from "./api.js";
+
   let { backendOnline = false } = $props();
 
   let tools = $state([]);
@@ -7,21 +9,23 @@
   let loading = $state(false);
   let error = $state("");
 
-  const API_BASE = "";
+  $effect(() => {
+    if (backendOnline) {
+      loadTools();
+    } else {
+      tools = [];
+    }
+  });
 
-  async function fetchRegistry() {
-    if (!backendOnline) return;
+  async function loadTools() {
     loading = true;
     error = "";
     try {
-      const res = await fetch(`${API_BASE}/apps/app/users/user/sessions`, {
-        signal: AbortSignal.timeout(5000),
-      });
-      if (res.ok) {
-        loading = false;
-      }
-    } catch (err) {
-      error = "Could not reach backend";
+      const data = await fetchRegistry();
+      tools = data.tools || [];
+    } catch {
+      error = "Could not load registry";
+      tools = [];
     } finally {
       loading = false;
     }
@@ -38,19 +42,27 @@
   function selectTool(tool) {
     selectedTool = selectedTool?.name === tool.name ? null : tool;
   }
+
+  function formatSchema(schema) {
+    if (!schema || Object.keys(schema).length === 0) return "none";
+    return Object.entries(schema).map(([k, v]) => `${k}: ${v}`).join(", ");
+  }
 </script>
 
 <div class="registry-panel">
   <div class="panel-header">
     <h3>Tool Registry</h3>
-    <span class="count">{tools.length} tools</span>
+    <div class="header-actions">
+      <span class="count">{tools.length} tools</span>
+      <button class="refresh-btn" onclick={loadTools} disabled={!backendOnline || loading} title="Refresh">&#8635;</button>
+    </div>
   </div>
 
   <div class="search-bar">
     <input
       type="text"
       bind:value={searchQuery}
-      placeholder="Search tools..."
+      placeholder="Filter tools..."
     />
   </div>
 
@@ -84,7 +96,17 @@
   {#if selectedTool}
     <div class="tool-detail">
       <h4>{selectedTool.name}</h4>
-      <p>{selectedTool.description}</p>
+      <p class="description">{selectedTool.description}</p>
+      <div class="schema-section">
+        <div class="schema-row">
+          <span class="schema-label">Input:</span>
+          <span class="schema-value">{formatSchema(selectedTool.input_schema)}</span>
+        </div>
+        <div class="schema-row">
+          <span class="schema-label">Output:</span>
+          <span class="schema-value">{formatSchema(selectedTool.output_schema)}</span>
+        </div>
+      </div>
       <div class="meta">
         <span>v{selectedTool.version}</span>
         <span>{selectedTool.risk_level} risk</span>
@@ -120,9 +142,36 @@
     color: #475569;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .count {
     font-size: 0.75em;
     color: #94a3b8;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 2px 6px;
+    line-height: 1;
+  }
+
+  .refresh-btn:hover:not(:disabled) {
+    border-color: #2563eb;
+    color: #2563eb;
+  }
+
+  .refresh-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
 
   .search-bar {
@@ -180,6 +229,9 @@
     font-size: 0.85em;
     font-weight: 500;
     color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .tool-risk {
@@ -187,6 +239,7 @@
     padding: 2px 8px;
     border-radius: 10px;
     font-weight: 600;
+    flex-shrink: 0;
   }
 
   .tool-risk.low { background: #dcfce7; color: #166534; }
@@ -204,11 +257,33 @@
     color: #0f172a;
   }
 
-  .tool-detail p {
+  .description {
     margin: 0 0 8px;
     font-size: 0.8em;
     color: #64748b;
     line-height: 1.4;
+  }
+
+  .schema-section {
+    margin-bottom: 8px;
+  }
+
+  .schema-row {
+    display: flex;
+    gap: 6px;
+    font-size: 0.75em;
+    margin-bottom: 3px;
+  }
+
+  .schema-label {
+    color: #64748b;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .schema-value {
+    color: #475569;
+    font-family: "SF Mono", "Cascadia Code", monospace;
   }
 
   .meta {

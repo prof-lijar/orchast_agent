@@ -60,6 +60,18 @@ export async function getSession(appName = "app", userId = "user", sessionId) {
   return res.json();
 }
 
+export async function fetchRegistry() {
+  const res = await fetch(`${API_BASE}/api/registry`);
+  if (!res.ok) return { tools: [] };
+  return res.json();
+}
+
+export async function searchRegistry(query) {
+  const res = await fetch(`${API_BASE}/api/registry/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) return { tools: [] };
+  return res.json();
+}
+
 export async function fetchModels() {
   const res = await fetch(`${API_BASE}/api/models`);
   if (!res.ok) return { models: [] };
