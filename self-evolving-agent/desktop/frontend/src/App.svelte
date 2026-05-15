@@ -8,7 +8,7 @@
 
   let backendOnline = $state(false);
   let bridgeAvailable = $state(false);
-  let sessionId = $state("");
+  let sessionId = $state(localStorage.getItem("sessionId") || "");
   let userId = $state("user");
   let appName = $state("app");
   let currentModel = $state("");
@@ -23,12 +23,28 @@
     return () => clearInterval(healthInterval);
   });
 
+  function saveSessionId(id) {
+    sessionId = id;
+    if (id) {
+      localStorage.setItem("sessionId", id);
+    } else {
+      localStorage.removeItem("sessionId");
+    }
+  }
+
   async function connectToBackend() {
     backendOnline = await checkBackendHealth();
+    if (backendOnline && sessionId) {
+      try {
+        await getSession(appName, userId, sessionId);
+      } catch {
+        saveSessionId("");
+      }
+    }
     if (backendOnline && !sessionId) {
       try {
         const session = await createSession(appName);
-        sessionId = session.id;
+        saveSessionId(session.id);
       } catch {
         // session creation failed — user can still see the UI
       }
@@ -80,7 +96,7 @@
           }
         }
       }
-      sessionId = sid;
+      saveSessionId(sid);
       sessionMessages = msgs;
       sessionKey++;
     } catch (err) {
@@ -91,7 +107,7 @@
   async function handleNewSession() {
     try {
       const session = await createSession(appName);
-      sessionId = session.id;
+      saveSessionId(session.id);
       sessionMessages = [];
       sessionKey++;
     } catch (err) {
