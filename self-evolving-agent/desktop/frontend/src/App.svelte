@@ -36,7 +36,19 @@
     backendOnline = await checkBackendHealth();
     if (backendOnline && sessionId) {
       try {
-        await getSession(appName, userId, sessionId);
+        const session = await getSession(appName, userId, sessionId);
+        const msgs = [];
+        for (const event of session.events || []) {
+          const parts = event?.content?.parts ?? [];
+          const author = event?.author;
+          for (const part of parts) {
+            if (part.text) {
+              msgs.push({ role: author === "user" ? "user" : "agent", text: part.text });
+            }
+          }
+        }
+        sessionMessages = msgs;
+        sessionKey++;
       } catch {
         saveSessionId("");
       }

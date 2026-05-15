@@ -25,6 +25,12 @@
     }
   });
 
+  $effect(() => {
+    if (activeSessionId && backendOnline) {
+      loadSessions();
+    }
+  });
+
   async function loadModels() {
     try {
       const data = await fetchModels();
