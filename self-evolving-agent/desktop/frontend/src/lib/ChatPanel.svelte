@@ -1,9 +1,10 @@
 <script>
   import { sendMessage } from "./api.js";
 
-  let { appName = "app", userId = "user", sessionId = "" } = $props();
+  let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
 
-  let messages = $state([]);
+  // svelte-ignore state_referenced_locally
+  let messages = $state([...initialMessages]);
   let input = $state("");
   let loading = $state(false);
   let chatContainer;

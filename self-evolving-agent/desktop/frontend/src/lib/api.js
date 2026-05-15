@@ -40,3 +40,44 @@ export async function listApps() {
   if (!res.ok) throw new Error(`Failed to list apps: ${res.status}`);
   return res.json();
 }
+
+export async function listSessions(appName = "app", userId = "user") {
+  const res = await fetch(`${API_BASE}/apps/${appName}/users/${userId}/sessions`);
+  if (!res.ok) throw new Error(`Failed to list sessions: ${res.status}`);
+  return res.json();
+}
+
+export async function deleteSession(appName = "app", userId = "user", sessionId) {
+  const res = await fetch(`${API_BASE}/apps/${appName}/users/${userId}/sessions/${sessionId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`Failed to delete session: ${res.status}`);
+}
+
+export async function getSession(appName = "app", userId = "user", sessionId) {
+  const res = await fetch(`${API_BASE}/apps/${appName}/users/${userId}/sessions/${sessionId}`);
+  if (!res.ok) throw new Error(`Failed to get session: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchModels() {
+  const res = await fetch(`${API_BASE}/api/models`);
+  if (!res.ok) return { models: [] };
+  return res.json();
+}
+
+export async function fetchCurrentModel() {
+  const res = await fetch(`${API_BASE}/api/models/current`);
+  if (!res.ok) return { model: "" };
+  return res.json();
+}
+
+export async function switchModel(modelName) {
+  const res = await fetch(`${API_BASE}/api/models/switch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: modelName }),
+  });
+  if (!res.ok) throw new Error(`Failed to switch model: ${res.status}`);
+  return res.json();
+}

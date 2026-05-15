@@ -1,5 +1,10 @@
 <script>
-  let { backendOnline = false, bridgeAvailable = false, sessionId = "" } = $props();
+  let {
+    backendOnline = false,
+    bridgeAvailable = false,
+    sessionId = "",
+    currentModel = "",
+  } = $props();
 </script>
 
 <div class="status-bar">
@@ -12,6 +17,10 @@
     <span class="label">Bridge: {bridgeAvailable ? "active" : "N/A"}</span>
   </div>
   <div class="right">
+    {#if currentModel}
+      <span class="model-info">{currentModel}</span>
+      <span class="separator">|</span>
+    {/if}
     {#if sessionId}
       <span class="session">Session: {sessionId.slice(0, 8)}...</span>
     {:else}
@@ -50,4 +59,5 @@
   .separator { color: #475569; }
   .label { color: #cbd5e1; }
   .session { color: #64748b; }
+  .model-info { color: #94a3b8; }
 </style>

@@ -1,7 +1,8 @@
 <script>
   import { onMount } from "svelte";
-  import { checkBackendHealth, createSession } from "./lib/api.js";
+  import { checkBackendHealth, createSession, fetchCurrentModel, switchModel as apiSwitchModel, getSession } from "./lib/api.js";
   import ChatPanel from "./lib/ChatPanel.svelte";
+  import LeftSidebar from "./lib/LeftSidebar.svelte";
   import RegistryPanel from "./lib/RegistryPanel.svelte";
   import StatusBar from "./lib/StatusBar.svelte";
 
@@ -10,7 +11,10 @@
   let sessionId = $state("");
   let userId = $state("user");
   let appName = $state("app");
+  let currentModel = $state("");
   let healthInterval;
+  let sessionMessages = $state([]);
+  let sessionKey = $state(0);
 
   onMount(() => {
     bridgeAvailable = !!window.zero;
@@ -29,6 +33,12 @@
         // session creation failed — user can still see the UI
       }
     }
+    if (backendOnline) {
+      try {
+        const info = await fetchCurrentModel();
+        currentModel = info.model;
+      } catch { /* ignore */ }
+    }
   }
 
   async function pollHealth() {
@@ -36,6 +46,56 @@
     backendOnline = await checkBackendHealth();
     if (!wasOnline && backendOnline && !sessionId) {
       connectToBackend();
+    }
+    if (backendOnline) {
+      try {
+        const info = await fetchCurrentModel();
+        currentModel = info.model;
+      } catch { /* ignore */ }
+    }
+  }
+
+  async function handleModelSwitch(modelName) {
+    try {
+      const result = await apiSwitchModel(modelName);
+      if (result.success) {
+        currentModel = result.model;
+      }
+    } catch (err) {
+      console.error("Model switch failed:", err);
+    }
+  }
+
+  async function handleSessionSelect(sid) {
+    if (sid === sessionId) return;
+    try {
+      const session = await getSession(appName, userId, sid);
+      const msgs = [];
+      for (const event of session.events || []) {
+        const parts = event?.content?.parts ?? [];
+        const author = event?.author;
+        for (const part of parts) {
+          if (part.text) {
+            msgs.push({ role: author === "user" ? "user" : "agent", text: part.text });
+          }
+        }
+      }
+      sessionId = sid;
+      sessionMessages = msgs;
+      sessionKey++;
+    } catch (err) {
+      console.error("Failed to load session:", err);
+    }
+  }
+
+  async function handleNewSession() {
+    try {
+      const session = await createSession(appName);
+      sessionId = session.id;
+      sessionMessages = [];
+      sessionKey++;
+    } catch (err) {
+      console.error("Failed to create session:", err);
     }
   }
 </script>
@@ -50,15 +110,29 @@
   </header>
 
   <div class="main-content">
+    <div class="left-panel">
+      <LeftSidebar
+        {backendOnline}
+        {currentModel}
+        activeSessionId={sessionId}
+        {appName}
+        {userId}
+        onModelSwitch={handleModelSwitch}
+        onSessionSelect={handleSessionSelect}
+        onNewSession={handleNewSession}
+      />
+    </div>
     <div class="chat-area">
-      <ChatPanel {appName} {userId} {sessionId} />
+      {#key sessionKey}
+        <ChatPanel {appName} {userId} {sessionId} initialMessages={sessionMessages} />
+      {/key}
     </div>
     <div class="sidebar">
       <RegistryPanel {backendOnline} />
     </div>
   </div>
 
-  <StatusBar {backendOnline} {bridgeAvailable} {sessionId} />
+  <StatusBar {backendOnline} {bridgeAvailable} {sessionId} {currentModel} />
 </div>
 
 <style>
@@ -102,6 +176,12 @@
     display: flex;
     flex: 1;
     min-height: 0;
+  }
+
+  .left-panel {
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid #1e293b;
   }
 
   .chat-area {
