@@ -10,8 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -43,3 +43,11 @@ venv/
 my_env.tfvars
 .terraform*
 uv.lock
+
+# Desktop app (zero-native)
+desktop/zig-out/
+desktop/zig-cache/
+desktop/.zig-cache/
+desktop/frontend/node_modules/
+desktop/frontend/dist/
+desktop/third_party/

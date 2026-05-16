@@ -1,0 +1,52 @@
+.{
+    .id = "dev.self_evolving_agent.desktop",
+    .name = "self-evolving-agent",
+    .display_name = "Self-Evolving Agent",
+    .version = "0.1.0",
+    .icons = .{"assets/icon.icns"},
+    .platforms = .{ "macos", "linux" },
+    .permissions = .{ "window", "filesystem", "network", "notifications" },
+    .capabilities = .{ "webview", "js_bridge", "filesystem", "network" },
+    .frontend = .{
+        .dist = "frontend/dist",
+        .entry = "index.html",
+        .spa_fallback = true,
+        .dev = .{
+            .url = "http://127.0.0.1:5173/",
+            .command = .{ "npm", "--prefix", "frontend", "run", "dev", "--", "--host", "127.0.0.1" },
+            .ready_path = "/",
+            .timeout_ms = 30000,
+        },
+    },
+    .security = .{
+        .navigation = .{
+            .allowed_origins = .{ "zero://app", "zero://inline", "http://127.0.0.1:5173", "http://127.0.0.1:8001" },
+            .external_links = .{ .action = "deny" },
+        },
+    },
+    .bridge = .{
+        .commands = .{
+            .{
+                .name = "agent.backend_status",
+                .permissions = .{"network"},
+                .origins = .{"zero://app"},
+            },
+            .{
+                .name = "agent.notify",
+                .permissions = .{"notifications"},
+                .origins = .{"zero://app"},
+            },
+        },
+    },
+    .web_engine = "system",
+    .cef = .{ .dir = "third_party/cef/macos", .auto_install = false },
+    .windows = .{
+        .{
+            .label = "main",
+            .title = "Self-Evolving Agent",
+            .width = 1280,
+            .height = 800,
+            .restore_state = true,
+        },
+    },
+}

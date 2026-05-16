@@ -25,6 +25,8 @@ os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 _agent_model = os.environ.get("AGENT_MODEL")
+_current_model_name = _agent_model or "gemini-flash-latest"
+
 if _agent_model:
     _model = LiteLlm(
         model=f"openai/{_agent_model}",
@@ -40,6 +42,66 @@ else:
         model="gemini-flash-latest",
         retry_options=types.HttpRetryOptions(attempts=3),
     )
+
+
+def get_current_model_name() -> str:
+    return _current_model_name
+
+
+def _make_ollama_model(name: str) -> LiteLlm:
+    return LiteLlm(
+        model=f"openai/{name}",
+        api_base="http://localhost:11434/v1",
+        api_key="ollama",
+        think=False,
+        num_ctx=8192,
+        repeat_penalty=1.2,
+        temperature=0.7,
+    )
+
+
+def switch_model(model_name: str) -> dict:
+    global _model, _current_model_name, _agent_model
+    previous = _current_model_name
+    if model_name.startswith("gemini"):
+        new_model = Gemini(
+            model=model_name,
+            retry_options=types.HttpRetryOptions(attempts=3),
+        )
+    else:
+        new_model = _make_ollama_model(model_name)
+    _model = new_model
+    _current_model_name = model_name
+    _agent_model = model_name
+
+    all_agents = [
+        root_agent,
+        tool_spec_agent,
+        tool_coder_agent,
+        tool_test_agent,
+        tool_registrar_agent,
+        tool_review_fixer_agent,
+    ]
+    for agent in all_agents:
+        agent.model = new_model
+
+    return {"success": True, "model": model_name, "previous": previous}
+
+
+def switch_model_tool(model_name: str) -> str:
+    """Switch all agents to a different LLM model at runtime.
+
+    Args:
+        model_name: The model to switch to, e.g. 'qwen2.5:7b', 'gemma3:12b', or 'gemini-flash-latest'.
+
+    Returns:
+        JSON string confirming the switch or describing the error.
+    """
+    try:
+        result = switch_model(model_name)
+        return json.dumps(result)
+    except Exception as e:
+        return json.dumps({"success": False, "error": str(e)})
 
 GENERATED_TOOLS_DIR = Path(__file__).parent / "tools" / "generated"
 OUTPUT_DIR = Path(__file__).parent / "output"
@@ -933,6 +995,10 @@ Use `list_available_tools` when the user asks what tools are available. \
 After listing, STOP — do NOT start creating, retrying, or fixing tools unless \
 the user explicitly asks for it.
 
+Use `switch_model_tool` when the user asks to change, switch, or use a \
+different model. Pass the exact model name (e.g. 'qwen2.5:7b', \
+'gemma3:12b', 'gemini-flash-latest'). Confirm the switch to the user.
+
 UPDATE TOOL WORKFLOW — when the user asks to update, edit, fix, or improve \
 an existing tool:
 
@@ -993,11 +1059,12 @@ def _local_root_instruction(ctx):
     return f"""\
 You are the Self-Evolving Agent. You manage a registry of tools.
 
-You can ONLY call these 4 functions:
+You can ONLY call these 5 functions:
   1. search_registry(query) — find a registered tool by keyword
   2. execute_registered_tool(tool_name, input_data) — run a registered tool
   3. delete_registered_tool(tool_name) — delete a tool
   4. create_downloadable_file(filename, content) — create a file for download
+  5. switch_model_tool(model_name) — switch all agents to a different model
 You CANNOT call anything else. Any other name will fail.
 
 RULES:
@@ -1041,6 +1108,7 @@ _root_tools = [
     execute_registered_tool,
     delete_registered_tool,
     create_downloadable_file,
+    switch_model_tool,
 ] if _agent_model else [
     search_registry,
     list_available_tools,
@@ -1049,6 +1117,7 @@ _root_tools = [
     update_registered_tool,
     delete_registered_tool,
     create_downloadable_file,
+    switch_model_tool,
 ]
 
 root_agent = Agent(
