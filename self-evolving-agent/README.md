@@ -1,3 +1,5 @@
+**[한국어](README.ko.md)**
+
 # Self-Evolving Agent
 
 A **Self-Evolving Agent** is an AI agent system that can identify missing capabilities, design new tools, generate Python code, test the generated tools in a sandbox, register them into a tool registry, and reuse them to solve future user requests.
