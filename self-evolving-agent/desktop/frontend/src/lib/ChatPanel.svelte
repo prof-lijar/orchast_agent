@@ -9,6 +9,13 @@
   let loading = $state(false);
   let chatContainer;
   let inputEl;
+  let copiedIndex = $state(-1);
+
+  function copyText(text, index) {
+    navigator.clipboard.writeText(text);
+    copiedIndex = index;
+    setTimeout(() => { copiedIndex = -1; }, 5000);
+  }
 
   function scrollToBottom() {
     if (chatContainer) {
@@ -63,11 +70,25 @@
         <p class="hint">Ask it to create, find, or use tools.</p>
       </div>
     {/if}
-    {#each messages as msg}
-      <div class="message {msg.role}">
-        <span class="label">{msg.role === "user" ? "You" : msg.role === "error" ? "Error" : "Agent"}</span>
-        <pre class="content">{msg.text}</pre>
-      </div>
+    {#each messages as msg, i}
+      {#if msg.role === "agent"}
+        <div class="message agent">
+          <span class="label">Agent</span>
+          <pre class="content">{msg.text}</pre>
+          <button class="copy-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
+            {#if copiedIndex === i}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            {:else}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            {/if}
+          </button>
+        </div>
+      {:else}
+        <div class="message {msg.role}">
+          <span class="label">{msg.role === "user" ? "You" : "Error"}</span>
+          <pre class="content">{msg.text}</pre>
+        </div>
+      {/if}
     {/each}
     {#if loading}
       <div class="message agent">
@@ -127,6 +148,7 @@
     padding: 10px 14px;
     border-radius: 12px;
     font-size: 0.9em;
+    position: relative;
   }
 
   .message.user {
@@ -167,6 +189,30 @@
     color: #94a3b8;
     font-style: italic;
   }
+
+  .message.agent {
+    padding-bottom: 36px;
+  }
+
+  .copy-btn {
+    position: absolute;
+    left: 8px;
+    bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .copy-btn:hover { background: #334155; color: #ffffff; }
 
   .chat-input {
     display: flex;
