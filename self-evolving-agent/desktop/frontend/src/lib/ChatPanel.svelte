@@ -8,6 +8,7 @@
   let input = $state("");
   let loading = $state(false);
   let chatContainer;
+  let inputEl;
 
   function scrollToBottom() {
     if (chatContainer) {
@@ -42,6 +43,7 @@
     } finally {
       loading = false;
       scrollToBottom();
+      setTimeout(() => inputEl?.focus(), 60);
     }
   }
 
@@ -77,6 +79,7 @@
 
   <div class="chat-input">
     <textarea
+      bind:this={inputEl}
       bind:value={input}
       onkeydown={handleKeydown}
       placeholder={sessionId ? "Message the agent..." : "Connecting..."}
