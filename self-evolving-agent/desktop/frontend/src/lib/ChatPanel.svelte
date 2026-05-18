@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import { sendMessageStream } from "./api.js";
   import { marked } from "marked";
 
@@ -15,6 +16,8 @@
   let copiedIndex = $state(-1);
   let editingIndex = $state(-1);
   let abortCtrl = $state(null);
+
+  onMount(() => { inputEl?.focus(); });
 
   function copyText(text, index) {
     navigator.clipboard.writeText(text);

@@ -66,11 +66,17 @@
 
   async function handleDelete(e, sid) {
     e.stopPropagation();
+    if (!confirm("Delete this session?")) return;
     try {
       await deleteSession(appName, userId, sid);
       sessions = sessions.filter((s) => s.id !== sid);
       if (sid === activeSessionId) {
-        onNewSession();
+        const next = sessions[0];
+        if (next) {
+          onSessionSelect(next.id);
+        } else {
+          onNewSession();
+        }
       }
     } catch { /* ignore */ }
   }
