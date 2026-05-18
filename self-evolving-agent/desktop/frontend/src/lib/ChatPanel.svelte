@@ -10,11 +10,18 @@
   let chatContainer;
   let inputEl;
   let copiedIndex = $state(-1);
+  let editingIndex = $state(-1);
 
   function copyText(text, index) {
     navigator.clipboard.writeText(text);
     copiedIndex = index;
     setTimeout(() => { copiedIndex = -1; }, 5000);
+  }
+
+  function startEdit(text, index) {
+    editingIndex = index;
+    input = text;
+    setTimeout(() => inputEl?.focus(), 60);
   }
 
   function scrollToBottom() {
@@ -28,6 +35,11 @@
   async function handleSend() {
     const text = input.trim();
     if (!text || loading || !sessionId) return;
+
+    if (editingIndex >= 0) {
+      messages = messages.slice(0, editingIndex);
+      editingIndex = -1;
+    }
 
     messages = [...messages, { role: "user", text }];
     input = "";
@@ -89,13 +101,18 @@
             <span class="label">You</span>
             <pre class="content">{msg.text}</pre>
           </div>
-          <button class="copy-btn user-copy" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
-            {#if copiedIndex === i}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            {:else}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            {/if}
-          </button>
+          <div class="user-actions">
+            <button class="action-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
+              {#if copiedIndex === i}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              {:else}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              {/if}
+            </button>
+            <button class="action-btn" onclick={() => startEdit(msg.text, i)} title="Edit message" disabled={loading}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+          </div>
         </div>
       {:else}
         <div class="message error">
@@ -216,13 +233,15 @@
     max-width: unset;
   }
 
-  .user-copy {
+  .user-actions {
     position: absolute;
     right: 0;
     bottom: 0;
+    display: flex;
+    gap: 4px;
   }
 
-  .copy-btn {
+  .action-btn, .copy-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -238,13 +257,14 @@
     flex-shrink: 0;
   }
 
-  .copy-btn:not(.user-copy) {
+  .copy-btn {
     position: absolute;
     left: 8px;
     bottom: 6px;
   }
 
-  .copy-btn:hover { background: #334155; color: #ffffff; }
+  .action-btn:hover, .copy-btn:hover { background: #334155; color: #ffffff; }
+  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .chat-input {
     display: flex;
