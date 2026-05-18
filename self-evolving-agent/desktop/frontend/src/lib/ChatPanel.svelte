@@ -1,5 +1,8 @@
 <script>
   import { sendMessageStream } from "./api.js";
+  import { marked } from "marked";
+
+  marked.setOptions({ breaks: true, gfm: true });
 
   let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
 
@@ -114,7 +117,7 @@
       {#if msg.role === "agent"}
         <div class="message agent">
           <span class="label">Agent</span>
-          <pre class="content">{msg.text}{#if msg.streaming}<span class="cursor">|</span>{/if}</pre>
+          <div class="content markdown-body">{@html marked.parse(msg.text || "")}{#if msg.streaming}<span class="cursor">|</span>{/if}</div>
           {#if !msg.streaming}
             <button class="copy-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
               {#if copiedIndex === i}
@@ -249,6 +252,112 @@
     white-space: pre-wrap;
     word-break: break-word;
     font-family: inherit;
+  }
+
+  .markdown-body {
+    white-space: normal;
+  }
+
+  .markdown-body :global(h1),
+  .markdown-body :global(h2),
+  .markdown-body :global(h3),
+  .markdown-body :global(h4) {
+    margin: 12px 0 6px;
+    line-height: 1.3;
+  }
+  .markdown-body :global(h1) { font-size: 1.3em; }
+  .markdown-body :global(h2) { font-size: 1.15em; }
+  .markdown-body :global(h3) { font-size: 1.05em; }
+
+  .markdown-body :global(p) {
+    margin: 6px 0;
+  }
+
+  .markdown-body :global(ul),
+  .markdown-body :global(ol) {
+    margin: 6px 0;
+    padding-left: 1.5em;
+  }
+
+  .markdown-body :global(li) {
+    margin: 2px 0;
+  }
+
+  .markdown-body :global(code) {
+    background: #e2e8f0;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 0.88em;
+  }
+
+  .markdown-body :global(pre) {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+
+  .markdown-body :global(pre code) {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.85em;
+  }
+
+  .markdown-body :global(blockquote) {
+    border-left: 3px solid #94a3b8;
+    margin: 8px 0;
+    padding: 4px 12px;
+    color: #475569;
+  }
+
+  .markdown-body :global(a) {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+
+  .markdown-body :global(hr) {
+    border: none;
+    border-top: 1px solid #cbd5e1;
+    margin: 12px 0;
+  }
+
+  .markdown-body :global(table) {
+    border-collapse: collapse;
+    margin: 8px 0;
+    width: 100%;
+    font-size: 0.88em;
+  }
+
+  .markdown-body :global(th),
+  .markdown-body :global(td) {
+    border: 1px solid #cbd5e1;
+    padding: 6px 10px;
+    text-align: left;
+  }
+
+  .markdown-body :global(th) {
+    background: #e2e8f0;
+    font-weight: 600;
+  }
+
+  .markdown-body :global(strong) {
+    font-weight: 700;
+  }
+
+  .markdown-body :global(em) {
+    font-style: italic;
+  }
+
+  .markdown-body :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .markdown-body :global(:last-child) {
+    margin-bottom: 0;
   }
 
   .typing {
