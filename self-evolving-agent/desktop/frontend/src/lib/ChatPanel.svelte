@@ -59,7 +59,7 @@
     loading = true;
     scrollToBottom();
 
-    const placeholder = { role: "agent", text: "", streaming: true };
+    const placeholder = { role: "agent", text: "", thinking: "", streaming: true };
     messages = [...messages, placeholder];
     const idx = messages.length - 1;
 
@@ -68,6 +68,10 @@
 
     try {
       await sendMessageStream(appName, userId, sessionId, text, {
+        onThinking(chunk) {
+          messages[idx].thinking += chunk;
+          scrollToBottom();
+        },
         onChunk(chunk) {
           messages[idx].text += chunk;
           scrollToBottom();
@@ -77,7 +81,7 @@
         },
         onComplete() {
           messages[idx].streaming = false;
-          if (!messages[idx].text) {
+          if (!messages[idx].text && !messages[idx].thinking) {
             messages.splice(idx, 1);
             messages = messages;
           }
@@ -120,7 +124,18 @@
       {#if msg.role === "agent"}
         <div class="message agent">
           <span class="label">Agent</span>
-          <div class="content markdown-body">{@html marked.parse(msg.text || "")}{#if msg.streaming}<span class="cursor">|</span>{/if}</div>
+          {#if msg.thinking}
+            <details class="thinking-block" open={msg.streaming && !msg.text}>
+              <summary>
+                <svg class="thinking-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                {#if msg.streaming && !msg.text}<span class="thinking-pulse">Thinking...</span>{:else}Thought{/if}
+              </summary>
+              <div class="thinking-content">{msg.thinking}</div>
+            </details>
+          {/if}
+          {#if msg.text || (msg.streaming && !msg.thinking)}
+            <div class="content markdown-body">{@html marked.parse(msg.text || "")}{#if msg.streaming}<span class="cursor">|</span>{/if}</div>
+          {/if}
           {#if !msg.streaming}
             <button class="copy-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
               {#if copiedIndex === i}
@@ -255,6 +270,66 @@
     white-space: pre-wrap;
     word-break: break-word;
     font-family: inherit;
+  }
+
+  .thinking-block {
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 0.85em;
+  }
+
+  .thinking-block summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.9em;
+    user-select: none;
+    list-style: none;
+  }
+
+  .thinking-block summary::-webkit-details-marker { display: none; }
+
+  .thinking-block summary::after {
+    content: "▸";
+    margin-left: auto;
+    font-size: 0.8em;
+    transition: transform 0.15s;
+  }
+
+  .thinking-block[open] summary::after {
+    transform: rotate(90deg);
+  }
+
+  .thinking-icon {
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .thinking-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .thinking-content {
+    padding: 6px 10px 10px;
+    color: #475569;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    border-top: 1px solid #e2e8f0;
+    line-height: 1.5;
+    max-height: 200px;
+    overflow-y: auto;
   }
 
   .markdown-body {

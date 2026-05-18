@@ -26,7 +26,7 @@ export async function sendMessage(appName, userId, sessionId, message) {
   return res.json();
 }
 
-export async function sendMessageStream(appName, userId, sessionId, message, { onChunk, onError, onComplete, signal }) {
+export async function sendMessageStream(appName, userId, sessionId, message, { onChunk, onThinking, onError, onComplete, signal }) {
   const res = await fetch(`${API_BASE}/run_sse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -66,7 +66,8 @@ export async function sendMessageStream(appName, userId, sessionId, message, { o
           const parts = event?.content?.parts;
           if (!parts) continue;
           for (const p of parts) {
-            if (p.text && !p.functionCall) onChunk?.(p.text);
+            if (!p.text || p.functionCall) continue;
+            if (p.thought) { onThinking?.(p.text); } else { onChunk?.(p.text); }
           }
         } catch {}
       }

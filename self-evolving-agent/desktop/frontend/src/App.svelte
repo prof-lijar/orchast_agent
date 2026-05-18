@@ -40,10 +40,18 @@
       for (const part of parts) {
         if (!part.text) continue;
         const last = msgs[msgs.length - 1];
-        if (last && last.role === role) {
-          last.text += part.text;
+        if (part.thought) {
+          if (last && last.role === role) {
+            last.thinking = (last.thinking || "") + part.text;
+          } else {
+            msgs.push({ role, text: "", thinking: part.text });
+          }
         } else {
-          msgs.push({ role, text: part.text });
+          if (last && last.role === role) {
+            last.text += part.text;
+          } else {
+            msgs.push({ role, text: part.text });
+          }
         }
       }
     }
