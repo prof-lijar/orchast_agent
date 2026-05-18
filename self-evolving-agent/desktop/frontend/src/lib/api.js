@@ -10,7 +10,11 @@ export async function createSession(appName = "app") {
   return res.json();
 }
 
-export async function sendMessage(appName, userId, sessionId, message) {
+export async function sendMessage(appName, userId, sessionId, message, files = []) {
+  const parts = [{ text: message }];
+  for (const f of files) {
+    parts.push({ inlineData: { mimeType: f.mime, data: f.base64 } });
+  }
   const res = await fetch(`${API_BASE}/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -18,7 +22,7 @@ export async function sendMessage(appName, userId, sessionId, message) {
       app_name: appName,
       user_id: userId,
       session_id: sessionId,
-      new_message: { role: "user", parts: [{ text: message }] },
+      new_message: { role: "user", parts },
       streaming: false,
     }),
   });
@@ -26,7 +30,11 @@ export async function sendMessage(appName, userId, sessionId, message) {
   return res.json();
 }
 
-export async function sendMessageStream(appName, userId, sessionId, message, { onChunk, onThinking, onError, onComplete, signal }) {
+export async function sendMessageStream(appName, userId, sessionId, message, files = [], { onChunk, onThinking, onError, onComplete, signal }) {
+  const parts = [{ text: message }];
+  for (const f of files) {
+    parts.push({ inlineData: { mimeType: f.mime, data: f.base64 } });
+  }
   const res = await fetch(`${API_BASE}/run_sse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -34,7 +42,7 @@ export async function sendMessageStream(appName, userId, sessionId, message, { o
       app_name: appName,
       user_id: userId,
       session_id: sessionId,
-      new_message: { role: "user", parts: [{ text: message }] },
+      new_message: { role: "user", parts },
       streaming: true,
     }),
     signal,

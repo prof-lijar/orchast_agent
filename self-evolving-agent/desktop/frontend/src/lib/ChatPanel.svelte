@@ -7,17 +7,87 @@
 
   let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const ACCEPTED_TYPES = ".csv,.json,.txt,.pdf,.png,.jpg,.jpeg,.xlsx";
+
   // svelte-ignore state_referenced_locally
   let messages = $state([...initialMessages]);
   let input = $state("");
   let loading = $state(false);
   let chatContainer;
   let inputEl;
+  let fileInput;
   let copiedIndex = $state(-1);
   let editingIndex = $state(-1);
   let abortCtrl = $state(null);
+  let attachedFiles = $state([]);
+  let dragging = $state(false);
 
   onMount(() => { inputEl?.focus(); });
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const bytes = new Uint8Array(reader.result);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        resolve(btoa(binary));
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function addFiles(fileList) {
+    for (const file of fileList) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File "${file.name}" exceeds 10 MB limit.`);
+        continue;
+      }
+      const base64 = await fileToBase64(file);
+      const isImage = file.type.startsWith("image/");
+      attachedFiles = [...attachedFiles, {
+        name: file.name,
+        size: file.size,
+        mime: file.type || "application/octet-stream",
+        base64,
+        previewUrl: isImage ? URL.createObjectURL(file) : null,
+      }];
+    }
+  }
+
+  function handleFileSelect(e) {
+    if (e.target.files?.length) addFiles(e.target.files);
+    e.target.value = "";
+  }
+
+  function removeFile(index) {
+    const f = attachedFiles[index];
+    if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+    attachedFiles = attachedFiles.filter((_, i) => i !== index);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    dragging = true;
+  }
+
+  function handleDragLeave() {
+    dragging = false;
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    dragging = false;
+    if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+  }
 
   function copyText(text, index) {
     navigator.clipboard.writeText(text);
@@ -47,15 +117,20 @@
 
   async function handleSend() {
     const text = input.trim();
-    if (!text || loading || !sessionId) return;
+    const hasFiles = attachedFiles.length > 0;
+    if ((!text && !hasFiles) || loading || !sessionId) return;
 
     if (editingIndex >= 0) {
       messages = messages.slice(0, editingIndex);
       editingIndex = -1;
     }
 
-    messages = [...messages, { role: "user", text }];
+    const fileMeta = attachedFiles.map(f => ({ name: f.name, size: f.size, mime: f.mime, previewUrl: f.previewUrl }));
+    const filesToSend = attachedFiles.map(f => ({ mime: f.mime, base64: f.base64 }));
+
+    messages = [...messages, { role: "user", text: text || "(attached files)", files: fileMeta }];
     input = "";
+    attachedFiles = [];
     loading = true;
     scrollToBottom();
 
@@ -67,7 +142,7 @@
     abortCtrl = ctrl;
 
     try {
-      await sendMessageStream(appName, userId, sessionId, text, {
+      await sendMessageStream(appName, userId, sessionId, text || "User attached file(s). Describe what you see or process them.", filesToSend, {
         onThinking(chunk) {
           messages[idx].thinking += chunk;
           scrollToBottom();
@@ -150,6 +225,20 @@
         <div class="message-wrap user">
           <div class="message user">
             <span class="label">You</span>
+            {#if msg.files?.length}
+              <div class="message-files">
+                {#each msg.files as f}
+                  <div class="message-file-chip">
+                    {#if f.previewUrl}
+                      <img src={f.previewUrl} alt={f.name} />
+                    {:else}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    {/if}
+                    <span>{f.name}</span>
+                  </div>
+                {/each}
+              </div>
+            {/if}
             <pre class="content">{msg.text}</pre>
           </div>
           <div class="user-actions">
@@ -180,22 +269,60 @@
     {/if}
   </div>
 
-  <div class="chat-input">
-    <textarea
-      bind:this={inputEl}
-      bind:value={input}
-      onkeydown={handleKeydown}
-      placeholder={sessionId ? "Message the agent..." : "Connecting..."}
-      disabled={!sessionId || loading}
-      rows="2"
-    ></textarea>
-    {#if abortCtrl}
-      <button class="stop-btn" onclick={stopStreaming}>Stop</button>
-    {:else}
-      <button onclick={handleSend} disabled={!input.trim() || loading || !sessionId}>
-        Send
-      </button>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="chat-input"
+    class:drag-over={dragging}
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
+    role="region"
+    aria-label="Message input with file drop"
+  >
+    {#if attachedFiles.length > 0}
+      <div class="file-preview-strip">
+        {#each attachedFiles as f, i}
+          <div class="file-chip">
+            {#if f.previewUrl}
+              <img src={f.previewUrl} alt={f.name} />
+            {:else}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            {/if}
+            <span class="file-chip-name">{f.name}</span>
+            <span class="file-chip-size">{formatFileSize(f.size)}</span>
+            <button class="file-chip-remove" onclick={() => removeFile(i)}>&times;</button>
+          </div>
+        {/each}
+      </div>
     {/if}
+    <input
+      type="file"
+      multiple
+      accept={ACCEPTED_TYPES}
+      bind:this={fileInput}
+      onchange={handleFileSelect}
+      style="display:none"
+    />
+    <div class="input-row">
+      <button class="attach-btn" onclick={() => fileInput?.click()} disabled={loading} title="Attach file">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <textarea
+        bind:this={inputEl}
+        bind:value={input}
+        onkeydown={handleKeydown}
+        placeholder={sessionId ? "Message the agent..." : "Connecting..."}
+        disabled={!sessionId || loading}
+        rows="2"
+      ></textarea>
+      {#if abortCtrl}
+        <button class="stop-btn" onclick={stopStreaming}>Stop</button>
+      {:else}
+        <button onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading || !sessionId}>
+          Send
+        </button>
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -489,10 +616,115 @@
 
   .chat-input {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    gap: 0;
     padding: 12px 16px;
     border-top: 1px solid #e2e8f0;
     background: #ffffff;
+    transition: border-color 0.15s;
+  }
+
+  .chat-input.drag-over {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .file-preview-strip {
+    display: flex;
+    gap: 6px;
+    padding: 6px 0 8px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .file-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.78em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .file-chip img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .file-chip-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #334155;
+  }
+
+  .file-chip-size {
+    color: #94a3b8;
+  }
+
+  .file-chip-remove {
+    padding: 0 4px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.1em;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .file-chip-remove:hover { color: #dc2626; }
+
+  .attach-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #64748b;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .attach-btn:hover:not(:disabled) { background: #f1f5f9; color: #2563eb; border-color: #2563eb; }
+  .attach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .message-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .message-file-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 6px;
+    font-size: 0.78em;
+  }
+
+  .message-file-chip img {
+    width: 24px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 3px;
   }
 
   textarea {

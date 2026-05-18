@@ -7,6 +7,9 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+os.environ["OPENAI_API_KEY"] = "ollama"
+os.environ["OPENAI_BASE_URL"] = "http://localhost:11434/v1"
+
 import google.auth
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.apps import App
@@ -780,50 +783,96 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 
 def _save_uploaded_files(callback_context, llm_request):
-    """Detect inline file uploads and save them to disk.
-
-    Appends a system hint with the saved file path so the model can pass it
-    to file-based tools like csv_read_tool.
+    """Detect inline file uploads, save to disk, extract text, and strip
+    inlineData parts so the LLM never sees unsupported MIME types.
     """
     contents = llm_request.contents
     if not contents:
         return None
-    last_user = None
-    for content in reversed(contents):
-        if content.role == "user":
-            last_user = content
-            break
-    if not last_user or not last_user.parts:
-        return None
+
     saved = []
-    for part in last_user.parts:
-        blob = getattr(part, "inline_data", None)
-        if not blob:
+    extracted = []
+    new_contents = []
+
+    for content in contents:
+        if not content.parts or content.role != "user":
+            new_contents.append(content)
             continue
-        mime = getattr(blob, "mime_type", "") or ""
-        data = getattr(blob, "data", None)
-        if not data:
-            continue
-        ext = _mime_to_ext(mime)
-        filename = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
-        filepath = UPLOAD_DIR / filename
-        if isinstance(data, str):
-            import base64
-            data = base64.b64decode(data)
-        filepath.write_bytes(data)
-        saved.append(str(filepath))
+        clean_parts = []
+        has_blobs = False
+        for part in content.parts:
+            blob = getattr(part, "inline_data", None)
+            if not blob:
+                clean_parts.append(part)
+                continue
+            data = getattr(blob, "data", None)
+            if not data:
+                clean_parts.append(part)
+                continue
+            has_blobs = True
+            mime = getattr(blob, "mime_type", "") or ""
+            ext = _mime_to_ext(mime)
+            filename = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
+            filepath = UPLOAD_DIR / filename
+            if isinstance(data, str):
+                import base64
+                data = base64.b64decode(data)
+            filepath.write_bytes(data)
+            saved.append(str(filepath))
+            text_content = _extract_file_text(filepath, ext)
+            if text_content:
+                extracted.append((filename, text_content))
+        if has_blobs:
+            if clean_parts:
+                new_contents.append(
+                    types.Content(role="user", parts=clean_parts)
+                )
+        else:
+            new_contents.append(content)
+
     if saved:
-        paths = ", ".join(saved)
-        llm_request.contents.append(
+        hint_lines = [f"- {p}" for p in saved]
+        hint = "[SYSTEM] The user uploaded file(s):\n" + "\n".join(hint_lines)
+        if extracted:
+            hint += "\n\nExtracted content:\n"
+            for fname, text in extracted:
+                hint += f"\n--- {fname} ---\n{text}\n"
+        else:
+            hint += "\nUse file path(s) when calling tools that need a file_path parameter."
+        new_contents.append(
             types.Content(
                 role="user",
-                parts=[types.Part.from_text(
-                    text=f"[SYSTEM] The user uploaded file(s) saved at: {paths}\n"
-                    f"Use this file path when calling tools that need a file_path parameter."
-                )],
+                parts=[types.Part.from_text(text=hint)],
             )
         )
+        llm_request.contents[:] = new_contents
+
     return None
+
+
+_MAX_EXTRACT_CHARS = 8000
+
+
+def _extract_file_text(filepath: Path, ext: str) -> str:
+    try:
+        if ext in (".txt", ".csv", ".json"):
+            text = filepath.read_text(encoding="utf-8", errors="replace")
+            return text[:_MAX_EXTRACT_CHARS]
+        if ext == ".pdf":
+            from pypdf import PdfReader
+            reader = PdfReader(str(filepath))
+            pages = []
+            total = 0
+            for page in reader.pages:
+                page_text = page.extract_text() or ""
+                pages.append(page_text)
+                total += len(page_text)
+                if total > _MAX_EXTRACT_CHARS:
+                    break
+            return "\n".join(pages)[:_MAX_EXTRACT_CHARS]
+    except Exception:
+        pass
+    return ""
 
 
 def _mime_to_ext(mime: str) -> str:
@@ -1211,7 +1260,12 @@ def _root_before_model_local(callback_context, llm_request):
     return _limit_tool_loops(callback_context, llm_request)
 
 
-_root_before_model = _root_before_model_local if _agent_model else None
+def _root_before_model_cloud(callback_context, llm_request):
+    _save_uploaded_files(callback_context, llm_request)
+    return None
+
+
+_root_before_model = _root_before_model_local if _agent_model else _root_before_model_cloud
 _root_tools = [
     search_registry,
     execute_registered_tool,
