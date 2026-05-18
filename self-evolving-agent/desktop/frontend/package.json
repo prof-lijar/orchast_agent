@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "marked": "^18.0.3",
     "svelte": "^5.55.5"
   },
   "devDependencies": {

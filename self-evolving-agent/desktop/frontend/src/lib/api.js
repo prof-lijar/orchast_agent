@@ -10,7 +10,11 @@ export async function createSession(appName = "app") {
   return res.json();
 }
 
-export async function sendMessage(appName, userId, sessionId, message) {
+export async function sendMessage(appName, userId, sessionId, message, files = []) {
+  const parts = [{ text: message }];
+  for (const f of files) {
+    parts.push({ inlineData: { mimeType: f.mime, data: f.base64 } });
+  }
   const res = await fetch(`${API_BASE}/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -18,12 +22,68 @@ export async function sendMessage(appName, userId, sessionId, message) {
       app_name: appName,
       user_id: userId,
       session_id: sessionId,
-      new_message: { role: "user", parts: [{ text: message }] },
+      new_message: { role: "user", parts },
       streaming: false,
     }),
   });
   if (!res.ok) throw new Error(`Failed to send message: ${res.status}`);
   return res.json();
+}
+
+export async function sendMessageStream(appName, userId, sessionId, message, files = [], { onChunk, onThinking, onError, onComplete, signal }) {
+  const parts = [{ text: message }];
+  for (const f of files) {
+    parts.push({ inlineData: { mimeType: f.mime, data: f.base64 } });
+  }
+  const res = await fetch(`${API_BASE}/run_sse`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app_name: appName,
+      user_id: userId,
+      session_id: sessionId,
+      new_message: { role: "user", parts },
+      streaming: true,
+    }),
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`Stream failed: ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n\n");
+      buf = lines.pop();
+
+      for (const block of lines) {
+        const line = block.trim();
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const event = JSON.parse(line.slice(6));
+          if (event.error) { onError?.(event.error); continue; }
+          if (!event.partial) continue;
+          const parts = event?.content?.parts;
+          if (!parts) continue;
+          for (const p of parts) {
+            if (!p.text || p.functionCall) continue;
+            if (p.thought) { onThinking?.(p.text); } else { onChunk?.(p.text); }
+          }
+        } catch {}
+      }
+    }
+  } finally {
+    reader.releaseLock();
+    onComplete?.();
+  }
 }
 
 export async function checkBackendHealth() {

@@ -1,168 +1,18 @@
 {
-  "url_fetch_tool": {
-    "name": "url_fetch_tool",
-    "description": "Fetches the text content of a specified URL using an HTTP GET request.",
-    "module": "app.tools.generated.url_fetch_tool",
-    "function": "url_fetch_tool",
-    "input_schema": {
-      "url": "string"
-    },
-    "output_schema": {
-      "content": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T11:54:13.355091+00:00",
-    "version": 1
-  },
-  "text_to_ascii_art_tool": {
-    "name": "text_to_ascii_art_tool",
-    "description": "Converts input text into stylized ASCII art using a fixed, simple font mapping.",
-    "module": "app.tools.generated.text_to_ascii_art_tool",
-    "function": "text_to_ascii_art_tool",
-    "input_schema": {
-      "text": "string"
-    },
-    "output_schema": {
-      "ascii_art": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T12:50:47.835121+00:00",
-    "version": 1
-  },
-  "word_reverser_tool": {
-    "name": "word_reverser_tool",
-    "description": "Reverses the order of words in an input string, preserving the spelling of individual words.",
-    "module": "app.tools.generated.word_reverser_tool",
-    "function": "word_reverser_tool",
-    "input_schema": {
-      "text": "string"
-    },
-    "output_schema": {
-      "reversed_text": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T12:59:40.127886+00:00",
-    "version": 1
-  },
-  "python_syntax_detector_tool": {
-    "name": "python_syntax_detector_tool",
-    "description": "Checks a given string of Python code for syntax errors and provides diagnostic feedback.",
-    "module": "app.tools.generated.python_syntax_detector_tool",
-    "function": "python_syntax_detector_tool",
-    "input_schema": {
-      "code": "string"
-    },
-    "output_schema": {
-      "is_valid": "boolean",
-      "feedback": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T14:13:17.515078+00:00",
-    "version": 1
-  },
-  "social_media_post_generator_tool": {
-    "name": "social_media_post_generator_tool",
-    "description": "Generates a complete social media post (headline, body text, and three relevant hashtags) optimized for short-form platforms based on a user-provided topic.",
-    "module": "app.tools.generated.social_media_post_generator_tool",
-    "function": "social_media_post_generator_tool",
-    "input_schema": {
-      "topic": "string"
-    },
-    "output_schema": {
-      "headline": "string",
-      "body_text": "string",
-      "hashtags": "list_of_strings"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T14:22:47.608906+00:00",
-    "version": 1
-  },
-  "caveman_summarizer_tool": {
-    "name": "caveman_summarizer_tool",
-    "description": "Summarizes input text into simple, funny, and easy-to-understand caveman-style language.",
-    "module": "app.tools.generated.caveman_summarizer_tool",
-    "function": "caveman_summarizer_tool",
-    "input_schema": {
-      "text": "string"
-    },
-    "output_schema": {
-      "summary": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-10T14:27:23.227529+00:00",
-    "version": 1
-  },
-  "translation_tool": {
-    "name": "translation_tool",
-    "description": "Translates text from a specified source language to a target language.",
-    "module": "app.tools.generated.translation_tool",
-    "function": "translation_tool",
-    "input_schema": {
-      "text": "string",
-      "source_language": "string",
-      "target_language": "string"
-    },
-    "output_schema": {
-      "translated_text": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-11T11:27:53.139240+00:00",
-    "version": 1
-  },
-  "csv_formatter_tool": {
-    "name": "csv_formatter_tool",
-    "description": "Reads a CSV file and returns a formatted string representation of the data based on specified columns and row limits.",
-    "module": "app.tools.generated.csv_formatter_tool",
-    "function": "csv_formatter_tool",
+  "excel_pilot_tool": {
+    "name": "excel_pilot_tool",
+    "description": "Analyzes Excel files and performs data processing or calculations based on a natural language request.",
+    "module": "app.tools.generated.excel_pilot_tool",
+    "function": "excel_pilot_tool",
     "input_schema": {
       "file_path": "string",
-      "columns": "list",
-      "row_limit": "integer"
+      "request": "string"
     },
     "output_schema": {
-      "formatted_data": "string"
+      "result": "string"
     },
     "risk_level": "low",
-    "created_at": "2026-05-12T07:55:10.636773+00:00",
-    "version": 1
-  },
-  "build_website_tool": {
-    "name": "build_website_tool",
-    "description": "Generates a complete static website project organized into a project folder containing HTML, CSS, JavaScript, and a README file.",
-    "module": "app.tools.generated.build_website_tool",
-    "function": "build_website_tool",
-    "input_schema": {
-      "website_description": "string",
-      "style_preference": "string",
-      "features": "array",
-      "pages": "array"
-    },
-    "output_schema": {
-      "success": "boolean",
-      "project_name": "string",
-      "files": "object",
-      "instructions": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-12T09:54:44.434254+00:00",
-    "version": 1
-  },
-  "create_project_files_tool": {
-    "name": "create_project_files_tool",
-    "description": "Creates a project directory containing multiple files with specified paths and contents, ensuring the project structure is preserved for download.",
-    "module": "app.tools.generated.create_project_files_tool",
-    "function": "create_project_files_tool",
-    "input_schema": {
-      "project_name": "string",
-      "files": "object"
-    },
-    "output_schema": {
-      "success": "boolean",
-      "project_name": "string",
-      "message": "string"
-    },
-    "risk_level": "low",
-    "created_at": "2026-05-12T10:07:13.108639+00:00",
+    "created_at": "2026-05-18T10:09:40.534638+00:00",
     "version": 1
   }
 }

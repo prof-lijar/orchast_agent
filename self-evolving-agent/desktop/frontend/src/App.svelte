@@ -32,22 +32,38 @@
     }
   }
 
+  function mergeSessionEvents(events) {
+    const msgs = [];
+    for (const event of events) {
+      const parts = event?.content?.parts ?? [];
+      const role = event?.author === "user" ? "user" : "agent";
+      for (const part of parts) {
+        if (!part.text) continue;
+        const last = msgs[msgs.length - 1];
+        if (part.thought) {
+          if (last && last.role === role) {
+            last.thinking = (last.thinking || "") + part.text;
+          } else {
+            msgs.push({ role, text: "", thinking: part.text });
+          }
+        } else {
+          if (last && last.role === role) {
+            last.text += part.text;
+          } else {
+            msgs.push({ role, text: part.text });
+          }
+        }
+      }
+    }
+    return msgs;
+  }
+
   async function connectToBackend() {
     backendOnline = await checkBackendHealth();
     if (backendOnline && sessionId) {
       try {
         const session = await getSession(appName, userId, sessionId);
-        const msgs = [];
-        for (const event of session.events || []) {
-          const parts = event?.content?.parts ?? [];
-          const author = event?.author;
-          for (const part of parts) {
-            if (part.text) {
-              msgs.push({ role: author === "user" ? "user" : "agent", text: part.text });
-            }
-          }
-        }
-        sessionMessages = msgs;
+        sessionMessages = mergeSessionEvents(session.events || []);
         sessionKey++;
       } catch {
         saveSessionId("");
@@ -98,18 +114,8 @@
     if (sid === sessionId) return;
     try {
       const session = await getSession(appName, userId, sid);
-      const msgs = [];
-      for (const event of session.events || []) {
-        const parts = event?.content?.parts ?? [];
-        const author = event?.author;
-        for (const part of parts) {
-          if (part.text) {
-            msgs.push({ role: author === "user" ? "user" : "agent", text: part.text });
-          }
-        }
-      }
       saveSessionId(sid);
-      sessionMessages = msgs;
+      sessionMessages = mergeSessionEvents(session.events || []);
       sessionKey++;
     } catch (err) {
       console.error("Failed to load session:", err);

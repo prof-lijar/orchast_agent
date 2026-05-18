@@ -7,6 +7,9 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+os.environ["OPENAI_API_KEY"] = "ollama"
+os.environ["OPENAI_BASE_URL"] = "http://localhost:11434/v1"
+
 import google.auth
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.apps import App
@@ -42,6 +45,10 @@ else:
         model="gemini-flash-latest",
         retry_options=types.HttpRetryOptions(attempts=3),
     )
+
+_gemini_thinking_config = types.GenerateContentConfig(
+    thinking_config=types.ThinkingConfig(thinking_budget=2048),
+)
 
 
 def get_current_model_name() -> str:
@@ -84,6 +91,10 @@ def switch_model(model_name: str) -> dict:
     ]
     for agent in all_agents:
         agent.model = new_model
+
+    root_agent.generate_content_config = (
+        _gemini_thinking_config if model_name.startswith("gemini") else None
+    )
 
     return {"success": True, "model": model_name, "previous": previous}
 
@@ -228,6 +239,52 @@ async def create_downloadable_file(
     })
 
 
+async def run_python_code(
+    code: str,
+    dependencies: str = "",
+    tool_context: ToolContext = None,
+) -> str:
+    """Execute Python code and return the output. Use this for ad-hoc data \
+processing tasks such as analyzing uploaded files, computing statistics, \
+filtering rows, or generating tables.
+
+    The code runs in a sandboxed subprocess with a 120-second timeout.
+    Use print() in the code to produce output — stdout is returned.
+
+    Args:
+        code: Python source code to execute. Use print() for output.
+        dependencies: Comma-separated pip package names to install before \
+running, e.g. 'tabulate,matplotlib'. Leave empty if not needed.
+
+    Returns:
+        The stdout from the executed code, or an error message.
+    """
+    from app.sandbox.runner import install_dependencies, run_code
+
+    if dependencies:
+        pkgs = [p.strip() for p in dependencies.split(",") if p.strip()]
+        dep_result = install_dependencies(pkgs)
+        if not dep_result.success:
+            return json.dumps({
+                "success": False,
+                "error": f"Failed to install dependencies: {dep_result.stderr}",
+            })
+
+    result = run_code(code, timeout=120, max_output=50_000)
+    if result.timed_out:
+        return json.dumps({
+            "success": False,
+            "error": "Code execution timed out after 120 seconds.",
+        })
+    if not result.success:
+        return json.dumps({
+            "success": False,
+            "error": result.stderr or "Code execution failed.",
+            "stdout": result.stdout,
+        })
+    return json.dumps({"success": True, "output": result.stdout})
+
+
 def register_validated_tool(
     tool_context: ToolContext,
 ) -> str:
@@ -276,6 +333,14 @@ everything is read from session state automatically.
         return json.dumps({"success": False, "error": f"Invalid spec: {e}"})
 
     tool_name = spec.tool_name
+
+    if state.get("update_mode", False):
+        original_name = state.get("update_tool_name", "")
+        if original_name:
+            spec_dict = json.loads(strip_code_fences(spec_json))
+            spec_dict["tool_name"] = original_name
+            state["tool_spec"] = json.dumps(spec_dict)
+            return update_registered_tool(tool_context)
 
     if spec.risk_level != "low":
         return json.dumps({
@@ -495,6 +560,9 @@ No arguments needed — everything is read from session state automatically.
         "tool_name": tool_name,
         "version": new_version,
     }
+    state["update_mode"] = False
+    state["update_tool_name"] = ""
+    state["update_tool_spec"] = ""
     state["registration_result"] = json.dumps(result)
     return json.dumps(result)
 
@@ -521,6 +589,43 @@ def delete_registered_tool(tool_name: str) -> str:
         return f"Failed to delete tool '{tool_name}' from registry."
 
     return f"Tool '{tool_name}' has been deleted successfully."
+
+
+def set_update_mode(
+    tool_name: str,
+    tool_context: ToolContext,
+) -> str:
+    """Prepare session state for updating an existing tool. Must be called \
+before transferring to tool_creation_pipeline for tool updates.
+
+    Args:
+        tool_name: The exact name of the existing tool to update, e.g. 'url_fetch_tool'.
+
+    Returns:
+        JSON string confirming update mode is set, or an error if the tool is not found.
+    """
+    existing = registry_manager.find_tool(tool_name)
+    if existing is None:
+        return json.dumps({
+            "success": False,
+            "error": f"Tool '{tool_name}' not found in registry. Cannot update.",
+        })
+
+    state = tool_context.state
+    state["update_mode"] = True
+    state["update_tool_name"] = tool_name
+    state["update_tool_spec"] = json.dumps({
+        "tool_name": existing.name,
+        "description": existing.description,
+        "inputs": existing.input_schema,
+        "outputs": existing.output_schema,
+    })
+
+    return json.dumps({
+        "success": True,
+        "message": f"Update mode set for '{tool_name}'. Now transfer to tool_creation_pipeline.",
+        "tool_name": tool_name,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -723,51 +828,137 @@ UPLOAD_DIR = Path(tempfile.gettempdir()) / "adk_uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
-def _save_uploaded_files(callback_context, llm_request):
-    """Detect inline file uploads and save them to disk.
+_upload_cache: dict[str, tuple[str, str]] = {}
 
-    Appends a system hint with the saved file path so the model can pass it
-    to file-based tools like csv_read_tool.
+
+def _save_uploaded_files(callback_context, llm_request):
+    """Detect inline file uploads, save to disk, extract text, and strip
+    non-image inlineData parts so the LLM never sees unsupported MIME
+    types.  Image parts (image/*) are kept so the model can use vision.
+
+    Uses content-hash filenames so the save is idempotent (same blob →
+    same file, no overwrite).  The file-path hint is injected right
+    after the Content that contained the blob so it stays associated
+    with the original upload turn, not at the tail of the conversation.
     """
+    import hashlib
+
     contents = llm_request.contents
     if not contents:
         return None
-    last_user = None
-    for content in reversed(contents):
-        if content.role == "user":
-            last_user = content
-            break
-    if not last_user or not last_user.parts:
+
+    new_contents = []
+    has_any_blobs = False
+
+    for content in contents:
+        if not content.parts or content.role != "user":
+            new_contents.append(content)
+            continue
+        clean_parts = []
+        content_has_blobs = False
+        content_uploads = []
+        content_extracted = []
+        for part in content.parts:
+            blob = getattr(part, "inline_data", None)
+            if not blob:
+                clean_parts.append(part)
+                continue
+            data = getattr(blob, "data", None)
+            if not data:
+                clean_parts.append(part)
+                continue
+            content_has_blobs = True
+            mime = getattr(blob, "mime_type", "") or ""
+            is_image = mime.startswith("image/")
+            if is_image:
+                clean_parts.append(part)
+            ext = _mime_to_ext(mime)
+            if isinstance(data, str):
+                import base64
+                data = base64.b64decode(data)
+            fp_data = data[:4096] + len(data).to_bytes(8, "big")
+            content_hash = hashlib.sha256(fp_data).hexdigest()[:12]
+            if content_hash in _upload_cache:
+                filepath_str, text_content = _upload_cache[content_hash]
+            else:
+                filename = f"upload_{content_hash}{ext}"
+                filepath = UPLOAD_DIR / filename
+                if not filepath.exists():
+                    filepath.write_bytes(data)
+                filepath_str = str(filepath)
+                text_content = _extract_file_text(filepath, ext)
+                _upload_cache[content_hash] = (filepath_str, text_content)
+            content_uploads.append(filepath_str)
+            if text_content:
+                content_extracted.append((Path(filepath_str).name, text_content))
+        if content_has_blobs:
+            has_any_blobs = True
+            if clean_parts:
+                new_contents.append(
+                    types.Content(role="user", parts=clean_parts)
+                )
+            if content_uploads:
+                hint_lines = [f"- {p}" for p in content_uploads]
+                hint = "[SYSTEM] Uploaded file(s):\n" + "\n".join(hint_lines)
+                if content_extracted:
+                    hint += "\n\nExtracted content:\n"
+                    for fname, text in content_extracted:
+                        hint += f"\n--- {fname} ---\n{text}\n"
+                else:
+                    hint += "\nUse file path(s) when calling tools that need a file_path parameter."
+                new_contents.append(
+                    types.Content(
+                        role="user",
+                        parts=[types.Part.from_text(text=hint)],
+                    )
+                )
+        else:
+            new_contents.append(content)
+
+    if not has_any_blobs:
         return None
-    saved = []
-    for part in last_user.parts:
-        blob = getattr(part, "inline_data", None)
-        if not blob:
-            continue
-        mime = getattr(blob, "mime_type", "") or ""
-        data = getattr(blob, "data", None)
-        if not data:
-            continue
-        ext = _mime_to_ext(mime)
-        filename = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
-        filepath = UPLOAD_DIR / filename
-        if isinstance(data, str):
-            import base64
-            data = base64.b64decode(data)
-        filepath.write_bytes(data)
-        saved.append(str(filepath))
-    if saved:
-        paths = ", ".join(saved)
-        llm_request.contents.append(
-            types.Content(
-                role="user",
-                parts=[types.Part.from_text(
-                    text=f"[SYSTEM] The user uploaded file(s) saved at: {paths}\n"
-                    f"Use this file path when calling tools that need a file_path parameter."
-                )],
-            )
-        )
+
+    llm_request.contents[:] = new_contents
     return None
+
+
+_MAX_EXTRACT_CHARS = 8000
+
+
+def _extract_file_text(filepath: Path, ext: str) -> str:
+    try:
+        if ext in (".txt", ".csv", ".json"):
+            text = filepath.read_text(encoding="utf-8", errors="replace")
+            return text[:_MAX_EXTRACT_CHARS]
+        if ext == ".pdf":
+            from pypdf import PdfReader
+            reader = PdfReader(str(filepath))
+            pages = []
+            total = 0
+            for page in reader.pages:
+                page_text = page.extract_text() or ""
+                pages.append(page_text)
+                total += len(page_text)
+                if total > _MAX_EXTRACT_CHARS:
+                    break
+            return "\n".join(pages)[:_MAX_EXTRACT_CHARS]
+        if ext in (".xlsx", ".xls"):
+            import pandas as pd
+            engine = "xlrd" if ext == ".xls" else "openpyxl"
+            sheets = pd.read_excel(filepath, sheet_name=None, engine=engine)
+            parts = []
+            total = 0
+            for name, df in sheets.items():
+                header = f"[Sheet: {name}] ({len(df)} rows x {len(df.columns)} cols)\n"
+                table = df.head(100).to_string(index=False)
+                parts.append(header + table)
+                total += len(parts[-1])
+                if total > _MAX_EXTRACT_CHARS:
+                    break
+            return "\n\n".join(parts)[:_MAX_EXTRACT_CHARS]
+    except Exception:
+        pass
+    return ""
 
 
 def _mime_to_ext(mime: str) -> str:
@@ -779,6 +970,8 @@ def _mime_to_ext(mime: str) -> str:
         "image/png": ".png",
         "image/jpeg": ".jpg",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+        "application/vnd.ms-excel": ".xls",
+        "application/haansoftxlsx": ".xlsx",
     }
     return mapping.get(mime, ".bin")
 
@@ -837,15 +1030,76 @@ def _limit_tool_loops(callback_context, llm_request):
 
 
 # ---------------------------------------------------------------------------
+# Shared callback: strip inlineData from session history before any LLM call
+# ---------------------------------------------------------------------------
+
+
+def _strip_inline_data(callback_context, llm_request):
+    """Remove inlineData parts from all user contents so sub-agents don't
+    choke on unsupported MIME types from earlier file uploads."""
+    contents = llm_request.contents
+    if not contents:
+        return None
+    new_contents = []
+    changed = False
+    for content in contents:
+        if not content.parts or content.role != "user":
+            new_contents.append(content)
+            continue
+        has_blobs = any(
+            getattr(p, "inline_data", None) and getattr(getattr(p, "inline_data"), "data", None)
+            for p in content.parts
+        )
+        if not has_blobs:
+            new_contents.append(content)
+            continue
+        changed = True
+        clean = [
+            p for p in content.parts
+            if not (getattr(p, "inline_data", None) and getattr(getattr(p, "inline_data"), "data", None))
+        ]
+        if clean:
+            new_contents.append(types.Content(role="user", parts=clean))
+    if changed:
+        llm_request.contents[:] = new_contents
+    return None
+
+
+def _strip_then_limit_loops(callback_context, llm_request):
+    _strip_inline_data(callback_context, llm_request)
+    return _limit_tool_loops(callback_context, llm_request)
+
+
+# ---------------------------------------------------------------------------
 # Sub-agent definitions (Phases 7-9)
 # ---------------------------------------------------------------------------
 
+
+def _tool_spec_instruction(ctx):
+    update_mode = ctx.state.get("update_mode", False)
+    if not update_mode:
+        return TOOL_SPEC_INSTRUCTION
+
+    tool_name = ctx.state.get("update_tool_name", "")
+    existing_spec = ctx.state.get("update_tool_spec", "")
+
+    return TOOL_SPEC_INSTRUCTION + f"""
+
+UPDATE MODE — You are UPDATING an existing tool, NOT creating a new one.
+
+CRITICAL: The tool_name MUST be exactly "{tool_name}". Do NOT rename it.
+Here is the current spec — improve it as the user requested:
+{existing_spec}
+"""
+
+
 tool_spec_agent = Agent(
     name="tool_spec_agent",
-    description="Designs a formal JSON specification for a new tool based on the user's need",
+    description="Designs a formal JSON specification for a new or updated tool based on the user's need",
     model=_model,
-    instruction=TOOL_SPEC_INSTRUCTION,
+    instruction=_tool_spec_instruction,
     output_key="tool_spec",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -856,6 +1110,7 @@ tool_coder_agent = Agent(
     model=_model,
     instruction=TOOL_CODER_INSTRUCTION,
     output_key="tool_code",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -866,6 +1121,7 @@ tool_test_agent = Agent(
     model=_model,
     instruction=TOOL_TEST_INSTRUCTION,
     output_key="tool_tests",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -894,7 +1150,7 @@ tool_registrar_agent = Agent(
     model=_model,
     instruction=LOCAL_TOOL_REGISTRAR_INSTRUCTION if _agent_model else TOOL_REGISTRAR_INSTRUCTION,
     tools=[register_validated_tool, update_registered_tool],
-    before_model_callback=_limit_tool_loops if _agent_model else None,
+    before_model_callback=_strip_then_limit_loops if _agent_model else _strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -919,6 +1175,7 @@ tool_review_fixer_agent = Agent(
     model=_model,
     instruction=TOOL_REVIEW_FIXER_INSTRUCTION,
     output_key="review_fix_output",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -929,17 +1186,30 @@ tool_review_fixer_agent = Agent(
 # ---------------------------------------------------------------------------
 
 ROOT_INSTRUCTION = """\
+ABSOLUTE RULE — OBEY BEFORE ANYTHING ELSE:
+You MUST NEVER say "I don't have", "I cannot", "I do not have a tool", \
+"I'm not able to", or any similar denial of capability WITHOUT first calling \
+`search_registry`. Your tool registry is DYNAMIC — users add tools you don't \
+know about. If you claim you lack a capability without searching, you are \
+WRONG and LYING to the user. ALWAYS SEARCH FIRST, THEN RESPOND.
+
 You are the Self-Evolving Agent, an intelligent orchestrator that manages a \
 dynamic registry of tools. You can both use existing tools and create new ones.
+
+CRITICAL RULE: You are NOT a normal chatbot. You have a DYNAMIC tool registry \
+that grows over time. NEVER assume you lack a capability — ALWAYS call \
+`search_registry` first. Users create tools you don't know about. If the user \
+mentions a tool by name or asks you to do something specific, SEARCH FIRST.
 
 FIRST: Decide if the user's request needs a tool at all.
 - Simple questions (math, greetings, general knowledge, opinions, explanations) \
 → answer directly. Do NOT search the registry or create tools for these.
-- ANY task that involves processing, transforming, analyzing, formatting, or \
-generating structured output from input data → follow the TOOL WORKFLOW below.
-  Examples: counting words, counting sentences, formatting text, generating \
-markdown, converting data formats, computing text statistics, extracting \
-patterns, summarizing structure, creating formatted output from raw data.
+- If the user mentions a specific tool by name (e.g. "use X tool", "run X") \
+→ ALWAYS follow the TOOL WORKFLOW. NEVER say you don't have it without searching.
+- ANY task that involves processing, transforming, analyzing, fetching, \
+generating, or working with data → follow the TOOL WORKFLOW below.
+  Examples: counting words, fetching URLs, formatting text, converting data, \
+computing statistics, extracting patterns, web scraping, file operations.
 
 TOOL WORKFLOW — follow these steps IN ORDER:
 
@@ -1003,19 +1273,17 @@ UPDATE TOOL WORKFLOW — when the user asks to update, edit, fix, or improve \
 an existing tool:
 
 STEP U1: Confirm which tool to update. Call `search_registry` or \
-`list_available_tools` to verify the tool exists.
+`list_available_tools` to verify the tool exists and get its exact name.
 
-STEP U2: Set session state key "update_mode" to true. Then call \
-`transfer_to_agent` with agent name "tool_creation_pipeline". The pipeline \
-will generate a new spec, code, and tests. The registrar will detect \
-update_mode and call `update_registered_tool` instead of `register_validated_tool`.
+STEP U2: Call `set_update_mode` with the exact tool name. This prepares \
+the pipeline to preserve the original tool name. Then call \
+`transfer_to_agent` with agent name "tool_creation_pipeline".
 
 STEP U3: After the pipeline returns, check for "REGISTRATION_SUCCESS" or \
 "REGISTRATION_FAILED". Handle the same way as new tool creation (retry loop \
 with tool_review_fixer_agent if needed, up to 3 attempts).
 
-STEP U4: Tell the user the tool was updated with the new version number. \
-Reset "update_mode" to false.
+STEP U4: Tell the user the tool was updated with the new version number.
 
 DELETE TOOL WORKFLOW — when the user asks to delete, remove, or unregister \
 a tool:
@@ -1026,9 +1294,35 @@ STEP D2: Call `delete_registered_tool` with the exact tool name.
 
 STEP D3: Tell the user the tool was deleted.
 
+CODE EXECUTION — for ad-hoc data processing:
+When the user asks to process, analyze, or transform data (especially from \
+uploaded files), use `run_python_code` to write and execute Python code \
+directly. This is faster than creating a tool and ideal for one-off tasks.
+
+Use `run_python_code` when:
+- Processing or analyzing an uploaded file (Excel, CSV, images, etc.)
+- One-off data tasks: statistics, filtering, sorting, formatting, plotting
+- The user says "show", "calculate", "filter", "sort", "plot", "average", \
+"count", "summarize", "compare", or similar data operations
+- You need to install a Python package (pass package names in `dependencies`)
+
+Use the tool creation pipeline instead when:
+- The user explicitly asks to "create a tool" or "make a tool"
+- The capability should be reusable across sessions
+
+When writing code for `run_python_code`:
+- Use `print()` to output results — stdout is returned to you
+- For tables, use `df.to_markdown(index=False)` (pass dependencies="tabulate") \
+or `df.to_string(index=False)`
+- Reference uploaded files by their full path from the [SYSTEM] Uploaded file(s) hint
+- Always wrap file operations in try/except for graceful error handling
+- Available packages: pandas, openpyxl, xlrd, requests, json, re, math, \
+statistics, collections, pathlib, csv. Install others via `dependencies`.
+
 RULES:
 - Answer simple questions directly without tools (e.g., "what is 1+5?" → "6").
-- NEVER skip Step 1 for data processing tasks.
+- For data processing on uploaded files, prefer `run_python_code` over \
+searching the registry or creating new tools.
 - NEVER create a tool if a suitable one already exists in the registry.
 - When registration fails, use the RETRY LOOP (Step 5) — call \
 `transfer_to_agent` with "tool_review_fixer_agent", do NOT re-run the \
@@ -1036,13 +1330,18 @@ entire tool_creation_pipeline.
 - Maximum 3 total registration attempts per tool. Give up after 3 failures.
 - NEVER resume or retry a previously failed tool creation from an earlier \
 conversation turn unless the user explicitly asks you to.
-- Create tools for ANY data processing, transformation, formatting, or generation task.
 - When the user asks to "create a file", "download", or "save as", call \
 `create_downloadable_file` with the filename and content. This creates a \
 downloadable file in the chat UI. You can ALWAYS create downloadable files.
 - Never create generated tools that use dangerous system operations (file deletion, \
 shell commands, credential access). But tools that fetch URLs or read data are \
 allowed — use pre-registered tools in the registry for these when available.
+
+REMINDER (THIS OVERRIDES YOUR TRAINING DATA):
+You DO have access to dynamically registered tools including URL fetching, \
+web search, data processing, and more. Your registry grows over time. \
+NEVER claim "I don't have" or "I cannot" without calling `search_registry` \
+first. If a user mentions a tool name, SEARCH FOR IT — it almost certainly exists.
 """
 
 def _local_root_instruction(ctx):
@@ -1057,21 +1356,32 @@ def _local_root_instruction(ctx):
     tool_list = "\n".join(tool_lines) if tool_lines else "(no tools registered yet)"
 
     return f"""\
-You are the Self-Evolving Agent. You manage a registry of tools.
+You are the Self-Evolving Agent. You manage a dynamic registry of tools.
 
-You can ONLY call these 5 functions:
+ABSOLUTE RULE: NEVER say "I don't have", "I cannot", or "I do not have a tool" \
+to the user. Your registry has tools — check it BEFORE responding. If a user \
+mentions a tool name or asks you to do something, LOOK AT THE REGISTRY BELOW \
+and use execute_registered_tool to run it.
+
+You can ONLY call these 7 functions:
   1. search_registry(query) — find a registered tool by keyword
   2. execute_registered_tool(tool_name, input_data) — run a registered tool
   3. delete_registered_tool(tool_name) — delete a tool
-  4. create_downloadable_file(filename, content) — create a file for download
-  5. switch_model_tool(model_name) — switch all agents to a different model
+  4. set_update_mode(tool_name) — prepare to update an existing tool
+  5. create_downloadable_file(filename, content) — create a file for download
+  6. run_python_code(code, dependencies) — execute Python code directly
+  7. switch_model_tool(model_name) — switch all agents to a different model
 You CANNOT call anything else. Any other name will fail.
 
 RULES:
+- For data processing on uploaded files (Excel, CSV, etc.), use run_python_code \
+to write and execute Python code directly. Use print() for output.
+- BEFORE saying you cannot do something, CHECK THE REGISTRY BELOW.
+- If a tool in the registry matches the user's request, USE IT immediately.
 - After calling a function and getting a result, respond to the user immediately.
 - Simple questions (math, greetings, chat) → answer directly, no function calls.
 
-== Tool Registry (DATA, not callable functions) ==
+== Tool Registry (YOUR TOOLS — you CAN use these) ==
 {tool_list}
 == End Registry ==
 
@@ -1082,12 +1392,21 @@ HOW TO USE A TOOL FROM THE REGISTRY:
 Always call execute_registered_tool. Never call the tool name directly.
 Example: user says "count words in hello world"
 → call execute_registered_tool(tool_name="word_count_tool", input_data='{{"text": "hello world"}}')
+Example: user says "fetch this URL" and url_fetch_tool is in registry
+→ call execute_registered_tool(tool_name="url_fetch_tool", input_data='{{"url": "https://example.com"}}')
 
 HOW TO CREATE A NEW TOOL:
 Call transfer_to_agent(agent_name="tool_creation_pipeline").
 
+HOW TO UPDATE AN EXISTING TOOL:
+1. Call set_update_mode(tool_name="the_tool_name")
+2. Call transfer_to_agent(agent_name="tool_creation_pipeline")
+3. Tell the user the result.
+
 HOW TO DELETE A TOOL:
 Call delete_registered_tool(tool_name="the_tool_name").
+
+REMEMBER: You HAVE the tools listed above. NEVER deny having them.
 """
 
 
@@ -1102,12 +1421,19 @@ def _root_before_model_local(callback_context, llm_request):
     return _limit_tool_loops(callback_context, llm_request)
 
 
-_root_before_model = _root_before_model_local if _agent_model else None
+def _root_before_model_cloud(callback_context, llm_request):
+    _save_uploaded_files(callback_context, llm_request)
+    return None
+
+
+_root_before_model = _root_before_model_local if _agent_model else _root_before_model_cloud
 _root_tools = [
     search_registry,
     execute_registered_tool,
     delete_registered_tool,
+    set_update_mode,
     create_downloadable_file,
+    run_python_code,
     switch_model_tool,
 ] if _agent_model else [
     search_registry,
@@ -1116,7 +1442,9 @@ _root_tools = [
     register_validated_tool,
     update_registered_tool,
     delete_registered_tool,
+    set_update_mode,
     create_downloadable_file,
+    run_python_code,
     switch_model_tool,
 ]
 
@@ -1127,6 +1455,7 @@ root_agent = Agent(
     before_model_callback=_root_before_model,
     tools=_root_tools,
     sub_agents=_root_sub_agents,
+    generate_content_config=_gemini_thinking_config if not _agent_model else None,
 )
 
 app = App(
