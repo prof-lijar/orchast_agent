@@ -1,5 +1,5 @@
 <script>
-  import { sendMessage } from "./api.js";
+  import { sendMessageStream } from "./api.js";
 
   let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
 
@@ -11,6 +11,7 @@
   let inputEl;
   let copiedIndex = $state(-1);
   let editingIndex = $state(-1);
+  let abortCtrl = $state(null);
 
   function copyText(text, index) {
     navigator.clipboard.writeText(text);
@@ -24,12 +25,18 @@
     setTimeout(() => inputEl?.focus(), 60);
   }
 
+  let scrollRAF = 0;
   function scrollToBottom() {
-    if (chatContainer) {
-      setTimeout(() => {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }, 50);
-    }
+    if (scrollRAF || !chatContainer) return;
+    scrollRAF = requestAnimationFrame(() => {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      scrollRAF = 0;
+    });
+  }
+
+  function stopStreaming() {
+    abortCtrl?.abort();
+    abortCtrl = null;
   }
 
   async function handleSend() {
@@ -46,21 +53,42 @@
     loading = true;
     scrollToBottom();
 
+    const placeholder = { role: "agent", text: "", streaming: true };
+    messages = [...messages, placeholder];
+    const idx = messages.length - 1;
+
+    const ctrl = new AbortController();
+    abortCtrl = ctrl;
+
     try {
-      const response = await sendMessage(appName, userId, sessionId, text);
-      const events = Array.isArray(response) ? response : [response];
-      for (const event of events) {
-        const parts = event?.content?.parts ?? [];
-        for (const part of parts) {
-          if (part.text) {
-            messages = [...messages, { role: "agent", text: part.text }];
+      await sendMessageStream(appName, userId, sessionId, text, {
+        onChunk(chunk) {
+          messages[idx].text += chunk;
+          scrollToBottom();
+        },
+        onError(err) {
+          messages = [...messages, { role: "error", text: String(err) }];
+        },
+        onComplete() {
+          messages[idx].streaming = false;
+          if (!messages[idx].text) {
+            messages.splice(idx, 1);
+            messages = messages;
           }
-        }
-      }
+        },
+        signal: ctrl.signal,
+      });
     } catch (err) {
-      messages = [...messages, { role: "error", text: err.message }];
+      if (err.name !== "AbortError") {
+        messages[idx].streaming = false;
+        if (!messages[idx].text) messages.splice(idx, 1);
+        messages = [...messages, { role: "error", text: err.message }];
+      } else {
+        messages[idx].streaming = false;
+      }
     } finally {
       loading = false;
+      abortCtrl = null;
       scrollToBottom();
       setTimeout(() => inputEl?.focus(), 60);
     }
@@ -86,14 +114,16 @@
       {#if msg.role === "agent"}
         <div class="message agent">
           <span class="label">Agent</span>
-          <pre class="content">{msg.text}</pre>
-          <button class="copy-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
-            {#if copiedIndex === i}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            {:else}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-            {/if}
-          </button>
+          <pre class="content">{msg.text}{#if msg.streaming}<span class="cursor">|</span>{/if}</pre>
+          {#if !msg.streaming}
+            <button class="copy-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
+              {#if copiedIndex === i}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              {:else}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              {/if}
+            </button>
+          {/if}
         </div>
       {:else if msg.role === "user"}
         <div class="message-wrap user">
@@ -121,7 +151,7 @@
         </div>
       {/if}
     {/each}
-    {#if loading}
+    {#if loading && !messages.some(m => m.streaming)}
       <div class="message agent">
         <span class="label">Agent</span>
         <span class="typing">Thinking...</span>
@@ -138,9 +168,13 @@
       disabled={!sessionId || loading}
       rows="2"
     ></textarea>
-    <button onclick={handleSend} disabled={!input.trim() || loading || !sessionId}>
-      Send
-    </button>
+    {#if abortCtrl}
+      <button class="stop-btn" onclick={stopStreaming}>Stop</button>
+    {:else}
+      <button onclick={handleSend} disabled={!input.trim() || loading || !sessionId}>
+        Send
+      </button>
+    {/if}
   </div>
 </div>
 
@@ -302,4 +336,23 @@
 
   button:hover:not(:disabled) { background: #1d4ed8; }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .cursor {
+    animation: blink 0.6s step-end infinite;
+    color: #2563eb;
+    font-weight: bold;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .stop-btn {
+    padding: 10px 20px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  .stop-btn:hover { background: #b91c1c; }
 </style>

@@ -26,6 +26,57 @@ export async function sendMessage(appName, userId, sessionId, message) {
   return res.json();
 }
 
+export async function sendMessageStream(appName, userId, sessionId, message, { onChunk, onError, onComplete, signal }) {
+  const res = await fetch(`${API_BASE}/run_sse`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app_name: appName,
+      user_id: userId,
+      session_id: sessionId,
+      new_message: { role: "user", parts: [{ text: message }] },
+      streaming: true,
+    }),
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`Stream failed: ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n\n");
+      buf = lines.pop();
+
+      for (const block of lines) {
+        const line = block.trim();
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const event = JSON.parse(line.slice(6));
+          if (event.error) { onError?.(event.error); continue; }
+          if (!event.partial) continue;
+          const parts = event?.content?.parts;
+          if (!parts) continue;
+          for (const p of parts) {
+            if (p.text && !p.functionCall) onChunk?.(p.text);
+          }
+        } catch {}
+      }
+    }
+  } finally {
+    reader.releaseLock();
+    onComplete?.();
+  }
+}
+
 export async function checkBackendHealth() {
   try {
     const res = await fetch(`${API_BASE}/list-apps`, { signal: AbortSignal.timeout(3000) });
