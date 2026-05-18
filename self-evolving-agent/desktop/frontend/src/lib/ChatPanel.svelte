@@ -83,9 +83,23 @@
             {/if}
           </button>
         </div>
+      {:else if msg.role === "user"}
+        <div class="message-wrap user">
+          <div class="message user">
+            <span class="label">You</span>
+            <pre class="content">{msg.text}</pre>
+          </div>
+          <button class="copy-btn user-copy" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
+            {#if copiedIndex === i}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            {:else}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            {/if}
+          </button>
+        </div>
       {:else}
-        <div class="message {msg.role}">
-          <span class="label">{msg.role === "user" ? "You" : "Error"}</span>
+        <div class="message error">
+          <span class="label">Error</span>
           <pre class="content">{msg.text}</pre>
         </div>
       {/if}
@@ -161,6 +175,7 @@
     align-self: flex-start;
     background: #f1f5f9;
     color: #0f172a;
+    padding-bottom: 36px;
   }
 
   .message.error {
@@ -190,14 +205,24 @@
     font-style: italic;
   }
 
-  .message.agent {
-    padding-bottom: 36px;
+  .message-wrap.user {
+    align-self: flex-end;
+    max-width: 85%;
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .message-wrap.user .message {
+    max-width: unset;
+  }
+
+  .user-copy {
+    position: absolute;
+    right: 0;
+    bottom: 0;
   }
 
   .copy-btn {
-    position: absolute;
-    left: 8px;
-    bottom: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -210,6 +235,13 @@
     color: #64748b;
     cursor: pointer;
     transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .copy-btn:not(.user-copy) {
+    position: absolute;
+    left: 8px;
+    bottom: 6px;
   }
 
   .copy-btn:hover { background: #334155; color: #ffffff; }
