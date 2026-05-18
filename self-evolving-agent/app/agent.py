@@ -239,6 +239,52 @@ async def create_downloadable_file(
     })
 
 
+async def run_python_code(
+    code: str,
+    dependencies: str = "",
+    tool_context: ToolContext = None,
+) -> str:
+    """Execute Python code and return the output. Use this for ad-hoc data \
+processing tasks such as analyzing uploaded files, computing statistics, \
+filtering rows, or generating tables.
+
+    The code runs in a sandboxed subprocess with a 120-second timeout.
+    Use print() in the code to produce output — stdout is returned.
+
+    Args:
+        code: Python source code to execute. Use print() for output.
+        dependencies: Comma-separated pip package names to install before \
+running, e.g. 'tabulate,matplotlib'. Leave empty if not needed.
+
+    Returns:
+        The stdout from the executed code, or an error message.
+    """
+    from app.sandbox.runner import install_dependencies, run_code
+
+    if dependencies:
+        pkgs = [p.strip() for p in dependencies.split(",") if p.strip()]
+        dep_result = install_dependencies(pkgs)
+        if not dep_result.success:
+            return json.dumps({
+                "success": False,
+                "error": f"Failed to install dependencies: {dep_result.stderr}",
+            })
+
+    result = run_code(code, timeout=120, max_output=50_000)
+    if result.timed_out:
+        return json.dumps({
+            "success": False,
+            "error": "Code execution timed out after 120 seconds.",
+        })
+    if not result.success:
+        return json.dumps({
+            "success": False,
+            "error": result.stderr or "Code execution failed.",
+            "stdout": result.stdout,
+        })
+    return json.dumps({"success": True, "output": result.stdout})
+
+
 def register_validated_tool(
     tool_context: ToolContext,
 ) -> str:
@@ -782,24 +828,36 @@ UPLOAD_DIR = Path(tempfile.gettempdir()) / "adk_uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 
+_upload_cache: dict[str, tuple[str, str]] = {}
+
+
 def _save_uploaded_files(callback_context, llm_request):
     """Detect inline file uploads, save to disk, extract text, and strip
-    inlineData parts so the LLM never sees unsupported MIME types.
+    non-image inlineData parts so the LLM never sees unsupported MIME
+    types.  Image parts (image/*) are kept so the model can use vision.
+
+    Uses content-hash filenames so the save is idempotent (same blob →
+    same file, no overwrite).  The file-path hint is injected right
+    after the Content that contained the blob so it stays associated
+    with the original upload turn, not at the tail of the conversation.
     """
+    import hashlib
+
     contents = llm_request.contents
     if not contents:
         return None
 
-    saved = []
-    extracted = []
     new_contents = []
+    has_any_blobs = False
 
     for content in contents:
         if not content.parts or content.role != "user":
             new_contents.append(content)
             continue
         clean_parts = []
-        has_blobs = False
+        content_has_blobs = False
+        content_uploads = []
+        content_extracted = []
         for part in content.parts:
             blob = getattr(part, "inline_data", None)
             if not blob:
@@ -809,44 +867,58 @@ def _save_uploaded_files(callback_context, llm_request):
             if not data:
                 clean_parts.append(part)
                 continue
-            has_blobs = True
+            content_has_blobs = True
             mime = getattr(blob, "mime_type", "") or ""
+            is_image = mime.startswith("image/")
+            if is_image:
+                clean_parts.append(part)
             ext = _mime_to_ext(mime)
-            filename = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}{ext}"
-            filepath = UPLOAD_DIR / filename
             if isinstance(data, str):
                 import base64
                 data = base64.b64decode(data)
-            filepath.write_bytes(data)
-            saved.append(str(filepath))
-            text_content = _extract_file_text(filepath, ext)
+            fp_data = data[:4096] + len(data).to_bytes(8, "big")
+            content_hash = hashlib.sha256(fp_data).hexdigest()[:12]
+            if content_hash in _upload_cache:
+                filepath_str, text_content = _upload_cache[content_hash]
+            else:
+                filename = f"upload_{content_hash}{ext}"
+                filepath = UPLOAD_DIR / filename
+                if not filepath.exists():
+                    filepath.write_bytes(data)
+                filepath_str = str(filepath)
+                text_content = _extract_file_text(filepath, ext)
+                _upload_cache[content_hash] = (filepath_str, text_content)
+            content_uploads.append(filepath_str)
             if text_content:
-                extracted.append((filename, text_content))
-        if has_blobs:
+                content_extracted.append((Path(filepath_str).name, text_content))
+        if content_has_blobs:
+            has_any_blobs = True
             if clean_parts:
                 new_contents.append(
                     types.Content(role="user", parts=clean_parts)
                 )
+            if content_uploads:
+                hint_lines = [f"- {p}" for p in content_uploads]
+                hint = "[SYSTEM] Uploaded file(s):\n" + "\n".join(hint_lines)
+                if content_extracted:
+                    hint += "\n\nExtracted content:\n"
+                    for fname, text in content_extracted:
+                        hint += f"\n--- {fname} ---\n{text}\n"
+                else:
+                    hint += "\nUse file path(s) when calling tools that need a file_path parameter."
+                new_contents.append(
+                    types.Content(
+                        role="user",
+                        parts=[types.Part.from_text(text=hint)],
+                    )
+                )
         else:
             new_contents.append(content)
 
-    if saved:
-        hint_lines = [f"- {p}" for p in saved]
-        hint = "[SYSTEM] The user uploaded file(s):\n" + "\n".join(hint_lines)
-        if extracted:
-            hint += "\n\nExtracted content:\n"
-            for fname, text in extracted:
-                hint += f"\n--- {fname} ---\n{text}\n"
-        else:
-            hint += "\nUse file path(s) when calling tools that need a file_path parameter."
-        new_contents.append(
-            types.Content(
-                role="user",
-                parts=[types.Part.from_text(text=hint)],
-            )
-        )
-        llm_request.contents[:] = new_contents
+    if not has_any_blobs:
+        return None
 
+    llm_request.contents[:] = new_contents
     return None
 
 
@@ -870,6 +942,20 @@ def _extract_file_text(filepath: Path, ext: str) -> str:
                 if total > _MAX_EXTRACT_CHARS:
                     break
             return "\n".join(pages)[:_MAX_EXTRACT_CHARS]
+        if ext in (".xlsx", ".xls"):
+            import pandas as pd
+            engine = "xlrd" if ext == ".xls" else "openpyxl"
+            sheets = pd.read_excel(filepath, sheet_name=None, engine=engine)
+            parts = []
+            total = 0
+            for name, df in sheets.items():
+                header = f"[Sheet: {name}] ({len(df)} rows x {len(df.columns)} cols)\n"
+                table = df.head(100).to_string(index=False)
+                parts.append(header + table)
+                total += len(parts[-1])
+                if total > _MAX_EXTRACT_CHARS:
+                    break
+            return "\n\n".join(parts)[:_MAX_EXTRACT_CHARS]
     except Exception:
         pass
     return ""
@@ -884,6 +970,8 @@ def _mime_to_ext(mime: str) -> str:
         "image/png": ".png",
         "image/jpeg": ".jpg",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+        "application/vnd.ms-excel": ".xls",
+        "application/haansoftxlsx": ".xlsx",
     }
     return mapping.get(mime, ".bin")
 
@@ -942,6 +1030,47 @@ def _limit_tool_loops(callback_context, llm_request):
 
 
 # ---------------------------------------------------------------------------
+# Shared callback: strip inlineData from session history before any LLM call
+# ---------------------------------------------------------------------------
+
+
+def _strip_inline_data(callback_context, llm_request):
+    """Remove inlineData parts from all user contents so sub-agents don't
+    choke on unsupported MIME types from earlier file uploads."""
+    contents = llm_request.contents
+    if not contents:
+        return None
+    new_contents = []
+    changed = False
+    for content in contents:
+        if not content.parts or content.role != "user":
+            new_contents.append(content)
+            continue
+        has_blobs = any(
+            getattr(p, "inline_data", None) and getattr(getattr(p, "inline_data"), "data", None)
+            for p in content.parts
+        )
+        if not has_blobs:
+            new_contents.append(content)
+            continue
+        changed = True
+        clean = [
+            p for p in content.parts
+            if not (getattr(p, "inline_data", None) and getattr(getattr(p, "inline_data"), "data", None))
+        ]
+        if clean:
+            new_contents.append(types.Content(role="user", parts=clean))
+    if changed:
+        llm_request.contents[:] = new_contents
+    return None
+
+
+def _strip_then_limit_loops(callback_context, llm_request):
+    _strip_inline_data(callback_context, llm_request)
+    return _limit_tool_loops(callback_context, llm_request)
+
+
+# ---------------------------------------------------------------------------
 # Sub-agent definitions (Phases 7-9)
 # ---------------------------------------------------------------------------
 
@@ -970,6 +1099,7 @@ tool_spec_agent = Agent(
     model=_model,
     instruction=_tool_spec_instruction,
     output_key="tool_spec",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -980,6 +1110,7 @@ tool_coder_agent = Agent(
     model=_model,
     instruction=TOOL_CODER_INSTRUCTION,
     output_key="tool_code",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -990,6 +1121,7 @@ tool_test_agent = Agent(
     model=_model,
     instruction=TOOL_TEST_INSTRUCTION,
     output_key="tool_tests",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -1018,7 +1150,7 @@ tool_registrar_agent = Agent(
     model=_model,
     instruction=LOCAL_TOOL_REGISTRAR_INSTRUCTION if _agent_model else TOOL_REGISTRAR_INSTRUCTION,
     tools=[register_validated_tool, update_registered_tool],
-    before_model_callback=_limit_tool_loops if _agent_model else None,
+    before_model_callback=_strip_then_limit_loops if _agent_model else _strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -1043,6 +1175,7 @@ tool_review_fixer_agent = Agent(
     model=_model,
     instruction=TOOL_REVIEW_FIXER_INSTRUCTION,
     output_key="review_fix_output",
+    before_model_callback=_strip_inline_data,
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,
 )
@@ -1161,9 +1294,35 @@ STEP D2: Call `delete_registered_tool` with the exact tool name.
 
 STEP D3: Tell the user the tool was deleted.
 
+CODE EXECUTION — for ad-hoc data processing:
+When the user asks to process, analyze, or transform data (especially from \
+uploaded files), use `run_python_code` to write and execute Python code \
+directly. This is faster than creating a tool and ideal for one-off tasks.
+
+Use `run_python_code` when:
+- Processing or analyzing an uploaded file (Excel, CSV, images, etc.)
+- One-off data tasks: statistics, filtering, sorting, formatting, plotting
+- The user says "show", "calculate", "filter", "sort", "plot", "average", \
+"count", "summarize", "compare", or similar data operations
+- You need to install a Python package (pass package names in `dependencies`)
+
+Use the tool creation pipeline instead when:
+- The user explicitly asks to "create a tool" or "make a tool"
+- The capability should be reusable across sessions
+
+When writing code for `run_python_code`:
+- Use `print()` to output results — stdout is returned to you
+- For tables, use `df.to_markdown(index=False)` (pass dependencies="tabulate") \
+or `df.to_string(index=False)`
+- Reference uploaded files by their full path from the [SYSTEM] Uploaded file(s) hint
+- Always wrap file operations in try/except for graceful error handling
+- Available packages: pandas, openpyxl, xlrd, requests, json, re, math, \
+statistics, collections, pathlib, csv. Install others via `dependencies`.
+
 RULES:
 - Answer simple questions directly without tools (e.g., "what is 1+5?" → "6").
-- NEVER skip Step 1 for data processing tasks.
+- For data processing on uploaded files, prefer `run_python_code` over \
+searching the registry or creating new tools.
 - NEVER create a tool if a suitable one already exists in the registry.
 - When registration fails, use the RETRY LOOP (Step 5) — call \
 `transfer_to_agent` with "tool_review_fixer_agent", do NOT re-run the \
@@ -1171,7 +1330,6 @@ entire tool_creation_pipeline.
 - Maximum 3 total registration attempts per tool. Give up after 3 failures.
 - NEVER resume or retry a previously failed tool creation from an earlier \
 conversation turn unless the user explicitly asks you to.
-- Create tools for ANY data processing, transformation, formatting, or generation task.
 - When the user asks to "create a file", "download", or "save as", call \
 `create_downloadable_file` with the filename and content. This creates a \
 downloadable file in the chat UI. You can ALWAYS create downloadable files.
@@ -1205,16 +1363,19 @@ to the user. Your registry has tools — check it BEFORE responding. If a user \
 mentions a tool name or asks you to do something, LOOK AT THE REGISTRY BELOW \
 and use execute_registered_tool to run it.
 
-You can ONLY call these 6 functions:
+You can ONLY call these 7 functions:
   1. search_registry(query) — find a registered tool by keyword
   2. execute_registered_tool(tool_name, input_data) — run a registered tool
   3. delete_registered_tool(tool_name) — delete a tool
   4. set_update_mode(tool_name) — prepare to update an existing tool
   5. create_downloadable_file(filename, content) — create a file for download
-  6. switch_model_tool(model_name) — switch all agents to a different model
+  6. run_python_code(code, dependencies) — execute Python code directly
+  7. switch_model_tool(model_name) — switch all agents to a different model
 You CANNOT call anything else. Any other name will fail.
 
 RULES:
+- For data processing on uploaded files (Excel, CSV, etc.), use run_python_code \
+to write and execute Python code directly. Use print() for output.
 - BEFORE saying you cannot do something, CHECK THE REGISTRY BELOW.
 - If a tool in the registry matches the user's request, USE IT immediately.
 - After calling a function and getting a result, respond to the user immediately.
@@ -1272,6 +1433,7 @@ _root_tools = [
     delete_registered_tool,
     set_update_mode,
     create_downloadable_file,
+    run_python_code,
     switch_model_tool,
 ] if _agent_model else [
     search_registry,
@@ -1282,6 +1444,7 @@ _root_tools = [
     delete_registered_tool,
     set_update_mode,
     create_downloadable_file,
+    run_python_code,
     switch_model_tool,
 ]
 

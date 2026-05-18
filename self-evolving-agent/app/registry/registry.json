@@ -1,20 +1,18 @@
 {
-  "website_fetch_tool": {
-    "name": "website_fetch_tool",
-    "description": "Fetches the content and metadata from a specified URL.",
-    "module": "app.tools.generated.website_fetch_tool",
-    "function": "website_fetch_tool",
+  "excel_pilot_tool": {
+    "name": "excel_pilot_tool",
+    "description": "Analyzes Excel files and performs data processing or calculations based on a natural language request.",
+    "module": "app.tools.generated.excel_pilot_tool",
+    "function": "excel_pilot_tool",
     "input_schema": {
-      "url": "string"
+      "file_path": "string",
+      "request": "string"
     },
     "output_schema": {
-      "status": "string",
-      "title": "string",
-      "content": "string",
-      "metadata": "object"
+      "result": "string"
     },
     "risk_level": "low",
-    "created_at": "2026-05-18T06:10:31.207363+00:00",
+    "created_at": "2026-05-18T10:09:40.534638+00:00",
     "version": 1
   }
 }

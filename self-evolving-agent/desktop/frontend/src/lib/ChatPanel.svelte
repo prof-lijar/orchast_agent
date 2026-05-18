@@ -8,7 +8,7 @@
   let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
-  const ACCEPTED_TYPES = ".csv,.json,.txt,.pdf,.png,.jpg,.jpeg,.xlsx";
+  const ACCEPTED_TYPES = ".csv,.json,.txt,.pdf,.png,.jpg,.jpeg,.xlsx,.xls";
 
   // svelte-ignore state_referenced_locally
   let messages = $state([...initialMessages]);

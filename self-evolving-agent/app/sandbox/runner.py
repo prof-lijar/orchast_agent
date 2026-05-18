@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -14,8 +15,63 @@ PYTHON = sys.executable
 TIMEOUT_SECONDS = 30
 MAX_OUTPUT_SIZE = 10_000
 
+_VALID_PKG = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._-]*([\[<>=!~].*)?$")
 
-def run_code(code: str, timeout: int = TIMEOUT_SECONDS) -> SandboxResult:
+
+def _find_uv() -> str | None:
+    """Return the path to the ``uv`` binary, or *None* if not found."""
+    import shutil
+    return shutil.which("uv")
+
+
+def install_dependencies(
+    packages: list[str], timeout: int = 60
+) -> SandboxResult:
+    """Install packages into the current venv.
+
+    Uses ``uv pip install`` when available (fast), falling back to
+    ``python -m pip install``.  Validates package names to prevent
+    command injection (no URLs, paths, or pip flags — only PyPI
+    identifiers with optional version pins like ``pandas>=2.0``).
+    """
+    if not packages:
+        return SandboxResult(success=True)
+    invalid = [p for p in packages if not _VALID_PKG.match(p)]
+    if invalid:
+        return SandboxResult(
+            success=False,
+            stderr=f"Invalid package name(s): {', '.join(invalid)}",
+        )
+    uv = _find_uv()
+    if uv:
+        cmd = [uv, "pip", "install", "--quiet", *packages]
+    else:
+        cmd = [PYTHON, "-m", "pip", "install", "--quiet", *packages]
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return SandboxResult(
+            success=result.returncode == 0,
+            stdout=result.stdout[:MAX_OUTPUT_SIZE],
+            stderr=result.stderr[:MAX_OUTPUT_SIZE],
+        )
+    except subprocess.TimeoutExpired:
+        return SandboxResult(
+            success=False,
+            stderr=f"Dependency install timed out after {timeout} seconds.",
+            timed_out=True,
+        )
+
+
+def run_code(
+    code: str,
+    timeout: int = TIMEOUT_SECONDS,
+    max_output: int = MAX_OUTPUT_SIZE,
+) -> SandboxResult:
     """Execute Python code in a subprocess with timeout."""
     with tempfile.TemporaryDirectory() as tmpdir:
         script_path = Path(tmpdir) / "script.py"
@@ -31,8 +87,8 @@ def run_code(code: str, timeout: int = TIMEOUT_SECONDS) -> SandboxResult:
             )
             return SandboxResult(
                 success=result.returncode == 0,
-                stdout=result.stdout[:MAX_OUTPUT_SIZE],
-                stderr=result.stderr[:MAX_OUTPUT_SIZE],
+                stdout=result.stdout[:max_output],
+                stderr=result.stderr[:max_output],
             )
         except subprocess.TimeoutExpired:
             return SandboxResult(
