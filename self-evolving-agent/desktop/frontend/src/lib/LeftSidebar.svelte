@@ -175,8 +175,8 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    background: #0f172a;
-    color: #cbd5e1;
+    background: #ffffff;
+    color: #334155;
     font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
     font-size: 0.8em;
     overflow: hidden;
@@ -186,13 +186,13 @@
     font-size: 0.7em;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: #64748b;
+    color: #94a3b8;
     padding: 12px 14px 6px;
   }
 
   .divider {
     height: 1px;
-    background: #1e293b;
+    background: #e2e8f0;
     margin: 4px 10px;
   }
 
@@ -208,10 +208,10 @@
     width: calc(100% - 20px);
     margin: 0 10px 4px;
     padding: 8px 10px;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #e2e8f0;
+    color: #0f172a;
     cursor: pointer;
     font-family: inherit;
     font-size: inherit;
@@ -232,7 +232,7 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #475569;
+    background: #cbd5e1;
     flex-shrink: 0;
   }
 
@@ -249,17 +249,18 @@
 
   .chevron {
     font-size: 0.7em;
-    color: #64748b;
+    color: #94a3b8;
     flex-shrink: 0;
   }
 
   .model-list {
     margin: 0 10px 4px;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
     max-height: 220px;
     overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
 
   .model-option {
@@ -270,7 +271,7 @@
     padding: 7px 10px;
     background: none;
     border: none;
-    color: #cbd5e1;
+    color: #334155;
     cursor: pointer;
     font-family: inherit;
     font-size: inherit;
@@ -278,11 +279,11 @@
   }
 
   .model-option:hover:not(:disabled) {
-    background: #334155;
+    background: #f1f5f9;
   }
 
   .model-option.current {
-    background: rgba(59, 130, 246, 0.15);
+    background: #eff6ff;
   }
 
   .model-option:disabled {
@@ -299,13 +300,13 @@
   }
 
   .badge.ollama {
-    background: #1e3a5f;
-    color: #60a5fa;
+    background: #dbeafe;
+    color: #1d4ed8;
   }
 
   .badge.gemini {
-    background: #1a3320;
-    color: #4ade80;
+    background: #dcfce7;
+    color: #166534;
   }
 
   .opt-name {
@@ -341,10 +342,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 5px;
-    color: #94a3b8;
+    color: #64748b;
     font-size: 1.1em;
     cursor: pointer;
     line-height: 1;
@@ -352,7 +353,7 @@
 
   .new-btn:hover:not(:disabled) {
     border-color: #3b82f6;
-    color: #e2e8f0;
+    color: #2563eb;
   }
 
   .new-btn:disabled {
@@ -376,7 +377,7 @@
     background: none;
     border: none;
     border-radius: 6px;
-    color: #94a3b8;
+    color: #64748b;
     cursor: pointer;
     font-family: inherit;
     font-size: inherit;
@@ -385,19 +386,19 @@
   }
 
   .session-item:hover {
-    background: #1e293b;
-    color: #cbd5e1;
+    background: #f1f5f9;
+    color: #334155;
   }
 
   .session-item.active {
-    background: #1e293b;
-    color: #e2e8f0;
+    background: #eff6ff;
+    color: #0f172a;
     border-left: 2px solid #3b82f6;
   }
 
   .session-icon {
     font-size: 0.6em;
-    color: #475569;
+    color: #94a3b8;
     flex-shrink: 0;
   }
 
@@ -412,7 +413,7 @@
     display: none;
     background: none;
     border: none;
-    color: #64748b;
+    color: #94a3b8;
     cursor: pointer;
     font-size: 1.1em;
     padding: 0 2px;
@@ -431,7 +432,7 @@
   .empty {
     padding: 16px;
     text-align: center;
-    color: #475569;
+    color: #94a3b8;
     font-size: 0.9em;
   }
 </style>

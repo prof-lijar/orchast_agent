@@ -208,8 +208,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background: #0f172a;
-    color: #f8fafc;
+    background: #ffffff;
+    color: #0f172a;
+    border-bottom: 1px solid #e2e8f0;
     -webkit-app-region: drag;
   }
 
@@ -228,7 +229,7 @@
 
   .version {
     font-size: 0.75em;
-    color: #64748b;
+    color: #94a3b8;
     font-family: "SF Mono", "Cascadia Code", monospace;
   }
 
@@ -241,7 +242,7 @@
   .left-panel {
     width: 220px;
     flex-shrink: 0;
-    border-right: 1px solid #1e293b;
+    border-right: 1px solid #e2e8f0;
   }
 
   .chat-area {

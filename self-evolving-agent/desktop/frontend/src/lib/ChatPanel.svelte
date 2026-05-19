@@ -729,7 +729,7 @@
     bottom: 6px;
   }
 
-  .action-btn:hover, .copy-btn:hover { background: #334155; color: #ffffff; }
+  .action-btn:hover, .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
   .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .chat-input {
