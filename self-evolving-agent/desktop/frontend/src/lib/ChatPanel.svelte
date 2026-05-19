@@ -1,11 +1,11 @@
 <script>
   import { onMount } from "svelte";
-  import { sendMessageStream, truncateSession, clearMessageCache } from "./api.js";
+  import { sendMessageStream, truncateSession, clearMessageCache, createSession } from "./api.js";
   import { marked } from "marked";
 
   marked.setOptions({ breaks: true, gfm: true });
 
-  let { appName = "app", userId = "user", sessionId = "", initialMessages = [], onMessagesChanged = () => {} } = $props();
+  let { appName = "app", userId = "user", sessionId = "", initialMessages = [], onMessagesChanged = () => {}, onSessionCreated = () => {} } = $props();
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const ACCEPTED_TYPES = ".csv,.json,.txt,.pdf,.png,.jpg,.jpeg,.xlsx,.xls";
@@ -158,7 +158,18 @@
   async function handleSend() {
     const text = input.trim();
     const hasFiles = attachedFiles.length > 0;
-    if ((!text && !hasFiles) || loading || !sessionId) return;
+    if ((!text && !hasFiles) || loading) return;
+
+    if (!sessionId) {
+      try {
+        const session = await createSession(appName);
+        sessionId = session.id;
+        onSessionCreated(session.id);
+      } catch {
+        messages = [...messages, { role: "error", text: "Failed to create session." }];
+        return;
+      }
+    }
 
     if (pendingTruncate) {
       try {
@@ -393,8 +404,8 @@
         bind:value={input}
         oninput={autoResize}
         onkeydown={handleKeydown}
-        placeholder={sessionId ? "Message the agent..." : "Connecting..."}
-        disabled={!sessionId || loading}
+        placeholder="Message the agent..."
+        disabled={loading}
         rows="1"
       ></textarea>
       {#if abortCtrl}
@@ -402,7 +413,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
         </button>
       {:else}
-        <button class="send-btn" onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading || !sessionId}>
+        <button class="send-btn" onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l7-7 7 7"/><path d="M12 19V5"/></svg>
         </button>
       {/if}

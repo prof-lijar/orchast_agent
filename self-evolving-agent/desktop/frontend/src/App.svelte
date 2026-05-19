@@ -149,15 +149,14 @@
     if (sessionId) saveMessageCache(sessionId, msgs);
   }
 
-  async function handleNewSession() {
-    try {
-      const session = await createSession(appName);
-      saveSessionId(session.id);
-      sessionMessages = [];
-      sessionKey++;
-    } catch (err) {
-      console.error("Failed to create session:", err);
-    }
+  function handleNewSession() {
+    saveSessionId("");
+    sessionMessages = [];
+    sessionKey++;
+  }
+
+  function handleSessionCreated(sid) {
+    saveSessionId(sid);
   }
 </script>
 
@@ -185,7 +184,7 @@
     </div>
     <div class="chat-area">
       {#key sessionKey}
-        <ChatPanel {appName} {userId} {sessionId} initialMessages={sessionMessages} onMessagesChanged={handleMessagesChanged} />
+        <ChatPanel {appName} {userId} {sessionId} initialMessages={sessionMessages} onMessagesChanged={handleMessagesChanged} onSessionCreated={handleSessionCreated} />
       {/key}
     </div>
     <div class="sidebar">

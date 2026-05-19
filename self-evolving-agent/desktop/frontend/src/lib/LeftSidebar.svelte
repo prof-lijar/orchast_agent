@@ -21,6 +21,7 @@
 
   $effect(() => {
     if (backendOnline) {
+      activeSessionId;
       loadSessions();
     }
   });
