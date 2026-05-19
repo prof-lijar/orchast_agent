@@ -120,6 +120,19 @@ export async function getSession(appName = "app", userId = "user", sessionId) {
   return res.json();
 }
 
+export async function truncateSession(appName = "app", userId = "user", sessionId, keepEventCount) {
+  const session = await getSession(appName, userId, sessionId);
+  const events = (session.events || []).slice(0, keepEventCount);
+  await deleteSession(appName, userId, sessionId);
+  const res = await fetch(`${API_BASE}/apps/${appName}/users/${userId}/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, state: session.state || {}, events }),
+  });
+  if (!res.ok) throw new Error(`Failed to recreate session: ${res.status}`);
+  return res.json();
+}
+
 export async function fetchRegistry() {
   const res = await fetch(`${API_BASE}/api/registry`);
   if (!res.ok) return { tools: [] };

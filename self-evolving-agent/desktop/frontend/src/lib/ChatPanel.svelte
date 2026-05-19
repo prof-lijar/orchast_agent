@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { sendMessageStream } from "./api.js";
+  import { sendMessageStream, truncateSession } from "./api.js";
   import { marked } from "marked";
 
   marked.setOptions({ breaks: true, gfm: true });
@@ -23,6 +23,8 @@
   let attachedFiles = $state([]);
   let dragging = $state(false);
   let expanded = $state(false);
+  let editText = $state("");
+  let editTextareaEl;
 
   onMount(() => { inputEl?.focus(); });
 
@@ -98,8 +100,43 @@
 
   function startEdit(text, index) {
     editingIndex = index;
-    input = text;
-    setTimeout(() => inputEl?.focus(), 60);
+    editText = text;
+    const eventStart = messages[index]?._eventStart;
+    messages = messages.slice(0, index + 1);
+    if (sessionId && eventStart != null) {
+      truncateSession(appName, userId, sessionId, eventStart).catch(() => {});
+    }
+    setTimeout(() => {
+      if (editTextareaEl) {
+        editTextareaEl.focus();
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(editTextareaEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }, 60);
+  }
+
+  function cancelEdit() {
+    editingIndex = -1;
+    editText = "";
+  }
+
+  function confirmEdit() {
+    input = editTextareaEl?.innerText?.trim() || editText;
+    editText = "";
+    handleSend();
+  }
+
+  function handleEditKeydown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      confirmEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
   }
 
   let scrollRAF = 0;
@@ -254,20 +291,33 @@
                 {/each}
               </div>
             {/if}
-            <pre class="content">{msg.text}</pre>
+            {#if editingIndex === i}
+              <pre
+                class="content"
+                contenteditable="true"
+                bind:this={editTextareaEl}
+                onkeydown={handleEditKeydown}
+                oninput={() => { editText = editTextareaEl.innerText; }}
+                onblur={cancelEdit}
+              >{msg.text}</pre>
+            {:else}
+              <pre class="content">{msg.text}</pre>
+            {/if}
           </div>
-          <div class="user-actions">
-            <button class="action-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
-              {#if copiedIndex === i}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              {:else}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              {/if}
-            </button>
-            <button class="action-btn" onclick={() => startEdit(msg.text, i)} title="Edit message" disabled={loading}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-          </div>
+          {#if editingIndex !== i}
+            <div class="user-actions">
+              <button class="action-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
+                {#if copiedIndex === i}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                {:else}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                {/if}
+              </button>
+              <button class="action-btn" onclick={() => startEdit(msg.text, i)} title="Edit message" disabled={loading}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+            </div>
+          {/if}
         </div>
       {:else}
         <div class="message error">
@@ -843,4 +893,9 @@
     transition: all 0.15s;
   }
   .stop-btn:hover { background: #b91c1c; }
+
+  .content[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+  }
 </style>

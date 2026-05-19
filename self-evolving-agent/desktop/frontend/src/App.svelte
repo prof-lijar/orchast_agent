@@ -34,7 +34,8 @@
 
   function mergeSessionEvents(events) {
     const msgs = [];
-    for (const event of events) {
+    for (let ei = 0; ei < events.length; ei++) {
+      const event = events[ei];
       const parts = event?.content?.parts ?? [];
       const role = event?.author === "user" ? "user" : "agent";
       for (const part of parts) {
@@ -44,13 +45,13 @@
           if (last && last.role === role) {
             last.thinking = (last.thinking || "") + part.text;
           } else {
-            msgs.push({ role, text: "", thinking: part.text });
+            msgs.push({ role, text: "", thinking: part.text, _eventStart: ei });
           }
         } else {
           if (last && last.role === role) {
             last.text += part.text;
           } else {
-            msgs.push({ role, text: part.text });
+            msgs.push({ role, text: part.text, _eventStart: ei });
           }
         }
       }
