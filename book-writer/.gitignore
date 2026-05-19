@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+book/
+.progress.json
+book-writer.log
