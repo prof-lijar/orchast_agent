@@ -2,10 +2,14 @@
 """Overnight book-writing runner.
 
 Usage:
-    python run_book.py --toc toc.json
-    python run_book.py --toc toc.json --output-dir ./my-book --model gemma4:27b
-    python run_book.py --toc toc.json --resume
-    python run_book.py --toc toc.json --repo https://github.com/user/book.git
+    # GitHub URL — auto-clones repo, reads TOC, writes chapters to the same directory:
+    python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json
+
+    # Local file:
+    python run_book.py --toc toc.json --output-dir ./my-book
+
+    # Resume after interruption:
+    python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --resume
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -35,6 +40,69 @@ from app.tools import (
 )
 
 logger = logging.getLogger("book-writer")
+
+GITHUB_BLOB_RE = re.compile(
+    r"https?://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)/blob/(?P<branch>[^/]+)/(?P<path>.+)"
+)
+GITHUB_TREE_RE = re.compile(
+    r"https?://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)/tree/(?P<branch>[^/]+)/(?P<path>.+)"
+)
+
+
+def resolve_github_toc(url: str, clone_base: str = "./repos") -> dict:
+    """Parse a GitHub blob URL, clone/pull the repo, return local paths.
+
+    Returns dict with keys: toc_path, output_dir, repo_dir, branch, repo_url
+    """
+    m = GITHUB_BLOB_RE.match(url)
+    if not m:
+        raise ValueError(
+            f"Not a valid GitHub blob URL: {url}\n"
+            "Expected: https://github.com/owner/repo/blob/branch/path/to/toc.json"
+        )
+
+    owner = m.group("owner")
+    repo = m.group("repo")
+    branch = m.group("branch")
+    file_path = m.group("path")
+
+    repo_url = f"https://github.com/{owner}/{repo}.git"
+    repo_dir = Path(clone_base) / repo
+    toc_path = repo_dir / file_path
+    output_dir = toc_path.parent
+
+    if (repo_dir / ".git").exists():
+        logger.info("Repo already cloned at %s — pulling latest", repo_dir)
+        subprocess.run(
+            ["git", "pull", "origin", branch],
+            cwd=str(repo_dir),
+            check=True,
+            timeout=120,
+            capture_output=True,
+        )
+    else:
+        logger.info("Cloning %s into %s", repo_url, repo_dir)
+        repo_dir.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "-b", branch, repo_url, str(repo_dir)],
+            check=True,
+            timeout=120,
+        )
+
+    if not toc_path.exists():
+        raise FileNotFoundError(f"TOC file not found at {toc_path}")
+
+    return {
+        "toc_path": str(toc_path),
+        "output_dir": str(output_dir),
+        "repo_dir": str(repo_dir),
+        "branch": branch,
+        "repo_url": repo_url,
+    }
+
+
+def is_github_url(s: str) -> bool:
+    return s.startswith("https://github.com/") or s.startswith("http://github.com/")
 
 
 def setup_logging(output_dir: str) -> None:
@@ -172,12 +240,25 @@ async def run_chapter(
 
 
 async def main() -> None:
-    parser = argparse.ArgumentParser(description="Overnight book writer")
-    parser.add_argument("--toc", required=True, help="Path to table of contents file")
-    parser.add_argument("--output-dir", default="./book", help="Output directory")
+    parser = argparse.ArgumentParser(
+        description="Overnight book writer",
+        epilog=(
+            "Examples:\n"
+            "  python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json\n"
+            "  python run_book.py --toc toc.json --output-dir ./my-book\n"
+            "  python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --resume\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--toc", required=True,
+        help="Path or GitHub URL to table of contents file (e.g. https://github.com/user/repo/blob/main/book/toc.json)",
+    )
+    parser.add_argument("--output-dir", default=None, help="Output directory (auto-detected from GitHub URL)")
     parser.add_argument("--model", default=None, help="Ollama model name")
-    parser.add_argument("--branch", default="main", help="Git branch")
-    parser.add_argument("--repo", default=None, help="Git remote repo URL")
+    parser.add_argument("--branch", default=None, help="Git branch (auto-detected from GitHub URL)")
+    parser.add_argument("--repo", default=None, help="Git remote repo URL (auto-detected from GitHub URL)")
+    parser.add_argument("--clone-dir", default="./repos", help="Base directory for cloned repos (default: ./repos)")
     parser.add_argument("--retry", type=int, default=3, help="Retries per chapter")
     parser.add_argument("--resume", action="store_true", help="Resume from progress")
     parser.add_argument(
@@ -188,7 +269,20 @@ async def main() -> None:
     )
     args = parser.parse_args()
 
-    setup_logging(args.output_dir)
+    # Resolve GitHub URL or use local paths
+    if is_github_url(args.toc):
+        gh = resolve_github_toc(args.toc, clone_base=args.clone_dir)
+        toc_path = gh["toc_path"]
+        output_dir = args.output_dir or gh["output_dir"]
+        branch = args.branch or gh["branch"]
+        repo_url = args.repo or gh["repo_url"]
+    else:
+        toc_path = args.toc
+        output_dir = args.output_dir or "./book"
+        branch = args.branch or "main"
+        repo_url = args.repo
+
+    setup_logging(output_dir)
 
     if args.model:
         os.environ["AGENT_MODEL"] = args.model
@@ -199,13 +293,14 @@ async def main() -> None:
     if not check_ollama(model_name):
         sys.exit(1)
 
-    toc = parse_toc(args.toc)
+    toc = parse_toc(toc_path)
     logger.info(
         "Loaded TOC: '%s' with %d chapters", toc["title"], len(toc["chapters"])
     )
+    logger.info("Output directory: %s", output_dir)
 
-    if args.repo or not args.no_push:
-        setup_git_repo(args.output_dir, args.repo, args.branch)
+    if repo_url or not args.no_push:
+        setup_git_repo(output_dir, repo_url, branch)
 
     # Import agent after setting AGENT_MODEL env var
     from app.agent import chapter_pipeline
@@ -217,7 +312,7 @@ async def main() -> None:
         session_service=session_service,
     )
 
-    progress = load_progress(args.output_dir) if args.resume else {
+    progress = load_progress(output_dir) if args.resume else {
         "started_at": datetime.now(timezone.utc).isoformat(),
         "completed": [],
         "failed": {},
@@ -248,7 +343,7 @@ async def main() -> None:
         )
 
         progress["in_progress"] = ch_num
-        save_progress(args.output_dir, progress)
+        save_progress(output_dir, progress)
 
         content = None
         for attempt in range(1, args.retry + 1):
@@ -282,7 +377,7 @@ async def main() -> None:
 
         if content:
             result = save_chapter_to_disk(
-                ch_num, chapter["title"], content, args.output_dir
+                ch_num, chapter["title"], content, output_dir
             )
             logger.info(
                 "Saved: %s (%d words)", result["filename"], result["word_count"]
@@ -291,7 +386,7 @@ async def main() -> None:
 
             if not args.no_push:
                 git_result = git_commit_and_push_sync(
-                    ch_num, chapter["title"], args.output_dir, args.branch
+                    ch_num, chapter["title"], output_dir, branch
                 )
                 if git_result["success"]:
                     pushed = "pushed" if git_result.get("pushed") else "committed only"
@@ -308,7 +403,7 @@ async def main() -> None:
             progress["failed"][str(ch_num)] = f"Failed after {args.retry} attempts"
 
         progress["in_progress"] = None
-        save_progress(args.output_dir, progress)
+        save_progress(output_dir, progress)
 
     elapsed_total = time.time() - start_time
     logger.info("=" * 60)
