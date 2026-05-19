@@ -22,6 +22,7 @@
   let abortCtrl = $state(null);
   let attachedFiles = $state([]);
   let dragging = $state(false);
+  let expanded = $state(false);
 
   onMount(() => { inputEl?.focus(); });
 
@@ -132,6 +133,7 @@
     input = "";
     attachedFiles = [];
     loading = true;
+    resetInputHeight();
     scrollToBottom();
 
     const placeholder = { role: "agent", text: "", thinking: "", streaming: true };
@@ -179,6 +181,19 @@
     }
   }
 
+  function autoResize() {
+    if (!inputEl) return;
+    inputEl.style.height = "auto";
+    expanded = inputEl.scrollHeight > 40;
+    inputEl.style.height = inputEl.scrollHeight + "px";
+  }
+
+  function resetInputHeight() {
+    if (!inputEl) return;
+    inputEl.style.height = "auto";
+    expanded = false;
+  }
+
   function handleKeydown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -187,7 +202,7 @@
   }
 </script>
 
-<div class="chat-panel">
+<div class="chat-panel" class:empty={messages.length === 0}>
   <div class="chat-messages" bind:this={chatContainer}>
     {#if messages.length === 0}
       <div class="empty-state">
@@ -303,23 +318,26 @@
       onchange={handleFileSelect}
       style="display:none"
     />
-    <div class="input-row">
+    <div class="input-row" class:expanded>
       <button class="attach-btn" onclick={() => fileInput?.click()} disabled={loading} title="Attach file">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
       </button>
       <textarea
         bind:this={inputEl}
         bind:value={input}
+        oninput={autoResize}
         onkeydown={handleKeydown}
         placeholder={sessionId ? "Message the agent..." : "Connecting..."}
         disabled={!sessionId || loading}
-        rows="2"
+        rows="1"
       ></textarea>
       {#if abortCtrl}
-        <button class="stop-btn" onclick={stopStreaming}>Stop</button>
+        <button class="stop-btn" onclick={stopStreaming} title="Stop generating">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
       {:else}
-        <button onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading || !sessionId}>
-          Send
+        <button class="send-btn" onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading || !sessionId}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l7-7 7 7"/><path d="M12 19V5"/></svg>
         </button>
       {/if}
     </div>
@@ -355,6 +373,29 @@
 
   .empty-state p { margin: 4px 0; }
   .empty-state .hint { font-size: 0.85em; color: #94a3b8; }
+
+  .chat-panel.empty {
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .chat-panel.empty .chat-messages {
+    flex: none;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .chat-panel.empty .empty-state {
+    flex: none;
+  }
+
+  .chat-panel.empty .chat-input {
+    border-top: none;
+    max-width: 680px;
+    width: 100%;
+    background: transparent;
+  }
 
   .message {
     max-width: 85%;
@@ -630,9 +671,27 @@
   }
 
   .input-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "attach textarea send";
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    background: #f8fafc;
+    padding: 4px;
+    transition: border-color 0.15s;
+  }
+
+  .input-row.expanded {
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "textarea textarea textarea"
+      "attach . send";
+    border-radius: 20px;
+  }
+
+  .input-row:focus-within {
+    border-color: #2563eb;
   }
 
   .file-preview-strip {
@@ -686,21 +745,21 @@
   .file-chip-remove:hover { color: #dc2626; }
 
   .attach-btn {
+    grid-area: attach;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     background: transparent;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    color: #64748b;
+    border: none;
+    border-radius: 50%;
+    color: #94a3b8;
     cursor: pointer;
-    flex-shrink: 0;
     transition: all 0.15s;
   }
-  .attach-btn:hover:not(:disabled) { background: #f1f5f9; color: #2563eb; border-color: #2563eb; }
+  .attach-btn:hover:not(:disabled) { background: #e2e8f0; color: #2563eb; }
   .attach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .message-files {
@@ -728,33 +787,38 @@
   }
 
   textarea {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    grid-area: textarea;
+    padding: 6px 12px;
+    border: none;
     font-family: inherit;
     font-size: 0.9em;
+    line-height: 1.4;
     resize: none;
     outline: none;
-    background: #f8fafc;
+    background: transparent;
+    max-height: 150px;
+    overflow-y: auto;
   }
 
-  textarea:focus { border-color: #2563eb; }
   textarea:disabled { opacity: 0.5; }
 
-  button {
-    padding: 10px 20px;
+  .send-btn {
+    grid-area: send;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     background: #2563eb;
     color: white;
     border: none;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0.9em;
+    transition: all 0.15s;
   }
-
-  button:hover:not(:disabled) { background: #1d4ed8; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send-btn:hover:not(:disabled) { background: #1d4ed8; }
+  .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .cursor {
     animation: blink 0.6s step-end infinite;
@@ -764,14 +828,19 @@
   @keyframes blink { 50% { opacity: 0; } }
 
   .stop-btn {
-    padding: 10px 20px;
+    grid-area: send;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     background: #dc2626;
     color: white;
     border: none;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0.9em;
+    transition: all 0.15s;
   }
   .stop-btn:hover { background: #b91c1c; }
 </style>
