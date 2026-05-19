@@ -55,13 +55,15 @@
         continue;
       }
       const base64 = await fileToBase64(file);
-      const isImage = file.type.startsWith("image/");
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      const isImage = file.type.startsWith("image/") || ["png","jpg","jpeg","gif","webp","bmp","svg"].includes(ext);
+      const mime = file.type || "application/octet-stream";
       attachedFiles = [...attachedFiles, {
         name: file.name,
         size: file.size,
-        mime: file.type || "application/octet-stream",
+        mime,
         base64,
-        previewUrl: isImage ? URL.createObjectURL(file) : null,
+        previewUrl: isImage ? `data:${mime};base64,${base64}` : null,
       }];
     }
   }
@@ -72,8 +74,6 @@
   }
 
   function removeFile(index) {
-    const f = attachedFiles[index];
-    if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
     attachedFiles = attachedFiles.filter((_, i) => i !== index);
   }
 
@@ -353,7 +353,6 @@
             {:else}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             {/if}
-            <span class="file-chip-name">{f.name}</span>
             <span class="file-chip-size">{formatFileSize(f.size)}</span>
             <button class="file-chip-remove" onclick={() => removeFile(i)}>&times;</button>
           </div>
