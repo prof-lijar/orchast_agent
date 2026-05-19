@@ -26,7 +26,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import httpx
+import urllib.request
+import urllib.error
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
@@ -128,10 +129,10 @@ def setup_logging(output_dir: str) -> None:
 def check_ollama(model: str) -> bool:
     """Verify Ollama is running and the model is available."""
     try:
-        resp = httpx.get("http://localhost:11434/api/tags", timeout=10)
-        resp.raise_for_status()
-        available = [m["name"] for m in resp.json().get("models", [])]
-        # Match with or without tag suffix
+        req = urllib.request.Request("http://localhost:11434/api/tags")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+        available = [m["name"] for m in data.get("models", [])]
         matched = any(model in name or name.startswith(model) for name in available)
         if not matched:
             logger.error(
