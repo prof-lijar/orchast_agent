@@ -50,7 +50,7 @@ async def list_models():
         {"name": "gemini-flash-latest", "provider": "gemini"},
     ]
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        async with httpx.AsyncClient(timeout=1.0) as client:
             resp = await client.get(f"{OLLAMA_BASE}/api/tags")
             if resp.status_code == 200:
                 for m in resp.json().get("models", []):

@@ -17,16 +17,10 @@
   let modelsOpen = $state(false);
   let switching = $state(false);
   let loadingSessions = $state(false);
+  let modelsLoaded = $state(false);
 
   $effect(() => {
     if (backendOnline) {
-      loadModels();
-      loadSessions();
-    }
-  });
-
-  $effect(() => {
-    if (activeSessionId && backendOnline) {
       loadSessions();
     }
   });
@@ -35,6 +29,7 @@
     try {
       const data = await fetchModels();
       models = data.models || [];
+      modelsLoaded = true;
     } catch {
       models = [];
     }
@@ -101,7 +96,11 @@
     <div class="section-label">MODEL</div>
     <button
       class="model-btn"
-      onclick={() => { if (backendOnline) modelsOpen = !modelsOpen; }}
+      onclick={() => {
+        if (!backendOnline) return;
+        modelsOpen = !modelsOpen;
+        if (modelsOpen && !modelsLoaded) loadModels();
+      }}
       disabled={!backendOnline}
     >
       <span class="model-dot" class:active={!!currentModel}></span>

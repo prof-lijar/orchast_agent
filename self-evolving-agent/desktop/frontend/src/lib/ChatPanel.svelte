@@ -1,11 +1,11 @@
 <script>
   import { onMount } from "svelte";
-  import { sendMessageStream, truncateSession } from "./api.js";
+  import { sendMessageStream, truncateSession, clearMessageCache } from "./api.js";
   import { marked } from "marked";
 
   marked.setOptions({ breaks: true, gfm: true });
 
-  let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
+  let { appName = "app", userId = "user", sessionId = "", initialMessages = [], onMessagesChanged = () => {} } = $props();
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const ACCEPTED_TYPES = ".csv,.json,.txt,.pdf,.png,.jpg,.jpeg,.xlsx,.xls";
@@ -25,6 +25,7 @@
   let expanded = $state(false);
   let editText = $state("");
   let editTextareaEl;
+  let pendingTruncate = $state(null);
 
   onMount(() => { inputEl?.focus(); });
 
@@ -104,7 +105,7 @@
     const eventStart = messages[index]?._eventStart;
     messages = messages.slice(0, index + 1);
     if (sessionId && eventStart != null) {
-      truncateSession(appName, userId, sessionId, eventStart).catch(() => {});
+      pendingTruncate = { eventStart };
     }
     setTimeout(() => {
       if (editTextareaEl) {
@@ -122,6 +123,7 @@
   function cancelEdit() {
     editingIndex = -1;
     editText = "";
+    pendingTruncate = null;
   }
 
   function confirmEdit() {
@@ -157,6 +159,18 @@
     const text = input.trim();
     const hasFiles = attachedFiles.length > 0;
     if ((!text && !hasFiles) || loading || !sessionId) return;
+
+    if (pendingTruncate) {
+      try {
+        await truncateSession(appName, userId, sessionId, pendingTruncate.eventStart);
+        clearMessageCache(sessionId);
+      } catch {
+        messages = [...messages, { role: "error", text: "Failed to update session history. Please try again." }];
+        pendingTruncate = null;
+        return;
+      }
+      pendingTruncate = null;
+    }
 
     if (editingIndex >= 0) {
       messages = messages.slice(0, editingIndex);
@@ -199,6 +213,7 @@
             messages.splice(idx, 1);
             messages = messages;
           }
+          onMessagesChanged(messages);
         },
         signal: ctrl.signal,
       });
@@ -347,13 +362,15 @@
     {#if attachedFiles.length > 0}
       <div class="file-preview-strip">
         {#each attachedFiles as f, i}
-          <div class="file-chip">
+          <div class="file-chip" class:has-preview={f.previewUrl}>
             {#if f.previewUrl}
               <img src={f.previewUrl} alt={f.name} />
+              <span class="file-chip-overlay">{formatFileSize(f.size)}</span>
             {:else}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="file-chip-name">{f.name}</span>
+              <span class="file-chip-size">{formatFileSize(f.size)}</span>
             {/if}
-            <span class="file-chip-size">{formatFileSize(f.size)}</span>
             <button class="file-chip-remove" onclick={() => removeFile(i)}>&times;</button>
           </div>
         {/each}
@@ -752,6 +769,7 @@
   }
 
   .file-chip {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -764,10 +782,30 @@
     flex-shrink: 0;
   }
 
-  .file-chip img {
-    width: 28px;
-    height: 28px;
+  .file-chip.has-preview {
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .file-chip.has-preview img {
+    width: 80px;
+    height: 80px;
     object-fit: cover;
+    border-radius: 10px;
+    display: block;
+  }
+
+  .file-chip-overlay {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    padding: 1px 6px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    font-size: 0.7em;
     border-radius: 4px;
   }
 
@@ -783,15 +821,28 @@
   }
 
   .file-chip-remove {
-    padding: 0 4px;
-    background: none;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
     border: none;
-    color: #94a3b8;
-    font-size: 1.1em;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.85em;
     cursor: pointer;
     line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s;
   }
-  .file-chip-remove:hover { color: #dc2626; }
+
+  .file-chip:hover .file-chip-remove { opacity: 1; }
+  .file-chip-remove:hover { background: #dc2626; }
 
   .attach-btn {
     grid-area: attach;
