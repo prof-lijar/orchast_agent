@@ -1,11 +1,11 @@
 <script>
   import { onMount } from "svelte";
-  import { sendMessageStream } from "./api.js";
+  import { sendMessageStream, truncateSession, clearMessageCache, createSession } from "./api.js";
   import { marked } from "marked";
 
   marked.setOptions({ breaks: true, gfm: true });
 
-  let { appName = "app", userId = "user", sessionId = "", initialMessages = [] } = $props();
+  let { appName = "app", userId = "user", sessionId = "", initialMessages = [], onMessagesChanged = () => {}, onSessionCreated = () => {} } = $props();
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const ACCEPTED_TYPES = ".csv,.json,.txt,.pdf,.png,.jpg,.jpeg,.xlsx,.xls";
@@ -22,6 +22,10 @@
   let abortCtrl = $state(null);
   let attachedFiles = $state([]);
   let dragging = $state(false);
+  let expanded = $state(false);
+  let editText = $state("");
+  let editTextareaEl;
+  let pendingTruncate = $state(null);
 
   onMount(() => { inputEl?.focus(); });
 
@@ -52,13 +56,15 @@
         continue;
       }
       const base64 = await fileToBase64(file);
-      const isImage = file.type.startsWith("image/");
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      const isImage = file.type.startsWith("image/") || ["png","jpg","jpeg","gif","webp","bmp","svg"].includes(ext);
+      const mime = file.type || "application/octet-stream";
       attachedFiles = [...attachedFiles, {
         name: file.name,
         size: file.size,
-        mime: file.type || "application/octet-stream",
+        mime,
         base64,
-        previewUrl: isImage ? URL.createObjectURL(file) : null,
+        previewUrl: isImage ? `data:${mime};base64,${base64}` : null,
       }];
     }
   }
@@ -69,8 +75,6 @@
   }
 
   function removeFile(index) {
-    const f = attachedFiles[index];
-    if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
     attachedFiles = attachedFiles.filter((_, i) => i !== index);
   }
 
@@ -97,8 +101,44 @@
 
   function startEdit(text, index) {
     editingIndex = index;
-    input = text;
-    setTimeout(() => inputEl?.focus(), 60);
+    editText = text;
+    const eventStart = messages[index]?._eventStart;
+    messages = messages.slice(0, index + 1);
+    if (sessionId && eventStart != null) {
+      pendingTruncate = { eventStart };
+    }
+    setTimeout(() => {
+      if (editTextareaEl) {
+        editTextareaEl.focus();
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(editTextareaEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }, 60);
+  }
+
+  function cancelEdit() {
+    editingIndex = -1;
+    editText = "";
+    pendingTruncate = null;
+  }
+
+  function confirmEdit() {
+    input = editTextareaEl?.innerText?.trim() || editText;
+    editText = "";
+    handleSend();
+  }
+
+  function handleEditKeydown(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      confirmEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
   }
 
   let scrollRAF = 0;
@@ -118,7 +158,30 @@
   async function handleSend() {
     const text = input.trim();
     const hasFiles = attachedFiles.length > 0;
-    if ((!text && !hasFiles) || loading || !sessionId) return;
+    if ((!text && !hasFiles) || loading) return;
+
+    if (!sessionId) {
+      try {
+        const session = await createSession(appName);
+        sessionId = session.id;
+        onSessionCreated(session.id);
+      } catch {
+        messages = [...messages, { role: "error", text: "Failed to create session." }];
+        return;
+      }
+    }
+
+    if (pendingTruncate) {
+      try {
+        await truncateSession(appName, userId, sessionId, pendingTruncate.eventStart);
+        clearMessageCache(sessionId);
+      } catch {
+        messages = [...messages, { role: "error", text: "Failed to update session history. Please try again." }];
+        pendingTruncate = null;
+        return;
+      }
+      pendingTruncate = null;
+    }
 
     if (editingIndex >= 0) {
       messages = messages.slice(0, editingIndex);
@@ -132,6 +195,7 @@
     input = "";
     attachedFiles = [];
     loading = true;
+    resetInputHeight();
     scrollToBottom();
 
     const placeholder = { role: "agent", text: "", thinking: "", streaming: true };
@@ -160,6 +224,7 @@
             messages.splice(idx, 1);
             messages = messages;
           }
+          onMessagesChanged(messages);
         },
         signal: ctrl.signal,
       });
@@ -179,6 +244,19 @@
     }
   }
 
+  function autoResize() {
+    if (!inputEl) return;
+    inputEl.style.height = "auto";
+    expanded = inputEl.scrollHeight > 40;
+    inputEl.style.height = inputEl.scrollHeight + "px";
+  }
+
+  function resetInputHeight() {
+    if (!inputEl) return;
+    inputEl.style.height = "auto";
+    expanded = false;
+  }
+
   function handleKeydown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -187,7 +265,7 @@
   }
 </script>
 
-<div class="chat-panel">
+<div class="chat-panel" class:empty={messages.length === 0}>
   <div class="chat-messages" bind:this={chatContainer}>
     {#if messages.length === 0}
       <div class="empty-state">
@@ -239,20 +317,33 @@
                 {/each}
               </div>
             {/if}
-            <pre class="content">{msg.text}</pre>
+            {#if editingIndex === i}
+              <pre
+                class="content"
+                contenteditable="true"
+                bind:this={editTextareaEl}
+                onkeydown={handleEditKeydown}
+                oninput={() => { editText = editTextareaEl.innerText; }}
+                onblur={cancelEdit}
+              >{msg.text}</pre>
+            {:else}
+              <pre class="content">{msg.text}</pre>
+            {/if}
           </div>
-          <div class="user-actions">
-            <button class="action-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
-              {#if copiedIndex === i}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              {:else}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              {/if}
-            </button>
-            <button class="action-btn" onclick={() => startEdit(msg.text, i)} title="Edit message" disabled={loading}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-          </div>
+          {#if editingIndex !== i}
+            <div class="user-actions">
+              <button class="action-btn" onclick={() => copyText(msg.text, i)} title="Copy to clipboard">
+                {#if copiedIndex === i}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                {:else}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                {/if}
+              </button>
+              <button class="action-btn" onclick={() => startEdit(msg.text, i)} title="Edit message" disabled={loading}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+            </div>
+          {/if}
         </div>
       {:else}
         <div class="message error">
@@ -282,14 +373,15 @@
     {#if attachedFiles.length > 0}
       <div class="file-preview-strip">
         {#each attachedFiles as f, i}
-          <div class="file-chip">
+          <div class="file-chip" class:has-preview={f.previewUrl}>
             {#if f.previewUrl}
               <img src={f.previewUrl} alt={f.name} />
+              <span class="file-chip-overlay">{formatFileSize(f.size)}</span>
             {:else}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="file-chip-name">{f.name}</span>
+              <span class="file-chip-size">{formatFileSize(f.size)}</span>
             {/if}
-            <span class="file-chip-name">{f.name}</span>
-            <span class="file-chip-size">{formatFileSize(f.size)}</span>
             <button class="file-chip-remove" onclick={() => removeFile(i)}>&times;</button>
           </div>
         {/each}
@@ -303,23 +395,26 @@
       onchange={handleFileSelect}
       style="display:none"
     />
-    <div class="input-row">
+    <div class="input-row" class:expanded>
       <button class="attach-btn" onclick={() => fileInput?.click()} disabled={loading} title="Attach file">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
       </button>
       <textarea
         bind:this={inputEl}
         bind:value={input}
+        oninput={autoResize}
         onkeydown={handleKeydown}
-        placeholder={sessionId ? "Message the agent..." : "Connecting..."}
-        disabled={!sessionId || loading}
-        rows="2"
+        placeholder="Message the agent..."
+        disabled={loading}
+        rows="1"
       ></textarea>
       {#if abortCtrl}
-        <button class="stop-btn" onclick={stopStreaming}>Stop</button>
+        <button class="stop-btn" onclick={stopStreaming} title="Stop generating">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
       {:else}
-        <button onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading || !sessionId}>
-          Send
+        <button class="send-btn" onclick={handleSend} disabled={(!input.trim() && !attachedFiles.length) || loading}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l7-7 7 7"/><path d="M12 19V5"/></svg>
         </button>
       {/if}
     </div>
@@ -355,6 +450,29 @@
 
   .empty-state p { margin: 4px 0; }
   .empty-state .hint { font-size: 0.85em; color: #94a3b8; }
+
+  .chat-panel.empty {
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .chat-panel.empty .chat-messages {
+    flex: none;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .chat-panel.empty .empty-state {
+    flex: none;
+  }
+
+  .chat-panel.empty .chat-input {
+    border-top: none;
+    max-width: 680px;
+    width: 100%;
+    background: transparent;
+  }
 
   .message {
     max-width: 85%;
@@ -611,7 +729,7 @@
     bottom: 6px;
   }
 
-  .action-btn:hover, .copy-btn:hover { background: #334155; color: #ffffff; }
+  .action-btn:hover, .copy-btn:hover { background: #e2e8f0; color: #0f172a; }
   .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .chat-input {
@@ -630,9 +748,27 @@
   }
 
   .input-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "attach textarea send";
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    background: #f8fafc;
+    padding: 4px;
+    transition: border-color 0.15s;
+  }
+
+  .input-row.expanded {
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "textarea textarea textarea"
+      "attach . send";
+    border-radius: 20px;
+  }
+
+  .input-row:focus-within {
+    border-color: #2563eb;
   }
 
   .file-preview-strip {
@@ -644,6 +780,7 @@
   }
 
   .file-chip {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -656,10 +793,30 @@
     flex-shrink: 0;
   }
 
-  .file-chip img {
-    width: 28px;
-    height: 28px;
+  .file-chip.has-preview {
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .file-chip.has-preview img {
+    width: 80px;
+    height: 80px;
     object-fit: cover;
+    border-radius: 10px;
+    display: block;
+  }
+
+  .file-chip-overlay {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    padding: 1px 6px;
+    background: rgba(0,0,0,0.55);
+    color: white;
+    font-size: 0.7em;
     border-radius: 4px;
   }
 
@@ -675,32 +832,45 @@
   }
 
   .file-chip-remove {
-    padding: 0 4px;
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 1.1em;
-    cursor: pointer;
-    line-height: 1;
-  }
-  .file-chip-remove:hover { color: #dc2626; }
-
-  .attach-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.85em;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .file-chip:hover .file-chip-remove { opacity: 1; }
+  .file-chip-remove:hover { background: #dc2626; }
+
+  .attach-btn {
+    grid-area: attach;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     padding: 0;
     background: transparent;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    color: #64748b;
+    border: none;
+    border-radius: 50%;
+    color: #94a3b8;
     cursor: pointer;
-    flex-shrink: 0;
     transition: all 0.15s;
   }
-  .attach-btn:hover:not(:disabled) { background: #f1f5f9; color: #2563eb; border-color: #2563eb; }
+  .attach-btn:hover:not(:disabled) { background: #e2e8f0; color: #2563eb; }
   .attach-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .message-files {
@@ -728,33 +898,38 @@
   }
 
   textarea {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    grid-area: textarea;
+    padding: 6px 12px;
+    border: none;
     font-family: inherit;
     font-size: 0.9em;
+    line-height: 1.4;
     resize: none;
     outline: none;
-    background: #f8fafc;
+    background: transparent;
+    max-height: 150px;
+    overflow-y: auto;
   }
 
-  textarea:focus { border-color: #2563eb; }
   textarea:disabled { opacity: 0.5; }
 
-  button {
-    padding: 10px 20px;
+  .send-btn {
+    grid-area: send;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     background: #2563eb;
     color: white;
     border: none;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0.9em;
+    transition: all 0.15s;
   }
-
-  button:hover:not(:disabled) { background: #1d4ed8; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send-btn:hover:not(:disabled) { background: #1d4ed8; }
+  .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .cursor {
     animation: blink 0.6s step-end infinite;
@@ -764,14 +939,24 @@
   @keyframes blink { 50% { opacity: 0; } }
 
   .stop-btn {
-    padding: 10px 20px;
+    grid-area: send;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
     background: #dc2626;
     color: white;
     border: none;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 50%;
     cursor: pointer;
-    font-size: 0.9em;
+    transition: all 0.15s;
   }
   .stop-btn:hover { background: #b91c1c; }
+
+  .content[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+  }
 </style>

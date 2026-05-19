@@ -1,18 +1,19 @@
 {
-  "excel_pilot_tool": {
-    "name": "excel_pilot_tool",
-    "description": "Analyzes Excel files and performs data processing or calculations based on a natural language request.",
-    "module": "app.tools.generated.excel_pilot_tool",
-    "function": "excel_pilot_tool",
+  "web_search_content_tool": {
+    "name": "web_search_content_tool",
+    "description": "Performs web searches for a given query or extracts rich text content from a provided URL.",
+    "module": "app.tools.generated.web_search_content_tool",
+    "function": "web_search_content_tool",
     "input_schema": {
-      "file_path": "string",
-      "request": "string"
+      "query": "string",
+      "url": "string"
     },
     "output_schema": {
-      "result": "string"
+      "search_results": "string",
+      "page_content": "string"
     },
     "risk_level": "low",
-    "created_at": "2026-05-18T10:09:40.534638+00:00",
+    "created_at": "2026-05-19T05:08:46.370416+00:00",
     "version": 1
   }
 }

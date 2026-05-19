@@ -35,8 +35,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 6px 16px;
-    background: #1e293b;
-    color: #94a3b8;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
     font-size: 0.75em;
     font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
   }
@@ -56,8 +57,8 @@
   .indicator.online { background: #22c55e; }
   .indicator.offline { background: #ef4444; }
 
-  .separator { color: #475569; }
-  .label { color: #cbd5e1; }
-  .session { color: #64748b; }
-  .model-info { color: #94a3b8; }
+  .separator { color: #cbd5e1; }
+  .label { color: #475569; }
+  .session { color: #94a3b8; }
+  .model-info { color: #64748b; }
 </style>

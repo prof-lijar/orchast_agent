@@ -112,11 +112,25 @@ export async function deleteSession(appName = "app", userId = "user", sessionId)
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Failed to delete session: ${res.status}`);
+  clearMessageCache(sessionId);
 }
 
 export async function getSession(appName = "app", userId = "user", sessionId) {
   const res = await fetch(`${API_BASE}/apps/${appName}/users/${userId}/sessions/${sessionId}`);
   if (!res.ok) throw new Error(`Failed to get session: ${res.status}`);
+  return res.json();
+}
+
+export async function truncateSession(appName = "app", userId = "user", sessionId, keepEventCount) {
+  const session = await getSession(appName, userId, sessionId);
+  const events = (session.events || []).slice(0, keepEventCount);
+  await deleteSession(appName, userId, sessionId);
+  const res = await fetch(`${API_BASE}/apps/${appName}/users/${userId}/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, state: session.state || {}, events }),
+  });
+  if (!res.ok) throw new Error(`Failed to recreate session: ${res.status}`);
   return res.json();
 }
 
@@ -152,4 +166,58 @@ export async function switchModel(modelName) {
   });
   if (!res.ok) throw new Error(`Failed to switch model: ${res.status}`);
   return res.json();
+}
+
+const CACHE_PREFIX = "msgCache:";
+const MAX_CACHED_SESSIONS = 20;
+const MAX_CACHE_BYTES = 2 * 1024 * 1024;
+
+export function saveMessageCache(sessionId, messages) {
+  if (!sessionId || !messages?.length) return;
+  const stripped = messages.map(m => {
+    const clone = { ...m };
+    if (clone.files) {
+      clone.files = clone.files.map(f => {
+        const { previewUrl, ...rest } = f;
+        return rest;
+      });
+    }
+    return clone;
+  });
+  const entry = JSON.stringify({ v: 1, ts: Date.now(), messages: stripped });
+  if (entry.length > MAX_CACHE_BYTES) return;
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k?.startsWith(CACHE_PREFIX) && k !== CACHE_PREFIX + sessionId) {
+        try {
+          const { ts } = JSON.parse(localStorage.getItem(k));
+          keys.push({ k, ts });
+        } catch { keys.push({ k, ts: 0 }); }
+      }
+    }
+    if (keys.length >= MAX_CACHED_SESSIONS) {
+      keys.sort((a, b) => a.ts - b.ts);
+      for (let i = 0; i <= keys.length - MAX_CACHED_SESSIONS; i++) {
+        localStorage.removeItem(keys[i].k);
+      }
+    }
+    localStorage.setItem(CACHE_PREFIX + sessionId, entry);
+  } catch { /* quota exceeded */ }
+}
+
+export function loadMessageCache(sessionId) {
+  if (!sessionId) return null;
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + sessionId);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.v !== 1 || !Array.isArray(parsed.messages)) return null;
+    return parsed.messages;
+  } catch { return null; }
+}
+
+export function clearMessageCache(sessionId) {
+  if (sessionId) localStorage.removeItem(CACHE_PREFIX + sessionId);
 }
