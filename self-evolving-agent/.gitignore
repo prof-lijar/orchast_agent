@@ -50,4 +50,5 @@ desktop/zig-cache/
 desktop/.zig-cache/
 desktop/frontend/node_modules/
 desktop/frontend/dist/
+desktop/frontend/.vite/
 desktop/third_party/
