@@ -159,6 +159,16 @@ def setup_git_repo(output_dir: str, repo_url: str | None, branch: str) -> None:
         logger.info("Git repo already exists at %s", out)
         return
 
+    result = subprocess.run(
+        ["git", "rev-parse", "--git-dir"],
+        cwd=str(out),
+        capture_output=True,
+        timeout=10,
+    )
+    if result.returncode == 0:
+        logger.info("Output dir %s is inside an existing git repo — skipping clone", out)
+        return
+
     if repo_url:
         logger.info("Cloning %s into %s", repo_url, out)
         subprocess.run(
