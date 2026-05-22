@@ -193,6 +193,7 @@ async def run_chapter(
         "current_chapter_title": chapter["title"],
         "current_chapter_description": chapter.get("description", ""),
         "total_chapters": str(len(toc["chapters"])),
+        "target_word_count": os.environ.get("CHAPTER_WORD_COUNT", "3000-5000"),
     }
 
     session = await session_service.create_session(
@@ -268,6 +269,10 @@ async def main() -> None:
         "--timeout", type=int, default=1800, help="Timeout per chapter (seconds)"
     )
     parser.add_argument(
+        "--words", default="3000-5000",
+        help="Target word count range per chapter (default: 3000-5000)",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -288,6 +293,7 @@ async def main() -> None:
     setup_logging(output_dir)
 
     os.environ["AGENT_MODEL"] = args.model
+    os.environ["CHAPTER_WORD_COUNT"] = args.words
     model_name = args.model
     logger.info("Book Writer starting — model: %s", model_name)
 

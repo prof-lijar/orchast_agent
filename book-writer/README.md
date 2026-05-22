@@ -20,7 +20,7 @@ Table of Contents (JSON / YAML / text)
     │     → Detailed section-by-section plan  │
     │                                         │
     │  2. Writer Agent                        │
-    │     → Full chapter draft (3000-5000 w)  │
+    │     → Full chapter draft (--words)      │
     │                                         │
     │  3. Reviewer Agent                      │
     │     → Revised draft with improvements   │
@@ -219,6 +219,7 @@ Options:
   --repo URL             Git remote repository URL (auto-detected from GitHub URL)
   --clone-dir DIR        Base directory for cloned repos (default: ./repos)
   --retry N              Retries per chapter on failure (default: 3)
+  --words RANGE          Target word count per chapter (default: 3000-5000)
   --timeout SECONDS      Timeout per chapter in seconds (default: 1800)
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
@@ -297,7 +298,7 @@ LiteLlm(
 | **gemma4:31b** | High | ~5-15 min/chapter | Recommended for GPU servers |
 | **gemma4:27b** | Good | Faster | Good balance |
 | **gemma3:27b** | Good | Moderate | Also works well |
-| **qwen3.5:0.8b** | Lighter | Fast | Good for low-resource devices (e.g. Raspberry Pi) |
+| **qwen3.5:0.8b** | Lighter | Fast | Good for low-resource devices (e.g. Raspberry Pi); use `--words 800-1500 --timeout 7200` |
 
 ### Remote GPU Server
 

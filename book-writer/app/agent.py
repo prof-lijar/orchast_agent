@@ -50,7 +50,7 @@ Create a detailed, hierarchical outline for this chapter. Include:
 3. Key points and sub-topics under each section (2-4 per section)
 4. Transition notes between sections
 5. A conclusion or chapter summary concept
-6. Estimated word count per section (target total: 3000-5000 words)
+6. Estimated word count per section (target total: {target_word_count} words)
 
 Write the outline in Markdown with clear hierarchy using headings and bullet points.
 Be specific and substantive — this outline guides the writer agent."""
@@ -67,7 +67,7 @@ Use the following outline as your guide:
 Write the FULL chapter as polished, publication-ready prose. Requirements:
 - Follow the outline structure exactly
 - Write substantive prose paragraphs, NOT bullet points or lists (unless they serve the content)
-- Target 3000-5000 words total
+- Target {target_word_count} words total
 - Use a clear, engaging, and authoritative tone
 - Start with the chapter title as a level-1 heading: # Chapter {current_chapter_number}: {current_chapter_title}
 - Use level-2 headings (##) for main sections
