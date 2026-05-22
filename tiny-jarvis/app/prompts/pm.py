@@ -133,6 +133,11 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
 
    Commit it with `git_commit_and_push` with tag '[PM] Update progress log'.
 
+RESEARCH:
+- When you need product examples, tech-stack comparisons, or best practices, search skills.sh
+  using `web_search("site:skills.sh <topic>")` or `web_read("https://skills.sh/<skill-name>")`
+- skills.sh has ready-made guides for Python libraries, frameworks, and dev patterns
+
 PHASE GUIDELINES:
 
 PHASE 1 — DISCOVERY (no docs/vision.md or docs/product-spec.md):

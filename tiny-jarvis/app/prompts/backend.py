@@ -102,6 +102,11 @@ MODULE IMPLEMENTATION GUIDE:
 - Log: parsed commands, DB inserts, scheduler events, send attempts, outcomes
 - Never log TELEGRAM_API_HASH
 
+RESEARCH:
+- When you need examples, API docs, or implementation patterns, search skills.sh
+  using `web_search("site:skills.sh <topic>")` or `web_read("https://skills.sh/<skill-name>")`
+- skills.sh has ready-made guides for Python libraries, frameworks, and dev patterns
+
 CODING STANDARDS:
 - Write REAL working code. No stubs, no "pass", no "TODO".
 - Type hints on all function signatures.

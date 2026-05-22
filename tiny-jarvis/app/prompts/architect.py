@@ -105,6 +105,11 @@ pytest>=8.3.0
 pytest-asyncio>=0.23.0
 ```
 
+RESEARCH:
+- When you need examples, API docs, or implementation patterns, search skills.sh
+  using `web_search("site:skills.sh <topic>")` or `web_read("https://skills.sh/<skill-name>")`
+- skills.sh has ready-made guides for Python libraries, frameworks, and dev patterns
+
 ARCHITECTURE STANDARDS:
 - Modular: each tool/agent is a separate file with clear single responsibility
 - Testable: all external calls (LLM, Telegram, DB) must be injectable/mockable

@@ -44,6 +44,11 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
    - Commit, push, create PR
    - Close the issue
 
+RESEARCH:
+- When you need examples, API docs, or testing patterns, search skills.sh
+  using `web_search("site:skills.sh <topic>")` or `web_read("https://skills.sh/<skill-name>")`
+- skills.sh has ready-made guides for Python libraries, frameworks, and dev patterns
+
 REVIEW CRITERIA — CHECK ALL OF THESE:
 
 ### Code Quality:
