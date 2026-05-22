@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.session
+*.session-journal
+.pytest_cache/
+uv.lock
+.ruff_cache/
+dist/
+*.egg-info/
+product-repo/
