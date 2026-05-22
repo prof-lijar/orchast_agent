@@ -5,16 +5,13 @@ import os
 os.environ["OPENAI_API_KEY"] = "ollama"
 os.environ["OPENAI_BASE_URL"] = "http://localhost:11434/v1"
 
-import google.auth
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.apps import App
-from google.adk.models import Gemini, LiteLlm
-from google.genai import types
+from google.adk.models import LiteLlm
 
-_, project_id = google.auth.default()
-os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "local")
+os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "False")
 
 # --- Model Configuration ---
 
@@ -34,13 +31,7 @@ def _make_ollama_model(name: str) -> LiteLlm:
     )
 
 
-if _agent_model:
-    _model = _make_ollama_model(_agent_model)
-else:
-    _model = Gemini(
-        model="gemini-flash-latest",
-        retry_options=types.HttpRetryOptions(attempts=3),
-    )
+_model = _make_ollama_model(_agent_model)
 
 # --- Sub-Agent Instructions ---
 

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Overnight book-writing runner.
+"""Overnight book-writing runner using local Ollama models.
 
 Usage:
     # GitHub URL — auto-clones repo, reads TOC, writes chapters to the same directory:
-    python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json
+    python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --model gemma4:31b
 
     # Local file:
-    python run_book.py --toc toc.json --output-dir ./my-book
+    python run_book.py --toc toc.json --output-dir ./my-book --model llama3:8b
 
     # Resume after interruption:
-    python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --resume
+    python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --model gemma4:31b --resume
 """
 
 from __future__ import annotations
@@ -255,9 +255,9 @@ async def main() -> None:
         description="Overnight book writer",
         epilog=(
             "Examples:\n"
-            "  python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json\n"
-            "  python run_book.py --toc toc.json --output-dir ./my-book\n"
-            "  python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --resume\n"
+            "  python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --model gemma4:31b\n"
+            "  python run_book.py --toc toc.json --output-dir ./my-book --model llama3:8b\n"
+            "  python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --model gemma4:31b --resume\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -266,7 +266,7 @@ async def main() -> None:
         help="Path or GitHub URL to table of contents file (e.g. https://github.com/user/repo/blob/main/book/toc.json)",
     )
     parser.add_argument("--output-dir", default=None, help="Output directory (auto-detected from GitHub URL)")
-    parser.add_argument("--model", default=None, help="Ollama model name")
+    parser.add_argument("--model", required=True, help="Ollama model name (e.g. gemma4:31b, llama3:8b)")
     parser.add_argument("--branch", default=None, help="Git branch (auto-detected from GitHub URL)")
     parser.add_argument("--repo", default=None, help="Git remote repo URL (auto-detected from GitHub URL)")
     parser.add_argument("--clone-dir", default="./repos", help="Base directory for cloned repos (default: ./repos)")
@@ -295,10 +295,8 @@ async def main() -> None:
 
     setup_logging(output_dir)
 
-    if args.model:
-        os.environ["AGENT_MODEL"] = args.model
-
-    model_name = os.environ.get("AGENT_MODEL", "gemma4:31b")
+    os.environ["AGENT_MODEL"] = args.model
+    model_name = args.model
     logger.info("Book Writer starting — model: %s", model_name)
 
     if not check_ollama(model_name):
