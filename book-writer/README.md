@@ -81,11 +81,7 @@ The overnight runner (`run_book.py`) drives the pipeline programmatically rather
 
 - Python 3.11+
 - [Ollama](https://ollama.com/download) installed and running
-- A Gemma 4 model pulled:
-  ```bash
-  ollama pull gemma4:31b
-  ```
-- Google Cloud credentials configured (`gcloud auth application-default login`)
+- An Ollama model pulled (e.g. `ollama pull gemma4:31b`, `ollama pull qwen3.5:0.8b`)
 
 ### Install
 
@@ -160,40 +156,40 @@ A comprehensive guide to Python programming
 
 ### 2. Run the Agent
 
-**Basic run** (writes to `./book/` using `gemma4:31b`):
+**Basic run** (writes to `./book/`):
 
 ```bash
-python run_book.py --toc my-book-toc.json
+python run_book.py --toc my-book-toc.json --model gemma4:31b
 ```
 
-**Custom model**:
+**From a GitHub URL** (auto-clones the repo):
 
 ```bash
-python run_book.py --toc my-book-toc.json --model gemma4:27b
+python run_book.py --toc https://github.com/user/repo/blob/main/my-book/toc.json --model gemma4:31b
 ```
 
 **Push to GitHub as chapters complete**:
 
 ```bash
-python run_book.py --toc my-book-toc.json --repo https://github.com/user/my-book.git
+python run_book.py --toc my-book-toc.json --model gemma4:31b --repo https://github.com/user/my-book.git
 ```
 
 **Custom output directory and branch**:
 
 ```bash
-python run_book.py --toc my-book-toc.json --output-dir ./my-book --branch draft
+python run_book.py --toc my-book-toc.json --model gemma4:31b --output-dir ./my-book --branch draft
 ```
 
 **Resume after interruption**:
 
 ```bash
-python run_book.py --toc my-book-toc.json --resume
+python run_book.py --toc my-book-toc.json --model gemma4:31b --resume
 ```
 
 **Local only (no git push)**:
 
 ```bash
-python run_book.py --toc my-book-toc.json --no-push
+python run_book.py --toc my-book-toc.json --model gemma4:31b --no-push
 ```
 
 ### 3. Interactive Mode (ADK Playground)
@@ -211,16 +207,17 @@ Open `http://localhost:8080` and select the `app` agent.
 ## CLI Reference
 
 ```
-python run_book.py --toc TOC [options]
+python run_book.py --toc TOC --model MODEL [options]
 
 Required:
-  --toc TOC              Path to table of contents file (JSON, YAML, or text)
+  --toc TOC              Path or GitHub URL to table of contents file (JSON, YAML, or text)
+  --model MODEL          Ollama model name (e.g. gemma4:31b, qwen3.5:0.8b)
 
 Options:
-  --output-dir DIR       Output directory (default: ./book)
-  --model MODEL          Ollama model name (default: gemma4:31b)
-  --branch BRANCH        Git branch name (default: main)
-  --repo URL             Git remote repository URL
+  --output-dir DIR       Output directory (default: ./book, auto-detected from GitHub URL)
+  --branch BRANCH        Git branch name (default: main, auto-detected from GitHub URL)
+  --repo URL             Git remote repository URL (auto-detected from GitHub URL)
+  --clone-dir DIR        Base directory for cloned repos (default: ./repos)
   --retry N              Retries per chapter on failure (default: 3)
   --timeout SECONDS      Timeout per chapter in seconds (default: 1800)
   --resume               Resume from .progress.json (skip completed chapters)
@@ -278,7 +275,7 @@ The agent is designed for overnight unattended operation:
 
 ## Model Configuration
 
-Default model is `gemma4:31b` via Ollama. Change it with `--model` or the `AGENT_MODEL` env var.
+Specify the model with the required `--model` flag. Any model available in your local Ollama instance will work.
 
 The agent connects to Ollama through its OpenAI-compatible endpoint using ADK's `LiteLlm` wrapper:
 
@@ -297,9 +294,10 @@ LiteLlm(
 
 | Model | Quality | Speed | Notes |
 |-------|---------|-------|-------|
-| **gemma4:31b** | High | ~5-15 min/chapter | Recommended default |
+| **gemma4:31b** | High | ~5-15 min/chapter | Recommended for GPU servers |
 | **gemma4:27b** | Good | Faster | Good balance |
 | **gemma3:27b** | Good | Moderate | Also works well |
+| **qwen3.5:0.8b** | Lighter | Fast | Good for low-resource devices (e.g. Raspberry Pi) |
 
 ### Remote GPU Server
 
@@ -310,7 +308,7 @@ If Ollama runs on a remote machine, use SSH port forwarding:
 ssh -L 11434:localhost:11434 user@gpu-server
 
 # Run the agent
-python run_book.py --toc my-book-toc.json
+python run_book.py --toc my-book-toc.json --model gemma4:31b
 ```
 
 ---
@@ -319,9 +317,6 @@ python run_book.py --toc my-book-toc.json
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `AGENT_MODEL` | Ollama model name | `gemma4:31b` |
-| `BOOK_OUTPUT_DIR` | Output directory | `./book` |
-| `BOOK_GIT_BRANCH` | Git branch | `main` |
 | `ALLOW_ORIGINS` | CORS origins for FastAPI (comma-separated) | none |
 
 ---
@@ -349,6 +344,6 @@ book-writer/
 
 - **[Google ADK](https://github.com/google/adk-python)** — Agent framework (Agent, SequentialAgent, App, Runner)
 - **[Ollama](https://ollama.com/)** — Local LLM inference server
-- **Gemma 4** — Default LLM model for content generation
+- **Ollama models** — Any locally available model (Gemma, Qwen, Llama, etc.)
 - **LiteLlm** — Model provider abstraction (connects ADK to Ollama's OpenAI-compatible API)
 - **FastAPI** — Optional web interface for interactive use and progress monitoring

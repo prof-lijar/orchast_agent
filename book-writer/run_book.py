@@ -32,14 +32,6 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from app.tools import (
-    git_commit_and_push_sync,
-    load_progress,
-    parse_toc,
-    save_chapter_to_disk,
-    save_progress,
-)
-
 logger = logging.getLogger("book-writer")
 
 GITHUB_BLOB_RE = re.compile(
@@ -301,6 +293,14 @@ async def main() -> None:
 
     if not check_ollama(model_name):
         sys.exit(1)
+
+    from app.tools import (
+        git_commit_and_push_sync,
+        load_progress,
+        parse_toc,
+        save_chapter_to_disk,
+        save_progress,
+    )
 
     toc = parse_toc(toc_path)
     logger.info(
