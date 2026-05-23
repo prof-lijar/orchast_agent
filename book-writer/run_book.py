@@ -218,6 +218,7 @@ async def run_chapter(
     if stream:
         run_config = RunConfig(streaming_mode=StreamingMode.SSE)
 
+    agent_order = ["outline_agent", "writer_agent", "reviewer_agent", "finalizer_agent"]
     final_text = ""
     current_author = None
     async for event in runner.run_async(
@@ -228,7 +229,12 @@ async def run_chapter(
     ):
         if stream:
             if getattr(event, "turn_complete", False) and current_author:
-                print(f"\n[{current_author} done]", flush=True)
+                idx = agent_order.index(current_author) if current_author in agent_order else -1
+                if idx >= 0 and idx + 1 < len(agent_order):
+                    next_agent = agent_order[idx + 1]
+                    print(f"\n[{current_author} done → {next_agent} starting...]", flush=True)
+                else:
+                    print(f"\n[{current_author} done]", flush=True)
 
             if event.content and event.content.parts:
                 if event.author != current_author:
