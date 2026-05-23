@@ -221,6 +221,7 @@ Options:
   --retry N              Retries per chapter on failure (default: 3)
   --words RANGE          Target word count per chapter (default: 3000-5000)
   --timeout SECONDS      Timeout per chapter in seconds (default: 1800)
+  --stream               Stream LLM output to console in real-time
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
 ```

@@ -28,6 +28,7 @@ from pathlib import Path
 
 import urllib.request
 import urllib.error
+from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
@@ -184,6 +185,7 @@ async def run_chapter(
     session_service: InMemorySessionService,
     toc: dict,
     chapter: dict,
+    stream: bool = False,
 ) -> str | None:
     """Run the 4-phase pipeline for a single chapter. Returns the final content."""
     state = {
@@ -212,20 +214,42 @@ async def run_chapter(
         parts=[types.Part.from_text(text=prompt)],
     )
 
+    run_config = None
+    if stream:
+        run_config = RunConfig(streaming_mode=StreamingMode.SSE)
+
     final_text = ""
+    current_author = None
     async for event in runner.run_async(
         user_id="book-writer",
         session_id=session.id,
         new_message=message,
+        run_config=run_config,
     ):
+        if stream and event.content and event.content.parts:
+            if event.author != current_author:
+                if current_author is not None:
+                    print(flush=True)
+                current_author = event.author
+                print(f"\n[{event.author}]", flush=True)
+
+            if getattr(event, "partial", False):
+                for part in event.content.parts:
+                    if part.text:
+                        print(part.text, end="", flush=True)
+
         if (
             event.content
             and event.content.parts
             and event.author == "finalizer_agent"
+            and not getattr(event, "partial", False)
         ):
             for part in event.content.parts:
                 if part.text:
                     final_text = part.text
+
+    if stream and current_author is not None:
+        print(flush=True)
 
     if not final_text:
         session = await session_service.get_session(
@@ -271,6 +295,10 @@ async def main() -> None:
     parser.add_argument(
         "--words", default="3000-5000",
         help="Target word count range per chapter (default: 3000-5000)",
+    )
+    parser.add_argument(
+        "--stream", action="store_true",
+        help="Stream LLM output to console in real-time",
     )
     parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
@@ -368,7 +396,7 @@ async def main() -> None:
                 logger.info("Attempt %d/%d", attempt, args.retry)
 
                 content = await asyncio.wait_for(
-                    run_chapter(runner, session_service, toc, chapter),
+                    run_chapter(runner, session_service, toc, chapter, stream=args.stream),
                     timeout=args.timeout,
                 )
 
