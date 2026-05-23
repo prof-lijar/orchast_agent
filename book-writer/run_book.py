@@ -418,21 +418,15 @@ async def main() -> None:
     total_words = 0
     start_time = time.time()
 
+    logger.info("=" * 60)
+    logger.info("Starting book generation: %s", toc["title"])
+    logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
     if rewrite_set:
-        logger.info("=" * 60)
         logger.info("Rewriting chapter(s): %s", ", ".join(str(c) for c in sorted(rewrite_set)))
-        logger.info("=" * 60)
-    else:
-        logger.info("=" * 60)
-        logger.info("Starting book generation: %s", toc["title"])
-        logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
-        logger.info("=" * 60)
+    logger.info("=" * 60)
 
     for chapter in toc["chapters"]:
         ch_num = chapter["number"]
-
-        if rewrite_set and ch_num not in rewrite_set:
-            continue
 
         if ch_num in completed:
             logger.info("Skipping Chapter %d (already complete)", ch_num)
