@@ -226,17 +226,21 @@ async def run_chapter(
         new_message=message,
         run_config=run_config,
     ):
-        if stream and event.content and event.content.parts:
-            if event.author != current_author:
-                if current_author is not None:
-                    print(flush=True)
-                current_author = event.author
-                print(f"\n[{event.author}]", flush=True)
+        if stream:
+            if getattr(event, "turn_complete", False) and current_author:
+                print(f"\n[{current_author} done]", flush=True)
 
-            if getattr(event, "partial", False):
-                for part in event.content.parts:
-                    if part.text:
-                        print(part.text, end="", flush=True)
+            if event.content and event.content.parts:
+                if event.author != current_author:
+                    if current_author is not None:
+                        print(flush=True)
+                    current_author = event.author
+                    print(f"\n[{event.author}]", flush=True)
+
+                if getattr(event, "partial", False):
+                    for part in event.content.parts:
+                        if part.text:
+                            print(part.text, end="", flush=True)
 
         if (
             event.content
