@@ -222,6 +222,7 @@ Options:
   --words RANGE          Target word count per chapter (default: 3000-5000)
   --timeout SECONDS      Timeout per chapter in seconds (default: 1800)
   --stream               Stream LLM output to console in real-time
+  --no-think             Disable model thinking (recommended for qwen3 models)
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
 ```
@@ -299,7 +300,7 @@ LiteLlm(
 | **gemma4:31b** | High | ~5-15 min/chapter | Recommended for GPU servers |
 | **gemma4:27b** | Good | Faster | Good balance |
 | **gemma3:27b** | Good | Moderate | Also works well |
-| **qwen3.5:0.8b** | Lighter | Fast | Good for low-resource devices (e.g. Raspberry Pi); use `--words 800-1500 --timeout 7200` |
+| **qwen3.5:0.8b** | Lighter | Fast | Good for low-resource devices (e.g. Raspberry Pi); use `--words 800-1500 --timeout 7200 --no-think` |
 
 ### Remote GPU Server
 

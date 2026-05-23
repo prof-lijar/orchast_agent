@@ -301,6 +301,10 @@ async def main() -> None:
         help="Stream LLM output to console in real-time",
     )
     parser.add_argument(
+        "--no-think", action="store_true",
+        help="Disable model thinking (recommended for qwen3 models)",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -323,6 +327,8 @@ async def main() -> None:
     os.environ["AGENT_MODEL"] = args.model
     os.environ["CHAPTER_WORD_COUNT"] = args.words
     os.environ["LLM_TIMEOUT"] = str(args.timeout)
+    if args.no_think:
+        os.environ["DISABLE_THINKING"] = "1"
     model_name = args.model
     logger.info("Book Writer starting — model: %s", model_name)
 

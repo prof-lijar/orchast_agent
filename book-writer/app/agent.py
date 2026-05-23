@@ -35,9 +35,11 @@ def _make_ollama_model(name: str) -> LiteLlm:
 
 _model = _make_ollama_model(_agent_model)
 
+_nothink_prefix = "/nothink\n\n" if os.environ.get("DISABLE_THINKING") else ""
+
 # --- Sub-Agent Instructions ---
 
-OUTLINE_INSTRUCTION = """You are a book chapter outline specialist.
+OUTLINE_INSTRUCTION = _nothink_prefix + """You are a book chapter outline specialist.
 
 You are writing an outline for a chapter of the book "{book_title}".
 Book description: {book_description}
@@ -57,7 +59,7 @@ Create a detailed, hierarchical outline for this chapter. Include:
 Write the outline in Markdown with clear hierarchy using headings and bullet points.
 Be specific and substantive — this outline guides the writer agent."""
 
-WRITER_INSTRUCTION = """You are an expert book writer.
+WRITER_INSTRUCTION = _nothink_prefix + """You are an expert book writer.
 
 You are writing a chapter for the book "{book_title}".
 Chapter {current_chapter_number}: {current_chapter_title}
@@ -79,7 +81,7 @@ Write the FULL chapter as polished, publication-ready prose. Requirements:
 
 Output ONLY the chapter content in Markdown. No meta-commentary."""
 
-REVIEWER_INSTRUCTION = """You are a professional book editor and reviewer.
+REVIEWER_INSTRUCTION = _nothink_prefix + """You are a professional book editor and reviewer.
 
 You are reviewing a chapter for the book "{book_title}".
 Chapter {current_chapter_number}: {current_chapter_title}
@@ -101,7 +103,7 @@ Review the draft and produce an IMPROVED version of the entire chapter. Focus on
 Output the COMPLETE revised chapter in Markdown. Do NOT output review notes or commentary —
 output only the improved chapter text, ready for the finalizer."""
 
-FINALIZER_INSTRUCTION = """You are a book production editor performing the final polish.
+FINALIZER_INSTRUCTION = _nothink_prefix + """You are a book production editor performing the final polish.
 
 You are finalizing a chapter for the book "{book_title}".
 Chapter {current_chapter_number}: {current_chapter_title}
@@ -157,7 +159,7 @@ chapter_pipeline = SequentialAgent(
 
 # --- Root Agent ---
 
-ROOT_INSTRUCTION = """You are a book-writing orchestrator.
+ROOT_INSTRUCTION = _nothink_prefix + """You are a book-writing orchestrator.
 
 You help users write books by processing their table of contents chapter by chapter.
 For interactive use, guide the user through providing their book's table of contents
