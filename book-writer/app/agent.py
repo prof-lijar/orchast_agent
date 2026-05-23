@@ -20,6 +20,7 @@ _current_model_name = _agent_model
 
 
 def _make_ollama_model(name: str) -> LiteLlm:
+    timeout = int(os.environ.get("LLM_TIMEOUT", "1800"))
     return LiteLlm(
         model=f"openai/{name}",
         api_base="http://localhost:11434/v1",
@@ -28,6 +29,7 @@ def _make_ollama_model(name: str) -> LiteLlm:
         num_ctx=32768,
         repeat_penalty=1.2,
         temperature=0.7,
+        timeout=timeout,
     )
 
 

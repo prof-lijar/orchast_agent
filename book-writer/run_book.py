@@ -294,6 +294,7 @@ async def main() -> None:
 
     os.environ["AGENT_MODEL"] = args.model
     os.environ["CHAPTER_WORD_COUNT"] = args.words
+    os.environ["LLM_TIMEOUT"] = str(args.timeout)
     model_name = args.model
     logger.info("Book Writer starting — model: %s", model_name)
 
