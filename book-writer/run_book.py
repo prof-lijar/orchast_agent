@@ -335,6 +335,10 @@ async def main() -> None:
         help="Comma-separated pipeline stages (default: outline,writer,reviewer,finalizer)",
     )
     parser.add_argument(
+        "--rewrite", type=int, nargs="+", metavar="N",
+        help="Rewrite specific chapter(s) then stop (e.g. --rewrite 1 or --rewrite 1 3 5)",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -395,24 +399,40 @@ async def main() -> None:
         session_service=session_service,
     )
 
-    progress = load_progress(output_dir) if args.resume else {
-        "started_at": datetime.now(timezone.utc).isoformat(),
-        "completed": [],
-        "failed": {},
-        "in_progress": None,
-    }
+    rewrite_set = set(args.rewrite) if args.rewrite else None
+
+    if rewrite_set:
+        progress = load_progress(output_dir)
+        progress["completed"] = [c for c in progress.get("completed", []) if c not in rewrite_set]
+    elif args.resume:
+        progress = load_progress(output_dir)
+    else:
+        progress = {
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "completed": [],
+            "failed": {},
+            "in_progress": None,
+        }
 
     completed = set(progress.get("completed", []))
     total_words = 0
     start_time = time.time()
 
-    logger.info("=" * 60)
-    logger.info("Starting book generation: %s", toc["title"])
-    logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
-    logger.info("=" * 60)
+    if rewrite_set:
+        logger.info("=" * 60)
+        logger.info("Rewriting chapter(s): %s", ", ".join(str(c) for c in sorted(rewrite_set)))
+        logger.info("=" * 60)
+    else:
+        logger.info("=" * 60)
+        logger.info("Starting book generation: %s", toc["title"])
+        logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
+        logger.info("=" * 60)
 
     for chapter in toc["chapters"]:
         ch_num = chapter["number"]
+
+        if rewrite_set and ch_num not in rewrite_set:
+            continue
 
         if ch_num in completed:
             logger.info("Skipping Chapter %d (already complete)", ch_num)

@@ -226,6 +226,7 @@ Options:
   --num-ctx N            Context window size (default: 32768, use 4096-8192 for small models)
   --repeat-penalty N     Repetition penalty (default: 1.2, use 1.5+ for small models)
   --agents STAGES        Pipeline stages, comma-separated (default: outline,writer,reviewer,finalizer)
+  --rewrite N [N ...]    Rewrite specific chapter(s) then stop (e.g. --rewrite 1 or --rewrite 1 3 5)
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
 ```
