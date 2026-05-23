@@ -214,11 +214,20 @@ async def run_chapter(
         parts=[types.Part.from_text(text=prompt)],
     )
 
+    agent_name_map = {
+        "outline": "outline_agent",
+        "writer": "writer_agent",
+        "reviewer": "reviewer_agent",
+        "finalizer": "finalizer_agent",
+    }
+    selected = os.environ.get("PIPELINE_AGENTS", "outline,writer,reviewer,finalizer").split(",")
+    agent_order = [agent_name_map[s.strip()] for s in selected if s.strip() in agent_name_map]
+    last_agent = agent_order[-1] if agent_order else "finalizer_agent"
+
     run_config = None
     if stream:
         run_config = RunConfig(streaming_mode=StreamingMode.SSE)
 
-    agent_order = ["outline_agent", "writer_agent", "reviewer_agent", "finalizer_agent"]
     final_text = ""
     current_author = None
     async for event in runner.run_async(
@@ -251,7 +260,7 @@ async def run_chapter(
         if (
             event.content
             and event.content.parts
-            and event.author == "finalizer_agent"
+            and event.author == last_agent
             and not getattr(event, "partial", False)
         ):
             for part in event.content.parts:
@@ -267,12 +276,11 @@ async def run_chapter(
             user_id="book-writer",
             session_id=session.id,
         )
-        final_text = session.state.get("chapter_final", "")
-
-    if not final_text:
-        final_text = session.state.get("chapter_review", "")
-    if not final_text:
-        final_text = session.state.get("chapter_draft", "")
+        output_keys = ["chapter_final", "chapter_review", "chapter_draft", "chapter_outline"]
+        for key in output_keys:
+            final_text = session.state.get(key, "")
+            if final_text:
+                break
 
     return final_text if final_text else None
 
@@ -323,6 +331,10 @@ async def main() -> None:
         help="Repetition penalty (default: 1.2, use 1.5+ for small models)",
     )
     parser.add_argument(
+        "--agents", default="outline,writer,reviewer,finalizer",
+        help="Comma-separated pipeline stages (default: outline,writer,reviewer,finalizer)",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -347,6 +359,7 @@ async def main() -> None:
     os.environ["LLM_TIMEOUT"] = str(args.timeout)
     os.environ["NUM_CTX"] = str(args.num_ctx)
     os.environ["REPEAT_PENALTY"] = str(args.repeat_penalty)
+    os.environ["PIPELINE_AGENTS"] = args.agents
     if args.no_think:
         os.environ["DISABLE_THINKING"] = "1"
     model_name = args.model

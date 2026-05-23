@@ -152,9 +152,19 @@ finalizer_agent = Agent(
     output_key="chapter_final",
 )
 
+_agent_registry = {
+    "outline": outline_agent,
+    "writer": writer_agent,
+    "reviewer": reviewer_agent,
+    "finalizer": finalizer_agent,
+}
+
+_selected = os.environ.get("PIPELINE_AGENTS", "outline,writer,reviewer,finalizer").split(",")
+_pipeline_agents = [_agent_registry[n.strip()] for n in _selected if n.strip() in _agent_registry]
+
 chapter_pipeline = SequentialAgent(
     name="chapter_pipeline",
-    sub_agents=[outline_agent, writer_agent, reviewer_agent, finalizer_agent],
+    sub_agents=_pipeline_agents,
 )
 
 # --- Root Agent ---
