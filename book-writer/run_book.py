@@ -305,6 +305,14 @@ async def main() -> None:
         help="Disable model thinking (recommended for qwen3 models)",
     )
     parser.add_argument(
+        "--num-ctx", type=int, default=32768,
+        help="Context window size (default: 32768, use 4096-8192 for small models)",
+    )
+    parser.add_argument(
+        "--repeat-penalty", type=float, default=1.2,
+        help="Repetition penalty (default: 1.2, use 1.5+ for small models)",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -327,6 +335,8 @@ async def main() -> None:
     os.environ["AGENT_MODEL"] = args.model
     os.environ["CHAPTER_WORD_COUNT"] = args.words
     os.environ["LLM_TIMEOUT"] = str(args.timeout)
+    os.environ["NUM_CTX"] = str(args.num_ctx)
+    os.environ["REPEAT_PENALTY"] = str(args.repeat_penalty)
     if args.no_think:
         os.environ["DISABLE_THINKING"] = "1"
     model_name = args.model
