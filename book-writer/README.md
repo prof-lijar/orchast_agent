@@ -129,6 +129,31 @@ uv sync
 }
 ```
 
+**JSON with language and writing guidelines** (for non-English books):
+
+```json
+{
+  "title": "C Programming အစ‌ံအသန်",
+  "language": "my",
+  "description": "A beginner-friendly C programming guide in Burmese",
+  "writing_guidelines": [
+    "Use simple, conversational Burmese",
+    "Keep technical terms in English with Burmese explanations"
+  ],
+  "chapters": [
+    {
+      "number": 1,
+      "title": "Programming Language ဆိုတာ ဘာလဲ",
+      "description": "Introduction to programming languages and why C matters"
+    }
+  ]
+}
+```
+
+The `language` field (ISO 639-1 code) instructs all agents to write in that language. The `writing_guidelines` array is injected into every agent's prompt. Both fields are optional — if omitted, agents default to English with no extra guidelines.
+
+You can also override the TOC language via CLI: `--lang my`
+
 **YAML**:
 
 ```yaml
@@ -226,6 +251,7 @@ Options:
   --num-ctx N            Context window size (default: 32768, use 4096-8192 for small models)
   --repeat-penalty N     Repetition penalty (default: 1.2, use 1.5+ for small models)
   --agents STAGES        Pipeline stages, comma-separated (default: outline,writer,reviewer,finalizer)
+  --lang CODE            Language for book content (e.g. my, es, fr). Overrides TOC language field.
   --rewrite N [N ...]    Rewrite specific chapter(s) then stop (e.g. --rewrite 1 or --rewrite 1 3 5)
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
