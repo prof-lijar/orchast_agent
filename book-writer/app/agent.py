@@ -47,6 +47,7 @@ Book description: {book_description}
 Current chapter:
 - Chapter {current_chapter_number}: {current_chapter_title}
 - Description: {current_chapter_description}
+{writing_guidelines}{language_instruction}
 
 Create a detailed, hierarchical outline for this chapter. Include:
 1. A compelling opening hook or introduction concept
@@ -67,6 +68,7 @@ Chapter {current_chapter_number}: {current_chapter_title}
 Use the following outline as your guide:
 
 {chapter_outline}
+{writing_guidelines}{language_instruction}
 
 Write the FULL chapter as polished, publication-ready prose. Requirements:
 - Follow the outline structure exactly
@@ -91,6 +93,7 @@ Original outline:
 
 Draft to review:
 {chapter_draft}
+{writing_guidelines}{language_instruction}
 
 Review the draft and produce an IMPROVED version of the entire chapter. Focus on:
 1. Clarity and readability — simplify convoluted sentences
@@ -110,6 +113,7 @@ Chapter {current_chapter_number}: {current_chapter_title}
 
 Reviewed draft:
 {chapter_review}
+{language_instruction}
 
 Produce the FINAL version of this chapter. Ensure:
 1. The chapter starts with: # Chapter {current_chapter_number}: {current_chapter_title}

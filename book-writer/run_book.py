@@ -35,6 +35,19 @@ from google.genai import types
 
 logger = logging.getLogger("book-writer")
 
+LANGUAGE_NAMES = {
+    "ar": "Arabic", "bn": "Bengali", "de": "German", "en": "English",
+    "es": "Spanish", "fr": "French", "hi": "Hindi", "id": "Indonesian",
+    "it": "Italian", "ja": "Japanese", "ko": "Korean", "ms": "Malay",
+    "my": "Burmese (Myanmar)", "nl": "Dutch", "pl": "Polish",
+    "pt": "Portuguese", "ru": "Russian", "sv": "Swedish", "th": "Thai",
+    "tr": "Turkish", "uk": "Ukrainian", "vi": "Vietnamese", "zh": "Chinese",
+}
+
+
+def _language_name(code: str) -> str:
+    return LANGUAGE_NAMES.get(code, code)
+
 GITHUB_BLOB_RE = re.compile(
     r"https?://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)/blob/(?P<branch>[^/]+)/(?P<path>.+)"
 )
@@ -186,8 +199,28 @@ async def run_chapter(
     toc: dict,
     chapter: dict,
     stream: bool = False,
+    lang: str = "",
 ) -> str | None:
     """Run the 4-phase pipeline for a single chapter. Returns the final content."""
+    lang = lang or toc.get("language", "")
+    if lang and lang.lower() != "en":
+        lang_name = _language_name(lang)
+        language_instruction = (
+            f"\n\nIMPORTANT: You MUST write ALL content in {lang_name}. "
+            f"Every sentence and paragraph must be in {lang_name}. "
+            f"Do NOT write in English. Technical terms and code may remain in English, "
+            f"but all explanatory text must be in {lang_name}."
+        )
+    else:
+        language_instruction = ""
+
+    guidelines = toc.get("writing_guidelines", [])
+    if guidelines:
+        lines = "\n".join(f"- {g}" for g in guidelines)
+        writing_guidelines = f"\n\nWriting guidelines:\n{lines}"
+    else:
+        writing_guidelines = ""
+
     state = {
         "book_title": toc["title"],
         "book_description": toc.get("description", ""),
@@ -196,6 +229,8 @@ async def run_chapter(
         "current_chapter_description": chapter.get("description", ""),
         "total_chapters": str(len(toc["chapters"])),
         "target_word_count": os.environ.get("CHAPTER_WORD_COUNT", "3000-5000"),
+        "language_instruction": language_instruction,
+        "writing_guidelines": writing_guidelines,
     }
 
     session = await session_service.create_session(
@@ -335,6 +370,10 @@ async def main() -> None:
         help="Comma-separated pipeline stages (default: outline,writer,reviewer,finalizer)",
     )
     parser.add_argument(
+        "--lang", default=None,
+        help="Language for the book content (e.g. my, es, fr). Overrides TOC language field.",
+    )
+    parser.add_argument(
         "--rewrite", type=int, nargs="+", metavar="N",
         help="Rewrite specific chapter(s) then stop (e.g. --rewrite 1 or --rewrite 1 3 5)",
     )
@@ -381,9 +420,16 @@ async def main() -> None:
     )
 
     toc = parse_toc(toc_path)
-    logger.info(
-        "Loaded TOC: '%s' with %d chapters", toc["title"], len(toc["chapters"])
-    )
+    lang = args.lang or toc.get("language", "")
+    if lang:
+        logger.info(
+            "Loaded TOC: '%s' with %d chapters (language: %s)",
+            toc["title"], len(toc["chapters"]), _language_name(lang),
+        )
+    else:
+        logger.info(
+            "Loaded TOC: '%s' with %d chapters", toc["title"], len(toc["chapters"])
+        )
     logger.info("Output directory: %s", output_dir)
 
     if repo_url or not args.no_push:
@@ -449,7 +495,7 @@ async def main() -> None:
                 logger.info("Attempt %d/%d", attempt, args.retry)
 
                 content = await asyncio.wait_for(
-                    run_chapter(runner, session_service, toc, chapter, stream=args.stream),
+                    run_chapter(runner, session_service, toc, chapter, stream=args.stream, lang=args.lang or ""),
                     timeout=args.timeout,
                 )
 
