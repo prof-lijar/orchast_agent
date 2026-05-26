@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -8,6 +9,8 @@ from pathlib import Path
 
 import yaml
 from slugify import slugify
+
+logger = logging.getLogger("book-writer")
 
 
 def parse_toc_json(text: str) -> dict:
@@ -145,27 +148,51 @@ def git_commit_and_push_sync(
                         commit_hash = p.replace("]", "")
                         break
 
-        push_result = subprocess.run(
-            ["git", "push", "origin", branch],
-            cwd=str(cwd),
-            timeout=120,
-            capture_output=True,
-            text=True,
-        )
+        max_push_attempts = 3
+        for attempt in range(1, max_push_attempts + 1):
+            pull_result = subprocess.run(
+                ["git", "pull", "--rebase", "origin", branch],
+                cwd=str(cwd),
+                timeout=120,
+                capture_output=True,
+                text=True,
+            )
 
-        if push_result.returncode != 0:
-            return {
-                "success": True,
-                "commit_hash": commit_hash,
-                "pushed": False,
-                "message": f"Committed but push failed: {push_result.stderr.strip()}",
-            }
+            if pull_result.returncode != 0:
+                return {
+                    "success": True,
+                    "commit_hash": commit_hash,
+                    "pushed": False,
+                    "message": f"Committed but pull --rebase failed: {pull_result.stderr.strip()}",
+                }
+
+            push_result = subprocess.run(
+                ["git", "push", "origin", branch],
+                cwd=str(cwd),
+                timeout=120,
+                capture_output=True,
+                text=True,
+            )
+
+            if push_result.returncode == 0:
+                return {
+                    "success": True,
+                    "commit_hash": commit_hash,
+                    "pushed": True,
+                    "message": f"Committed and pushed Chapter {chapter_number}",
+                }
+
+            if attempt < max_push_attempts:
+                logger.warning(
+                    "Push attempt %d/%d failed, retrying: %s",
+                    attempt, max_push_attempts, push_result.stderr.strip(),
+                )
 
         return {
             "success": True,
             "commit_hash": commit_hash,
-            "pushed": True,
-            "message": f"Committed and pushed Chapter {chapter_number}",
+            "pushed": False,
+            "message": f"Committed but push failed after {max_push_attempts} attempts: {push_result.stderr.strip()}",
         }
 
     except subprocess.TimeoutExpired:
