@@ -73,7 +73,7 @@ def resolve_github_toc(url: str, clone_base: str = "./repos") -> dict:
     branch = m.group("branch")
     file_path = m.group("path")
 
-    repo_url = f"https://github.com/{owner}/{repo}.git"
+    repo_url = f"git@github.com:{owner}/{repo}.git"
     repo_dir = Path(clone_base) / repo
     toc_path = repo_dir / file_path
     output_dir = toc_path.parent
