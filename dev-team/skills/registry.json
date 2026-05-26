@@ -1,0 +1,127 @@
+{
+  "skills": [
+    {
+      "name": "node",
+      "file": "node.sh",
+      "description": "Node.js project management — npm, pnpm, yarn, build, test, lint, scaffold",
+      "requires": ["node", "npm"],
+      "commands": [
+        {"name": "install", "description": "Install all dependencies from package.json or specific packages", "args": "[packages...]"},
+        {"name": "run", "description": "Run an npm script defined in package.json", "args": "script_name [extra_args...]"},
+        {"name": "build", "description": "Run the project build (npm run build)", "args": ""},
+        {"name": "test", "description": "Run tests (npm test)", "args": "[test_pattern...]"},
+        {"name": "lint", "description": "Run linter (npm run lint)", "args": ""},
+        {"name": "init", "description": "Scaffold a new project via npx (e.g. create-next-app, create-vite)", "args": "generator [flags...]"},
+        {"name": "add_package", "description": "Add packages to the project", "args": "packages..."},
+        {"name": "add_dev_package", "description": "Add dev-only packages", "args": "packages..."}
+      ]
+    },
+    {
+      "name": "python",
+      "file": "python.sh",
+      "description": "Python project management — pip, poetry, uv, venv, pytest, ruff, mypy",
+      "requires": ["python3"],
+      "commands": [
+        {"name": "install", "description": "Install dependencies (detects pip/poetry/uv)", "args": "[packages...]"},
+        {"name": "build", "description": "Build the project", "args": ""},
+        {"name": "test", "description": "Run tests with pytest", "args": "[test_path...]"},
+        {"name": "lint", "description": "Run linter (ruff or flake8)", "args": "[path...]"},
+        {"name": "format", "description": "Format code (ruff format or black)", "args": "[path...]"},
+        {"name": "typecheck", "description": "Run type checker (mypy or pyright)", "args": "[path...]"},
+        {"name": "venv_create", "description": "Create a virtual environment", "args": "[name]"},
+        {"name": "run", "description": "Run a Python module or script", "args": "module_or_script [args...]"},
+        {"name": "init", "description": "Initialize a new Python project", "args": "project_name [framework]"}
+      ]
+    },
+    {
+      "name": "go",
+      "file": "go.sh",
+      "description": "Go project management — build, test, mod, vet, lint",
+      "requires": ["go"],
+      "commands": [
+        {"name": "build", "description": "Build the Go project", "args": "[packages...]"},
+        {"name": "test", "description": "Run Go tests", "args": "[packages...]"},
+        {"name": "lint", "description": "Run golangci-lint or go vet", "args": "[packages...]"},
+        {"name": "mod_tidy", "description": "Tidy go.mod dependencies", "args": ""},
+        {"name": "mod_download", "description": "Download dependencies", "args": ""},
+        {"name": "run", "description": "Run a Go program", "args": "file_or_package [args...]"},
+        {"name": "fmt", "description": "Format Go source files", "args": "[path...]"},
+        {"name": "init", "description": "Initialize a new Go module", "args": "module_name"}
+      ]
+    },
+    {
+      "name": "rust",
+      "file": "rust.sh",
+      "description": "Rust project management — cargo build, test, clippy, fmt",
+      "requires": ["cargo"],
+      "commands": [
+        {"name": "build", "description": "Build the Rust project", "args": "[flags...]"},
+        {"name": "test", "description": "Run Rust tests", "args": "[test_name...]"},
+        {"name": "lint", "description": "Run clippy linter", "args": "[flags...]"},
+        {"name": "fmt", "description": "Format Rust source files", "args": ""},
+        {"name": "run", "description": "Run the project binary", "args": "[args...]"},
+        {"name": "add", "description": "Add a dependency via cargo add", "args": "crate_name [flags...]"},
+        {"name": "init", "description": "Initialize a new Rust project", "args": "project_name [--lib]"},
+        {"name": "check", "description": "Check compilation without building", "args": ""}
+      ]
+    },
+    {
+      "name": "docker",
+      "file": "docker.sh",
+      "description": "Docker container management — build, run, push, compose",
+      "requires": ["docker"],
+      "commands": [
+        {"name": "build", "description": "Build a Docker image", "args": "[tag] [context_path] [flags...]"},
+        {"name": "run", "description": "Run a Docker container", "args": "image [flags...]"},
+        {"name": "push", "description": "Push an image to a registry", "args": "image_tag"},
+        {"name": "compose_up", "description": "Start services with docker compose", "args": "[flags...]"},
+        {"name": "compose_down", "description": "Stop services with docker compose", "args": "[flags...]"},
+        {"name": "ps", "description": "List running containers", "args": ""},
+        {"name": "logs", "description": "View container logs", "args": "container [flags...]"},
+        {"name": "exec", "description": "Execute a command in a running container", "args": "container command [args...]"}
+      ]
+    },
+    {
+      "name": "deploy",
+      "file": "deploy.sh",
+      "description": "Deployment management — Vercel, Fly.io, Docker-based deploy, static hosting",
+      "requires": [],
+      "commands": [
+        {"name": "vercel_deploy", "description": "Deploy to Vercel (preview or production)", "args": "[--prod]"},
+        {"name": "vercel_list", "description": "List recent Vercel deployments", "args": ""},
+        {"name": "vercel_logs", "description": "View Vercel deployment logs", "args": "deployment_url"},
+        {"name": "vercel_env_set", "description": "Set a Vercel environment variable", "args": "key value [environment]"},
+        {"name": "vercel_env_list", "description": "List Vercel environment variables", "args": ""},
+        {"name": "fly_deploy", "description": "Deploy to Fly.io", "args": "[flags...]"},
+        {"name": "fly_status", "description": "Check Fly.io app status", "args": ""},
+        {"name": "detect_platform", "description": "Auto-detect the best deployment platform for this project", "args": ""}
+      ]
+    },
+    {
+      "name": "ci",
+      "file": "ci.sh",
+      "description": "CI/CD configuration — GitHub Actions workflow generation and management",
+      "requires": ["gh"],
+      "commands": [
+        {"name": "generate", "description": "Generate a CI workflow for the detected stack", "args": "[stack_name]"},
+        {"name": "list_runs", "description": "List recent GitHub Actions runs", "args": "[limit]"},
+        {"name": "view_run", "description": "View details of a specific run", "args": "run_id"},
+        {"name": "rerun", "description": "Re-run a failed workflow", "args": "run_id"}
+      ]
+    },
+    {
+      "name": "db",
+      "file": "db.sh",
+      "description": "Database management — SQLite, PostgreSQL, migrations",
+      "requires": [],
+      "commands": [
+        {"name": "sqlite_query", "description": "Run a SQLite query", "args": "db_path query"},
+        {"name": "sqlite_schema", "description": "Show SQLite database schema", "args": "db_path"},
+        {"name": "pg_query", "description": "Run a PostgreSQL query", "args": "query [connection_string]"},
+        {"name": "pg_schema", "description": "Show PostgreSQL database schema", "args": "[connection_string]"},
+        {"name": "migrate_create", "description": "Create a new migration file", "args": "name [tool]"},
+        {"name": "migrate_run", "description": "Run pending migrations", "args": "[tool]"}
+      ]
+    }
+  ]
+}

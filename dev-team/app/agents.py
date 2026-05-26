@@ -82,14 +82,17 @@ from app.tools.web import (  # noqa: E402
     web_search,
     web_search_and_read,
 )
-from app.tools.vercel import (  # noqa: E402
-    vercel_deploy,
-    vercel_env_list,
-    vercel_env_set,
-    vercel_list_deployments,
-    vercel_logs,
+from app.tools.skills import (  # noqa: E402
+    install_skill,
+    list_skills,
+    run_skill,
+    skill_info,
 )
-from app.tools.nextjs import clean_for_init, npm_install, npm_run, npx_command  # noqa: E402
+from app.tools.build import (  # noqa: E402
+    run_build,
+    run_lint,
+    run_tests,
+)
 
 # --- Prompt imports ---
 from app.prompts.pm import PM_INSTRUCTION  # noqa: E402
@@ -100,8 +103,6 @@ from app.prompts.qa import QA_INSTRUCTION  # noqa: E402
 from app.prompts.devops import DEVOPS_INSTRUCTION  # noqa: E402
 
 # === SHARED TOOLS (all agents get these read-only tools) ===
-# NOTE: close_issue is NOT shared — it can accidentally close PRs (PRs are issues in GitHub).
-# Only agents that need to close issues get it explicitly.
 _shared_tools = [
     list_open_issues, view_issue, list_issue_comments,
     list_pull_requests, view_pull_request,
@@ -109,6 +110,8 @@ _shared_tools = [
     git_log, git_current_branch,
     comment_on_issue,
     web_search, web_read, web_search_and_read,
+    list_skills, skill_info,
+    run_build, run_tests, run_lint,
 ]
 
 # === PM AGENT ===
@@ -138,8 +141,7 @@ architect_agent = Agent(
         git_commit_and_push, git_pull,
         git_merge_branch, git_show_conflicts, git_resolve_conflict, git_abort_merge,
         merge_pull_request, remove_label_from_pr,
-        npm_run, npm_install, npx_command, clean_for_init,
-        run_command,
+        run_skill, install_skill, run_command,
     ],
 )
 
@@ -155,7 +157,7 @@ frontend_agent = Agent(
         git_create_branch, git_switch_branch, git_delete_branch,
         git_commit_and_push, git_pull,
         create_pull_request,
-        npm_run, npm_install,
+        run_skill,
     ],
 )
 
@@ -171,8 +173,7 @@ backend_agent = Agent(
         git_create_branch, git_switch_branch, git_delete_branch,
         git_commit_and_push, git_pull,
         create_pull_request,
-        npm_run, npm_install,
-        run_command,
+        run_skill, run_command,
     ],
 )
 
@@ -191,7 +192,7 @@ qa_agent = Agent(
         git_create_branch, git_switch_branch, git_delete_branch,
         git_commit_and_push, git_pull,
         create_pull_request,
-        npm_run,
+        run_skill,
     ],
 )
 
@@ -208,9 +209,7 @@ devops_agent = Agent(
         git_create_branch, git_switch_branch, git_delete_branch,
         git_commit_and_push, git_pull,
         create_pull_request,
-        npm_run,
-        vercel_deploy, vercel_list_deployments, vercel_logs,
-        vercel_env_set, vercel_env_list,
+        run_skill, install_skill, run_command,
     ],
 )
 
