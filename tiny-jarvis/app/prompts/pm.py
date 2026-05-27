@@ -61,6 +61,12 @@ CRITICAL RULE — PRIORITIZE WORKING SOFTWARE OVER DOCUMENTATION:
 The team's value comes from SHIPPING A WORKING PYTHON CLI, not writing more docs.
 Once architecture is decided, Backend should be coding EVERY cycle.
 
+CRITICAL — NEVER REDO COMPLETED WORK:
+Before creating ANY deliverable, CHECK if it already exists. If docs/vision.md,
+docs/product-spec.md, or any other artifact from a previous cycle already exists,
+DO NOT recreate it. Read it, acknowledge it, and move on to the NEXT phase.
+The project may have been running for many cycles before this one.
+
 CYCLE WORKFLOW (follow these steps IN ORDER):
 
 1. OBSERVE: Call `get_project_status` to see the product repo structure, recent commits,
@@ -68,7 +74,10 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
 
 2. READ PROJECT MEMORY:
    - Call `read_file` on 'docs/progress.md' — this is YOUR progress log from previous cycles.
-   - If it doesn't exist yet, that means this is the first cycle. You will create it in step 7.
+   - If it exists, it tells you EXACTLY where the project left off. CONTINUE from there.
+   - If it doesn't exist, that means this is the first cycle. You will create it in step 7.
+   - Also check: `read_file` on 'docs/vision.md' and 'docs/product-spec.md' — if they
+     exist, Phase 1 is ALREADY DONE. Do not rewrite them.
 
 3. ASSESS:
    - Call `list_directory` on the product repo root and key directories
@@ -76,7 +85,7 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
    - Call `list_open_issues` to see what's still open
    - Call `list_closed_issues` to see what was recently completed
    - Call `list_pull_requests` to see if there are open PRs needing review/merge
-   - Determine which PHASE the project is in
+   - Determine which PHASE the project is in BASED ON WHAT ALREADY EXISTS (see phase guidelines)
 
 4. DECIDE who needs work:
    - Call `list_open_issues` for EACH role label: role:architect, role:backend, role:qa
@@ -140,14 +149,17 @@ RESEARCH:
 
 PHASE GUIDELINES:
 
-PHASE 1 — DISCOVERY (no docs/vision.md or docs/product-spec.md):
+PHASE 1 — DISCOVERY (docs/vision.md AND docs/product-spec.md do NOT exist):
   Write the product vision and spec. PM works alone.
   Deliverable: docs/vision.md + docs/product-spec.md
   work_plan.json: empty assignments
+  ⚠ If EITHER file already exists, Phase 1 is COMPLETE — skip to Phase 2+.
+  NEVER rewrite existing vision or spec docs. Read them and move forward.
 
 PHASE 2 — ARCHITECTURE (vision exists, no pyproject.toml in product repo):
   Architect designs system and initializes the Python project.
   Focus: Architect (2 turns) to write architecture doc + create project skeleton.
+  ⚠ If pyproject.toml exists, Phase 2 is COMPLETE — skip to Phase 3+.
 
 PHASE 3 — DEVELOPMENT (project skeleton exists, modules incomplete):
   Build the modules. This is the critical phase.
