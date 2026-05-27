@@ -381,7 +381,11 @@ def publish_to_pdf(
         raw = md_file.read_text(encoding="utf-8")
         body = _FRONT_MATTER_RE.sub("", raw, count=1).strip()
         total_words += len(body.split())
-        chapter_html = md.markdown(body, extensions=["extra", "toc"])
+        chapter_html = md.markdown(
+            body,
+            extensions=["extra", "toc", "codehilite"],
+            extension_configs={"codehilite": {"css_class": "highlight", "guess_lang": True}},
+        )
         chapter_html = _convert_latex_math(chapter_html)
 
         ch_id = f"chapter-{idx + 1}"
@@ -426,12 +430,16 @@ def publish_to_pdf(
     version_html = f'<p class="version">Version {version}</p>'
     chapters_html = "\n".join(html_chapters)
 
+    from pygments.formatters import HtmlFormatter
+
+    pygments_css = HtmlFormatter(style="friendly").get_style_defs(".highlight")
+
     html_doc = (
         "<!DOCTYPE html>\n"
         "<html>\n<head>\n"
         '<meta charset="utf-8">\n'
         f"<title>{title}</title>\n"
-        f"<style>{_PDF_CSS}</style>\n"
+        f"<style>{_PDF_CSS}\n{pygments_css}</style>\n"
         "</head>\n<body>\n"
         f'<div class="title-page"><h1>{title}</h1>{desc_html}{author_html}{version_html}</div>\n'
         f"{toc_html}\n"
