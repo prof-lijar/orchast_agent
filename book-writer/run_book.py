@@ -384,6 +384,10 @@ async def main() -> None:
         help="Rewrite all chapters from scratch, ignoring existing progress",
     )
     parser.add_argument(
+        "--skip", type=int, nargs="+", metavar="N",
+        help="Skip specific chapter(s) even during --rewrite-all (e.g. --skip 1 2)",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -516,8 +520,14 @@ async def main() -> None:
             logger.info("Rewriting chapter(s): %s", ", ".join(str(c) for c in sorted(rewrite_set)))
         logger.info("=" * 60)
 
+        skip_set = set(args.skip) if args.skip else set()
+
         for chapter in toc["chapters"]:
             ch_num = chapter["number"]
+
+            if ch_num in skip_set:
+                logger.info("Skipping Chapter %d (--skip)", ch_num)
+                continue
 
             if ch_num in completed:
                 logger.info("Skipping Chapter %d (already complete)", ch_num)

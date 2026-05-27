@@ -218,6 +218,12 @@ python run_book.py --toc my-book-toc.json --model gemma4:31b --output-dir ./my-b
 python run_book.py --toc my-book-toc.json --model gemma4:31b --rewrite-all
 ```
 
+**Rewrite all except certain chapters**:
+
+```bash
+python run_book.py --toc my-book-toc.json --model gemma4:31b --rewrite-all --skip 1 2
+```
+
 **Resume after interruption**:
 
 ```bash
@@ -282,6 +288,7 @@ Options:
   --lang CODE            Language for book content (e.g. my, es, fr). Overrides TOC language field.
   --rewrite N [N ...]    Rewrite specific chapter(s) (e.g. --rewrite 1 or --rewrite 1 3 5)
   --rewrite-all          Rewrite all chapters from scratch, ignoring existing progress
+  --skip N [N ...]       Skip specific chapter(s) (e.g. --skip 1 2). Works with --rewrite-all.
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
 ```
