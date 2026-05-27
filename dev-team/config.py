@@ -56,20 +56,28 @@ class Config:
     status_labels: tuple[str, ...] = ("status:todo", "status:in-progress", "status:done", "status:blocked")
 
     @classmethod
-    def from_env(cls) -> Config:
+    def from_env(cls, cli_overrides: dict | None = None) -> Config:
+        cli = {k: v for k, v in (cli_overrides or {}).items() if v is not None}
+
         trusted_raw = os.environ.get("TRUSTED_SKILL_SOURCES", "")
         trusted = [s.strip() for s in trusted_raw.split(",") if s.strip()] if trusted_raw else []
 
+        product_repo = cli.get("product_repo") or os.environ.get("PRODUCT_REPO", cls.product_repo)
+
+        repo_dir_env = os.environ.get("PRODUCT_REPO_DIR", "")
+        if repo_dir_env:
+            product_repo_dir = Path(repo_dir_env).resolve()
+        else:
+            repo_slug = product_repo.replace("/", "-")
+            product_repo_dir = (Path(__file__).parent / "repos" / repo_slug).resolve()
+
         return cls(
-            model_name=os.environ.get("AGENT_MODEL", cls.model_name),
-            product_repo=os.environ.get("PRODUCT_REPO", cls.product_repo),
-            product_repo_dir=Path(os.environ.get(
-                "PRODUCT_REPO_DIR",
-                str((Path(__file__).parent / "product-repo").resolve()),
-            )).resolve(),
-            default_branch=os.environ.get("DEFAULT_BRANCH", cls.default_branch),
-            cycle_interval_seconds=int(os.environ.get("CYCLE_INTERVAL", str(cls.cycle_interval_seconds))),
-            agent_timeout_seconds=int(os.environ.get("AGENT_TIMEOUT", str(cls.agent_timeout_seconds))),
+            model_name=cli.get("model_name") or os.environ.get("AGENT_MODEL", cls.model_name),
+            product_repo=product_repo,
+            product_repo_dir=product_repo_dir,
+            default_branch=cli.get("default_branch") or os.environ.get("DEFAULT_BRANCH", cls.default_branch),
+            cycle_interval_seconds=cli.get("cycle_interval_seconds") or int(os.environ.get("CYCLE_INTERVAL", str(cls.cycle_interval_seconds))),
+            agent_timeout_seconds=cli.get("agent_timeout_seconds") or int(os.environ.get("AGENT_TIMEOUT", str(cls.agent_timeout_seconds))),
             num_ctx=int(os.environ.get("NUM_CTX", str(cls.num_ctx))),
             skills_dir=Path(os.environ.get(
                 "SKILLS_DIR",

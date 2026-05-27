@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import logging
@@ -522,8 +523,53 @@ async def run_cycle(
             logger.info("[%s] Turn %d/%d done in %.1fs", role.upper(), turn, turns, elapsed)
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="dev-team",
+        description="Autonomous AI software engineering team. "
+        "Point it at any GitHub repo and the team will plan, build, test, and deploy.",
+    )
+    parser.add_argument(
+        "repo",
+        nargs="?",
+        help="GitHub repo slug (owner/name). Overrides PRODUCT_REPO env var.",
+    )
+    parser.add_argument(
+        "--model", "-m",
+        help="Ollama model name (default: from AGENT_MODEL env or gemma4:31b).",
+    )
+    parser.add_argument(
+        "--branch", "-b",
+        help="Default branch (default: main).",
+    )
+    parser.add_argument(
+        "--timeout", "-t",
+        type=int,
+        help="Per-agent timeout in seconds (default: 1800).",
+    )
+    parser.add_argument(
+        "--interval", "-i",
+        type=int,
+        help="Seconds between cycles (default: 0 = continuous).",
+    )
+    parser.add_argument(
+        "--cycles", "-n",
+        type=int,
+        default=0,
+        help="Max cycles to run (default: 0 = unlimited).",
+    )
+    return parser.parse_args()
+
+
 async def main() -> None:
-    config = Config.from_env()
+    args = parse_args()
+    config = Config.from_env(cli_overrides={
+        "product_repo": args.repo,
+        "model_name": args.model,
+        "default_branch": args.branch,
+        "agent_timeout_seconds": args.timeout,
+        "cycle_interval_seconds": args.interval,
+    })
 
     logger.info("=" * 60)
     logger.info("  DEV-TEAM — Autonomous AI Engineering Team")
@@ -532,6 +578,7 @@ async def main() -> None:
     logger.info("  Product Dir: %s", config.product_repo_dir)
     logger.info("  Cycle interval: %ds", config.cycle_interval_seconds)
     logger.info("  Agent timeout: %ds", config.agent_timeout_seconds)
+    logger.info("  Skills: %s", config.skills_dir)
     logger.info("  Scheduling: PM-driven dynamic")
     logger.info("=" * 60)
 
@@ -555,10 +602,17 @@ async def main() -> None:
             session_service=session_service,
         )
 
+    max_cycles = args.cycles
     cycle_number = 1
     logger.info("Dev-team is online. Press Ctrl+C to shut down.")
+    if max_cycles > 0:
+        logger.info("Will run %d cycle(s) then stop.", max_cycles)
 
     while not _shutdown_requested:
+        if max_cycles > 0 and cycle_number > max_cycles:
+            logger.info("Reached max cycles (%d). Stopping.", max_cycles)
+            break
+
         cycle_start = time.time()
         logger.info("===== CYCLE %d START =====", cycle_number)
 
