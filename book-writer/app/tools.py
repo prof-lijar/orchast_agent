@@ -106,6 +106,7 @@ def git_commit_and_push_sync(
     title: str,
     output_dir: str,
     branch: str = "main",
+    message: str | None = None,
 ) -> dict:
     """Git add, commit, and push for a completed chapter."""
     cwd = Path(output_dir)
@@ -129,7 +130,7 @@ def git_commit_and_push_sync(
             capture_output=True,
         )
 
-        msg = f"Add Chapter {chapter_number}: {title}"
+        msg = message or f"Add Chapter {chapter_number}: {title}"
         result = subprocess.run(
             ["git", "commit", "-m", msg],
             cwd=str(cwd),
@@ -215,3 +216,220 @@ def save_progress(output_dir: str, progress: dict) -> None:
     path = Path(output_dir) / ".progress.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(progress, indent=2), encoding="utf-8")
+
+
+_FRONT_MATTER_RE = re.compile(r"^---\n.*?\n---\n*", re.DOTALL)
+
+_PDF_CSS = """\
+@page {
+    size: A4;
+    margin: 2.5cm 2cm;
+    @bottom-center { content: counter(page); }
+}
+body {
+    font-family: "DejaVu Serif", Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1a1a;
+}
+h1 { font-size: 22pt; margin-top: 0; }
+h2 { font-size: 16pt; margin-top: 1.5em; }
+h3 { font-size: 13pt; margin-top: 1.2em; }
+.title-page {
+    text-align: center;
+    padding-top: 30%;
+    page-break-after: always;
+}
+.title-page h1 { font-size: 32pt; margin-bottom: 0.5em; }
+.title-page .description {
+    font-size: 14pt;
+    color: #555;
+    font-style: italic;
+    max-width: 80%;
+    margin: 1em auto;
+}
+.title-page .author {
+    font-size: 13pt;
+    color: #444;
+    margin-top: 2em;
+}
+.title-page .orchestrator {
+    font-size: 11pt;
+    color: #777;
+    margin-top: 0.3em;
+}
+.title-page .version {
+    font-size: 12pt;
+    color: #777;
+    margin-top: 1.5em;
+}
+.toc-page {
+    page-break-after: always;
+}
+.toc-page h2 {
+    text-align: center;
+    font-size: 20pt;
+    margin-bottom: 1.5em;
+}
+.toc-page ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.toc-page li {
+    margin-bottom: 0.4em;
+    display: flex;
+    align-items: baseline;
+}
+.toc-page .toc-title {
+    white-space: nowrap;
+}
+.toc-page .toc-dots {
+    flex: 1;
+    border-bottom: 1px dotted #999;
+    margin: 0 0.4em;
+    min-width: 2em;
+}
+.toc-page .toc-page-num {
+    white-space: nowrap;
+}
+.toc-page .toc-page-num::after {
+    content: target-counter(attr(href), page);
+}
+.toc-page a {
+    text-decoration: none;
+    color: #1a1a1a;
+}
+.chapter { page-break-before: always; }
+pre {
+    background: #f5f5f5;
+    padding: 1em;
+    border-radius: 4px;
+    font-size: 9pt;
+    overflow-x: auto;
+}
+code {
+    font-family: "DejaVu Sans Mono", "Courier New", monospace;
+    font-size: 9pt;
+}
+blockquote {
+    border-left: 3px solid #ccc;
+    padding-left: 1em;
+    color: #555;
+    font-style: italic;
+}
+"""
+
+_CHAPTER_TITLE_RE = re.compile(r"<h1[^>]*>(.*?)</h1>", re.IGNORECASE)
+
+
+def publish_to_pdf(
+    output_dir: str,
+    title: str,
+    description: str = "",
+) -> dict:
+    """Convert all chapter markdown files into a single PDF book."""
+    try:
+        import markdown as md
+        from weasyprint import HTML
+    except ImportError as e:
+        return {
+            "success": False,
+            "message": (
+                f"Missing dependency: {e}. "
+                "Install with: pip install markdown weasyprint "
+                "(weasyprint also needs system libs: pango, gdk-pixbuf)"
+            ),
+        }
+
+    out = Path(output_dir)
+    chapter_files = sorted(out.glob("chapter-*.md"))
+
+    if not chapter_files:
+        return {
+            "success": False,
+            "message": f"No chapter markdown files found in {output_dir}",
+        }
+
+    html_chapters = []
+    toc_entries = []
+    total_words = 0
+    for idx, md_file in enumerate(chapter_files):
+        raw = md_file.read_text(encoding="utf-8")
+        body = _FRONT_MATTER_RE.sub("", raw, count=1).strip()
+        total_words += len(body.split())
+        chapter_html = md.markdown(body, extensions=["extra", "toc"])
+
+        ch_id = f"chapter-{idx + 1}"
+        m = _CHAPTER_TITLE_RE.search(chapter_html)
+        ch_title = m.group(1) if m else f"Chapter {idx + 1}"
+
+        html_chapters.append(
+            f'<section class="chapter" id="{ch_id}">{chapter_html}</section>'
+        )
+        toc_entries.append((ch_id, ch_title))
+
+    toc_items = "\n".join(
+        f'<li>'
+        f'<a class="toc-title" href="#{cid}">{ctitle}</a>'
+        f'<span class="toc-dots"></span>'
+        f'<a class="toc-page-num" href="#{cid}"></a>'
+        f'</li>'
+        for cid, ctitle in toc_entries
+    )
+    toc_html = (
+        '<div class="toc-page">\n'
+        "<h2>Table of Contents</h2>\n"
+        f"<ul>{toc_items}</ul>\n"
+        "</div>"
+    )
+
+    pdf_slug = slugify(title, max_length=60)
+    existing_versions = [
+        int(m.group(1))
+        for f in out.glob(f"{pdf_slug}-v*.pdf")
+        if (m := re.search(r"-v(\d+)\.pdf$", f.name))
+    ]
+    version = max(existing_versions, default=0) + 1
+
+    desc_html = (
+        f'<p class="description">{description}</p>' if description else ""
+    )
+    author_html = (
+        '<p class="author">book-writer agents</p>'
+        '<p class="orchestrator">orchestrated by lijar</p>'
+    )
+    version_html = f'<p class="version">Version {version}</p>'
+    chapters_html = "\n".join(html_chapters)
+
+    html_doc = (
+        "<!DOCTYPE html>\n"
+        "<html>\n<head>\n"
+        '<meta charset="utf-8">\n'
+        f"<title>{title}</title>\n"
+        f"<style>{_PDF_CSS}</style>\n"
+        "</head>\n<body>\n"
+        f'<div class="title-page"><h1>{title}</h1>{desc_html}{author_html}{version_html}</div>\n'
+        f"{toc_html}\n"
+        f"{chapters_html}\n"
+        "</body>\n</html>"
+    )
+
+    pdf_filename = f"{pdf_slug}-v{version}.pdf"
+    pdf_path = out / pdf_filename
+
+    try:
+        HTML(string=html_doc).write_pdf(str(pdf_path))
+    except Exception as e:
+        return {"success": False, "message": f"PDF rendering failed: {e}"}
+
+    logger.info("PDF written to %s (version %d)", pdf_path, version)
+
+    return {
+        "success": True,
+        "file_path": str(pdf_path),
+        "filename": pdf_filename,
+        "version": version,
+        "total_chapters": len(chapter_files),
+        "total_words": total_words,
+    }

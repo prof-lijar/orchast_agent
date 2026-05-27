@@ -336,7 +336,7 @@ async def main() -> None:
         help="Path or GitHub URL to table of contents file (e.g. https://github.com/user/repo/blob/main/book/toc.json)",
     )
     parser.add_argument("--output-dir", default=None, help="Output directory (auto-detected from GitHub URL)")
-    parser.add_argument("--model", required=True, help="Ollama model name (e.g. gemma4:31b, llama3:8b)")
+    parser.add_argument("--model", default=None, help="Ollama model name (e.g. gemma4:31b, llama3:8b)")
     parser.add_argument("--branch", default=None, help="Git branch (auto-detected from GitHub URL)")
     parser.add_argument("--repo", default=None, help="Git remote repo URL (auto-detected from GitHub URL)")
     parser.add_argument("--clone-dir", default="./repos", help="Base directory for cloned repos (default: ./repos)")
@@ -397,19 +397,30 @@ async def main() -> None:
 
     setup_logging(output_dir)
 
-    os.environ["AGENT_MODEL"] = args.model
-    os.environ["CHAPTER_WORD_COUNT"] = args.words
-    os.environ["LLM_TIMEOUT"] = str(args.timeout)
-    os.environ["NUM_CTX"] = str(args.num_ctx)
-    os.environ["REPEAT_PENALTY"] = str(args.repeat_penalty)
-    os.environ["PIPELINE_AGENTS"] = args.agents
-    if args.no_think:
-        os.environ["DISABLE_THINKING"] = "1"
-    model_name = args.model
-    logger.info("Book Writer starting — model: %s", model_name)
+    requested_agents = [a.strip() for a in args.agents.split(",") if a.strip()]
+    run_publisher = "publisher" in requested_agents
+    llm_agents = [a for a in requested_agents if a != "publisher"]
+    has_llm_agents = len(llm_agents) > 0
 
-    if not check_ollama(model_name):
-        sys.exit(1)
+    if has_llm_agents and not args.model:
+        parser.error("--model is required when running LLM agents")
+
+    os.environ["PIPELINE_AGENTS"] = ",".join(llm_agents) if llm_agents else ""
+
+    if has_llm_agents:
+        os.environ["AGENT_MODEL"] = args.model
+        os.environ["CHAPTER_WORD_COUNT"] = args.words
+        os.environ["LLM_TIMEOUT"] = str(args.timeout)
+        os.environ["NUM_CTX"] = str(args.num_ctx)
+        os.environ["REPEAT_PENALTY"] = str(args.repeat_penalty)
+        if args.no_think:
+            os.environ["DISABLE_THINKING"] = "1"
+        logger.info("Book Writer starting — model: %s", args.model)
+
+        if not check_ollama(args.model):
+            sys.exit(1)
+    else:
+        logger.info("Book Writer starting — publisher only (no LLM)")
 
     from app.tools import (
         git_commit_and_push_sync,
@@ -435,126 +446,166 @@ async def main() -> None:
     if repo_url or not args.no_push:
         setup_git_repo(output_dir, repo_url, branch)
 
-    # Import agent after setting AGENT_MODEL env var
-    from app.agent import chapter_pipeline
-
-    session_service = InMemorySessionService()
-    runner = Runner(
-        agent=chapter_pipeline,
-        app_name="book-writer",
-        session_service=session_service,
-    )
-
-    rewrite_set = set(args.rewrite) if args.rewrite else None
-
-    if rewrite_set:
-        progress = load_progress(output_dir)
-        progress["completed"] = [c for c in progress.get("completed", []) if c not in rewrite_set]
-    elif args.resume:
-        progress = load_progress(output_dir)
-    else:
-        progress = {
-            "started_at": datetime.now(timezone.utc).isoformat(),
-            "completed": [],
-            "failed": {},
-            "in_progress": None,
-        }
-
-    completed = set(progress.get("completed", []))
+    completed: set[int] = set()
     total_words = 0
     start_time = time.time()
 
-    logger.info("=" * 60)
-    logger.info("Starting book generation: %s", toc["title"])
-    logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
-    if rewrite_set:
-        logger.info("Rewriting chapter(s): %s", ", ".join(str(c) for c in sorted(rewrite_set)))
-    logger.info("=" * 60)
+    if has_llm_agents:
+        from app.agent import chapter_pipeline
 
-    for chapter in toc["chapters"]:
-        ch_num = chapter["number"]
-
-        if ch_num in completed:
-            logger.info("Skipping Chapter %d (already complete)", ch_num)
-            continue
-
-        logger.info(
-            "--- Chapter %d/%d: %s ---",
-            ch_num,
-            len(toc["chapters"]),
-            chapter["title"],
+        session_service = InMemorySessionService()
+        runner = Runner(
+            agent=chapter_pipeline,
+            app_name="book-writer",
+            session_service=session_service,
         )
 
-        progress["in_progress"] = ch_num
-        save_progress(output_dir, progress)
+        rewrite_set = set(args.rewrite) if args.rewrite else None
 
-        content = None
-        for attempt in range(1, args.retry + 1):
-            try:
-                ch_start = time.time()
-                logger.info("Attempt %d/%d", attempt, args.retry)
-
-                content = await asyncio.wait_for(
-                    run_chapter(runner, session_service, toc, chapter, stream=args.stream, lang=args.lang or ""),
-                    timeout=args.timeout,
-                )
-
-                if content:
-                    elapsed = time.time() - ch_start
-                    logger.info(
-                        "Chapter %d written in %.1f minutes", ch_num, elapsed / 60
-                    )
-                    break
-                else:
-                    logger.warning("Chapter %d returned empty content", ch_num)
-
-            except asyncio.TimeoutError:
-                logger.warning(
-                    "Chapter %d timed out after %ds (attempt %d)",
-                    ch_num,
-                    args.timeout,
-                    attempt,
-                )
-            except Exception:
-                logger.exception("Chapter %d failed (attempt %d)", ch_num, attempt)
-
-        if content:
-            result = save_chapter_to_disk(
-                ch_num, chapter["title"], content, output_dir
-            )
-            logger.info(
-                "Saved: %s (%d words)", result["filename"], result["word_count"]
-            )
-            total_words += result["word_count"]
-
-            if not args.no_push:
-                git_result = git_commit_and_push_sync(
-                    ch_num, chapter["title"], output_dir, branch
-                )
-                if git_result["success"]:
-                    pushed = "pushed" if git_result.get("pushed") else "committed only"
-                    logger.info("Git: %s (%s)", git_result["message"], pushed)
-                else:
-                    logger.warning("Git: %s", git_result["message"])
-
-            progress["completed"].append(ch_num)
-            completed.add(ch_num)
+        if rewrite_set:
+            progress = load_progress(output_dir)
+            progress["completed"] = [c for c in progress.get("completed", []) if c not in rewrite_set]
+        elif args.resume:
+            progress = load_progress(output_dir)
         else:
-            logger.error(
-                "SKIPPING Chapter %d after %d failures", ch_num, args.retry
-            )
-            progress["failed"][str(ch_num)] = f"Failed after {args.retry} attempts"
+            progress = {
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "completed": [],
+                "failed": {},
+                "in_progress": None,
+            }
 
-        progress["in_progress"] = None
-        save_progress(output_dir, progress)
+        completed = set(progress.get("completed", []))
+
+        logger.info("=" * 60)
+        logger.info("Starting book generation: %s", toc["title"])
+        logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
+        if rewrite_set:
+            logger.info("Rewriting chapter(s): %s", ", ".join(str(c) for c in sorted(rewrite_set)))
+        logger.info("=" * 60)
+
+        for chapter in toc["chapters"]:
+            ch_num = chapter["number"]
+
+            if ch_num in completed:
+                logger.info("Skipping Chapter %d (already complete)", ch_num)
+                continue
+
+            logger.info(
+                "--- Chapter %d/%d: %s ---",
+                ch_num,
+                len(toc["chapters"]),
+                chapter["title"],
+            )
+
+            progress["in_progress"] = ch_num
+            save_progress(output_dir, progress)
+
+            content = None
+            for attempt in range(1, args.retry + 1):
+                try:
+                    ch_start = time.time()
+                    logger.info("Attempt %d/%d", attempt, args.retry)
+
+                    content = await asyncio.wait_for(
+                        run_chapter(runner, session_service, toc, chapter, stream=args.stream, lang=args.lang or ""),
+                        timeout=args.timeout,
+                    )
+
+                    if content:
+                        elapsed = time.time() - ch_start
+                        logger.info(
+                            "Chapter %d written in %.1f minutes", ch_num, elapsed / 60
+                        )
+                        break
+                    else:
+                        logger.warning("Chapter %d returned empty content", ch_num)
+
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        "Chapter %d timed out after %ds (attempt %d)",
+                        ch_num,
+                        args.timeout,
+                        attempt,
+                    )
+                except Exception:
+                    logger.exception("Chapter %d failed (attempt %d)", ch_num, attempt)
+
+            if content:
+                result = save_chapter_to_disk(
+                    ch_num, chapter["title"], content, output_dir
+                )
+                logger.info(
+                    "Saved: %s (%d words)", result["filename"], result["word_count"]
+                )
+                total_words += result["word_count"]
+
+                if not args.no_push:
+                    git_result = git_commit_and_push_sync(
+                        ch_num, chapter["title"], output_dir, branch
+                    )
+                    if git_result["success"]:
+                        pushed = "pushed" if git_result.get("pushed") else "committed only"
+                        logger.info("Git: %s (%s)", git_result["message"], pushed)
+                    else:
+                        logger.warning("Git: %s", git_result["message"])
+
+                progress["completed"].append(ch_num)
+                completed.add(ch_num)
+            else:
+                logger.error(
+                    "SKIPPING Chapter %d after %d failures", ch_num, args.retry
+                )
+                progress["failed"][str(ch_num)] = f"Failed after {args.retry} attempts"
+
+            progress["in_progress"] = None
+            save_progress(output_dir, progress)
+
+    # --- Publisher ---
+    pub_result = None
+    if run_publisher:
+        from app.tools import publish_to_pdf
+
+        logger.info("=" * 60)
+        logger.info("PUBLISHING: Converting chapters to PDF")
+        logger.info("=" * 60)
+
+        pub_result = publish_to_pdf(
+            output_dir=output_dir,
+            title=toc["title"],
+            description=toc.get("description", ""),
+        )
+
+        if pub_result["success"]:
+            logger.info(
+                "PDF published: %s v%d (%d chapters, %d words)",
+                pub_result["filename"],
+                pub_result["version"],
+                pub_result["total_chapters"],
+                pub_result["total_words"],
+            )
+            git_result = git_commit_and_push_sync(
+                0, "", output_dir, branch,
+                message=f"Publish book PDF v{pub_result['version']}: {toc['title']}",
+            )
+            if git_result["success"]:
+                pushed = "pushed" if git_result.get("pushed") else "committed only"
+                logger.info("Git: %s (%s)", git_result["message"], pushed)
+            else:
+                logger.warning("Git: %s", git_result["message"])
+        else:
+            logger.error("PDF publishing failed: %s", pub_result["message"])
 
     elapsed_total = time.time() - start_time
     logger.info("=" * 60)
-    logger.info("BOOK GENERATION COMPLETE")
+    logger.info("BOOK COMPLETE")
     logger.info("Title: %s", toc["title"])
-    logger.info("Chapters completed: %d/%d", len(completed), len(toc["chapters"]))
-    logger.info("Failed: %d", len(progress.get("failed", {})))
-    logger.info("Total words: %d", total_words)
+    if has_llm_agents:
+        logger.info("Chapters completed: %d/%d", len(completed), len(toc["chapters"]))
+        logger.info("Failed: %d", len(progress.get("failed", {})))
+        logger.info("Total words: %d", total_words)
+    if pub_result and pub_result.get("success"):
+        logger.info("PDF: %s", pub_result["filename"])
     logger.info("Total time: %.1f minutes", elapsed_total / 60)
     logger.info("=" * 60)
 
