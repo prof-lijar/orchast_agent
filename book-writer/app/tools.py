@@ -318,6 +318,22 @@ blockquote {
     color: #555;
     font-style: italic;
 }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 10pt;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 0.4em 0.8em;
+    text-align: left;
+}
+th {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+tr:nth-child(even) { background: #fafafa; }
 """
 
 _CHAPTER_TITLE_RE = re.compile(r"<h1[^>]*>(.*?)</h1>", re.IGNORECASE)
