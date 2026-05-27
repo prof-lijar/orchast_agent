@@ -35,7 +35,7 @@ uv run python run.py owner/repo-name
 
 ```
 dev-team [-h] [--model MODEL] [--branch BRANCH] [--timeout TIMEOUT]
-         [--interval INTERVAL] [--cycles CYCLES] [--no-think] [--goals GOALS]
+         [--interval INTERVAL] [--cycles CYCLES] [--no-think] [--stream] [--goals GOALS]
          [repo]
 ```
 
@@ -48,6 +48,7 @@ dev-team [-h] [--model MODEL] [--branch BRANCH] [--timeout TIMEOUT]
 | `--interval` | `-i` | Seconds between cycles (default: `0` = continuous) |
 | `--cycles` | `-n` | Max cycles to run (default: `0` = unlimited) |
 | `--no-think` | | Disable model thinking mode for all agents |
+| `--stream` | | Stream agent thought/text/tool activity live |
 | `--goals` | | Path to a Markdown file with human-defined initial goals/requirements |
 
 ### Examples
@@ -68,6 +69,9 @@ uv run python run.py myorg/my-api -b develop
 # Disable think mode
 uv run python run.py myorg/my-api --no-think
 
+# Show live agent thought/text/tool stream
+uv run python run.py myorg/my-api --stream
+
 # Anchor planning/build to a human goals file
 uv run python run.py myorg/my-api --goals ./goals.md
 ```
@@ -83,6 +87,7 @@ You can also configure via `.env` (see `.env.example`):
 | `DEFAULT_BRANCH` | Default branch | `main` |
 | `AGENT_MODEL` | Ollama model name | `gemma4:31b` |
 | `AGENT_THINK` | Enable think mode (`true`/`false`) | `true` |
+| `AGENT_STREAM` | Stream verbose agent activity (`true`/`false`) | `false` |
 | `CYCLE_INTERVAL` | Seconds between cycles | `0` |
 | `AGENT_TIMEOUT` | Per-agent timeout (seconds) | `1800` |
 | `NUM_CTX` | Context window size | `32768` |

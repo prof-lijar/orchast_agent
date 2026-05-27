@@ -333,15 +333,17 @@ async def run_agent_turn(
             has_tool_call = False
             for part in event.content.parts:
                 if getattr(part, "thought", False) and part.text:
-                    thought = part.text.strip()
-                    if thought:
-                        for line in thought.split("\n")[:3]:
-                            logger.info("[%s] 💭 %s", role.upper(), line[:200])
+                    if config.stream_enabled:
+                        thought = part.text.strip()
+                        if thought:
+                            for line in thought.split("\n")[:3]:
+                                logger.info("[%s] 💭 %s", role.upper(), line[:200])
                 elif part.text:
-                    text = part.text.strip()
-                    if text:
-                        for line in text.split("\n")[:5]:
-                            logger.info("[%s] %s", role.upper(), line[:200])
+                    if config.stream_enabled:
+                        text = part.text.strip()
+                        if text:
+                            for line in text.split("\n")[:5]:
+                                logger.info("[%s] %s", role.upper(), line[:200])
                 if getattr(part, "function_call", None):
                     fc = part.function_call
                     args_str = json.dumps(dict(fc.args), ensure_ascii=False)[:150] if fc.args else ""
@@ -356,9 +358,10 @@ async def run_agent_turn(
                         )
                         return
                 if getattr(part, "function_response", None):
-                    fr = part.function_response
-                    resp_str = str(fr.response)[:150] if fr.response else ""
-                    logger.info("[%s] ← %s: %s", role.upper(), fr.name, resp_str)
+                    if config.stream_enabled:
+                        fr = part.function_response
+                        resp_str = str(fr.response)[:150] if fr.response else ""
+                        logger.info("[%s] ← %s: %s", role.upper(), fr.name, resp_str)
 
             if not has_tool_call and event.content.parts:
                 has_real_text = any(
@@ -566,6 +569,12 @@ def parse_args() -> argparse.Namespace:
         help="Disable model thinking mode for all agents.",
     )
     parser.add_argument(
+        "--stream",
+        action="store_true",
+        default=None,
+        help="Stream agent thought/text/tool activity live.",
+    )
+    parser.add_argument(
         "--goals",
         help="Path to a markdown file with initial product goals/requirements.",
     )
@@ -578,6 +587,7 @@ async def main() -> None:
         "product_repo": args.repo,
         "model_name": args.model,
         "think_enabled": (False if args.no_think else None),
+        "stream_enabled": (True if args.stream else None),
         "default_branch": args.branch,
         "agent_timeout_seconds": args.timeout,
         "cycle_interval_seconds": args.interval,
@@ -588,6 +598,7 @@ async def main() -> None:
     logger.info("  DEV-TEAM — Autonomous AI Engineering Team")
     logger.info("  Model: %s", config.model_name)
     logger.info("  Think mode: %s", "on" if config.think_enabled else "off")
+    logger.info("  Stream logs: %s", "on" if config.stream_enabled else "off")
     logger.info("  Product Repo: %s", config.product_repo)
     logger.info("  Product Dir: %s", config.product_repo_dir)
     logger.info("  Cycle interval: %ds", config.cycle_interval_seconds)
@@ -613,6 +624,7 @@ async def main() -> None:
     # Ensure agents importing Config.from_env() see CLI-resolved values.
     os.environ["AGENT_MODEL"] = config.model_name
     os.environ["AGENT_THINK"] = "true" if config.think_enabled else "false"
+    os.environ["AGENT_STREAM"] = "true" if config.stream_enabled else "false"
     os.environ["PRODUCT_REPO"] = config.product_repo
     os.environ["PRODUCT_REPO_DIR"] = str(config.product_repo_dir)
     if config.initial_goals_file:

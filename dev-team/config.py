@@ -23,6 +23,7 @@ class Config:
     num_ctx: int = 32768
     temperature: float = 0.7
     think_enabled: bool = True
+    stream_enabled: bool = False
 
     product_repo: str = "user/my-app"
     product_repo_dir: Path = field(
@@ -85,6 +86,11 @@ class Config:
                 cli.get("think_enabled")
                 if "think_enabled" in cli
                 else _as_bool(os.environ.get("AGENT_THINK", ""), cls.think_enabled)
+            ),
+            stream_enabled=(
+                cli.get("stream_enabled")
+                if "stream_enabled" in cli
+                else _as_bool(os.environ.get("AGENT_STREAM", ""), cls.stream_enabled)
             ),
             product_repo=product_repo,
             product_repo_dir=product_repo_dir,
