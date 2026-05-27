@@ -28,6 +28,8 @@ from pathlib import Path
 
 import urllib.request
 import urllib.error
+
+from slugify import slugify
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -398,6 +400,29 @@ async def main() -> None:
         output_dir = args.output_dir or "./book"
         branch = args.branch or "main"
         repo_url = args.repo
+
+    # When rewriting, rename the output folder if the book title changed
+    if args.rewrite_all and Path(output_dir).exists():
+        from app.tools import parse_toc as _parse_toc
+        toc_for_rename = _parse_toc(toc_path)
+        new_slug = slugify(toc_for_rename["title"], max_length=80)
+        current_dir = Path(output_dir)
+        if current_dir.name != new_slug:
+            new_dir = current_dir.parent / new_slug
+            if new_dir.exists():
+                logger.warning(
+                    "Cannot rename to '%s' — directory already exists", new_dir,
+                )
+            else:
+                current_dir.rename(new_dir)
+                output_dir = str(new_dir)
+                # Update toc_path if it lived inside the old directory
+                old_toc = Path(toc_path)
+                if old_toc.parts[: len(current_dir.parts)] == current_dir.parts:
+                    toc_path = str(new_dir / old_toc.relative_to(current_dir))
+                logger.info(
+                    "Renamed output folder: %s → %s", current_dir.name, new_slug,
+                )
 
     setup_logging(output_dir)
 
