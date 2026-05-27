@@ -2,22 +2,46 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 os.environ["OPENAI_API_KEY"] = "ollama"
 os.environ["OPENAI_BASE_URL"] = "http://localhost:11434/v1"
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"
 
-import google.auth  # noqa: E402
 from google.adk.agents import Agent  # noqa: E402
 from google.adk.models import LiteLlm  # noqa: E402
 
 from config import Config  # noqa: E402
 
-_, project_id = google.auth.default()
-os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
-
 _config = Config.from_env()
+
+
+def _load_initial_goals_markdown() -> str:
+    goals_path = os.environ.get("INITIAL_GOALS_FILE", "").strip()
+    if not goals_path:
+        return ""
+    try:
+        content = Path(goals_path).read_text(encoding="utf-8").strip()
+    except Exception:
+        return ""
+    return content
+
+
+def _with_goals(instruction: str, role: str) -> str:
+    goals_md = _load_initial_goals_markdown()
+    if not goals_md:
+        return instruction
+    return (
+        instruction
+        + "\n\n"
+        + "HUMAN-PROVIDED PROJECT GOALS (HIGHEST PRIORITY):\n"
+        + f"- You are the `{role}` agent.\n"
+        + "- The following goals are the source of truth for what to build.\n"
+        + "- Do not invent a different product. Execute these goals and break them into actionable work.\n"
+        + "- If details are missing, make minimal pragmatic assumptions consistent with these goals.\n\n"
+        + goals_md
+        + "\n"
+    )
 
 
 def _make_model() -> LiteLlm:
@@ -25,7 +49,7 @@ def _make_model() -> LiteLlm:
         model=f"openai/{_config.model_name}",
         api_base=_config.ollama_base_url,
         api_key=_config.ollama_api_key,
-        think=True,
+        think=_config.think_enabled,
         num_ctx=_config.num_ctx,
         repeat_penalty=1.2,
         temperature=_config.temperature,
@@ -118,7 +142,7 @@ _shared_tools = [
 pm_agent = Agent(
     name="pm_agent",
     model=_model,
-    instruction=PM_INSTRUCTION,
+    instruction=_with_goals(PM_INSTRUCTION, "pm"),
     tools=[
         *_shared_tools,
         close_issue,
@@ -132,7 +156,7 @@ pm_agent = Agent(
 architect_agent = Agent(
     name="architect_agent",
     model=_model,
-    instruction=ARCHITECT_INSTRUCTION,
+    instruction=_with_goals(ARCHITECT_INSTRUCTION, "architect"),
     tools=[
         *_shared_tools,
         write_file, append_to_file, delete_file,
@@ -149,7 +173,7 @@ architect_agent = Agent(
 frontend_agent = Agent(
     name="frontend_agent",
     model=_model,
-    instruction=FRONTEND_INSTRUCTION,
+    instruction=_with_goals(FRONTEND_INSTRUCTION, "frontend"),
     tools=[
         *_shared_tools,
         close_issue,
@@ -165,7 +189,7 @@ frontend_agent = Agent(
 backend_agent = Agent(
     name="backend_agent",
     model=_model,
-    instruction=BACKEND_INSTRUCTION,
+    instruction=_with_goals(BACKEND_INSTRUCTION, "backend"),
     tools=[
         *_shared_tools,
         close_issue,
@@ -181,7 +205,7 @@ backend_agent = Agent(
 qa_agent = Agent(
     name="qa_agent",
     model=_model,
-    instruction=QA_INSTRUCTION,
+    instruction=_with_goals(QA_INSTRUCTION, "qa"),
     tools=[
         *_shared_tools,
         close_issue,
@@ -200,7 +224,7 @@ qa_agent = Agent(
 devops_agent = Agent(
     name="devops_agent",
     model=_model,
-    instruction=DEVOPS_INSTRUCTION,
+    instruction=_with_goals(DEVOPS_INSTRUCTION, "devops"),
     tools=[
         *_shared_tools,
         close_issue,

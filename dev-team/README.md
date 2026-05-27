@@ -35,7 +35,7 @@ uv run python run.py owner/repo-name
 
 ```
 dev-team [-h] [--model MODEL] [--branch BRANCH] [--timeout TIMEOUT]
-         [--interval INTERVAL] [--cycles CYCLES]
+         [--interval INTERVAL] [--cycles CYCLES] [--no-think] [--goals GOALS]
          [repo]
 ```
 
@@ -47,6 +47,8 @@ dev-team [-h] [--model MODEL] [--branch BRANCH] [--timeout TIMEOUT]
 | `--timeout` | `-t` | Per-agent timeout in seconds (default: `1800`) |
 | `--interval` | `-i` | Seconds between cycles (default: `0` = continuous) |
 | `--cycles` | `-n` | Max cycles to run (default: `0` = unlimited) |
+| `--no-think` | | Disable model thinking mode for all agents |
+| `--goals` | | Path to a Markdown file with human-defined initial goals/requirements |
 
 ### Examples
 
@@ -62,6 +64,12 @@ uv run python run.py myorg/my-api -m qwen3:32b -i 300
 
 # Override the default branch
 uv run python run.py myorg/my-api -b develop
+
+# Disable think mode
+uv run python run.py myorg/my-api --no-think
+
+# Anchor planning/build to a human goals file
+uv run python run.py myorg/my-api --goals ./goals.md
 ```
 
 ## Environment variables
@@ -74,13 +82,38 @@ You can also configure via `.env` (see `.env.example`):
 | `PRODUCT_REPO_DIR` | Local clone path (auto-generated if unset) | `./repos/{owner-name}` |
 | `DEFAULT_BRANCH` | Default branch | `main` |
 | `AGENT_MODEL` | Ollama model name | `gemma4:31b` |
+| `AGENT_THINK` | Enable think mode (`true`/`false`) | `true` |
 | `CYCLE_INTERVAL` | Seconds between cycles | `0` |
 | `AGENT_TIMEOUT` | Per-agent timeout (seconds) | `1800` |
 | `NUM_CTX` | Context window size | `32768` |
 | `SKILLS_DIR` | Path to skill scripts | `./skills` |
 | `TRUSTED_SKILL_SOURCES` | Comma-separated URL prefixes for `install_skill` | — |
+| `INITIAL_GOALS_FILE` | Path to Markdown goals/requirements file used by all agents | — |
 
 CLI arguments override env vars, which override defaults.
+
+## Guiding agents with human goals
+
+To prevent random planning, provide an explicit goals file:
+
+```markdown
+# goals.md
+Build a website that hosts books from https://github.com/prof-lijar/ai-generated-books.
+
+Requirements:
+- Public library page listing books
+- PDF viewer page for each book
+- Search by title/filename
+- Mobile-friendly UI
+```
+
+Run with:
+
+```bash
+uv run python run.py prof-lijar/ai-generated-books-web --goals ./goals.md
+```
+
+When provided, this file is injected into every agent's instructions and treated as the highest-priority source of truth.
 
 ## Skills
 

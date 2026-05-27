@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import signal
 import subprocess
 import sys
@@ -558,6 +559,16 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Max cycles to run (default: 0 = unlimited).",
     )
+    parser.add_argument(
+        "--no-think",
+        action="store_true",
+        default=None,
+        help="Disable model thinking mode for all agents.",
+    )
+    parser.add_argument(
+        "--goals",
+        help="Path to a markdown file with initial product goals/requirements.",
+    )
     return parser.parse_args()
 
 
@@ -566,21 +577,30 @@ async def main() -> None:
     config = Config.from_env(cli_overrides={
         "product_repo": args.repo,
         "model_name": args.model,
+        "think_enabled": (False if args.no_think else None),
         "default_branch": args.branch,
         "agent_timeout_seconds": args.timeout,
         "cycle_interval_seconds": args.interval,
+        "initial_goals_file": args.goals,
     })
 
     logger.info("=" * 60)
     logger.info("  DEV-TEAM — Autonomous AI Engineering Team")
     logger.info("  Model: %s", config.model_name)
+    logger.info("  Think mode: %s", "on" if config.think_enabled else "off")
     logger.info("  Product Repo: %s", config.product_repo)
     logger.info("  Product Dir: %s", config.product_repo_dir)
     logger.info("  Cycle interval: %ds", config.cycle_interval_seconds)
     logger.info("  Agent timeout: %ds", config.agent_timeout_seconds)
     logger.info("  Skills: %s", config.skills_dir)
+    if config.initial_goals_file:
+        logger.info("  Initial goals: %s", config.initial_goals_file)
     logger.info("  Scheduling: PM-driven dynamic")
     logger.info("=" * 60)
+
+    if config.initial_goals_file and not config.initial_goals_file.exists():
+        logger.error("Initial goals file not found: %s", config.initial_goals_file)
+        sys.exit(1)
 
     if not check_ollama(config):
         logger.error("Ollama is not running. Start it with: ollama serve")
@@ -589,6 +609,14 @@ async def main() -> None:
     ensure_product_repo_cloned(config)
     ensure_labels(config)
     bootstrap_repo(config)
+
+    # Ensure agents importing Config.from_env() see CLI-resolved values.
+    os.environ["AGENT_MODEL"] = config.model_name
+    os.environ["AGENT_THINK"] = "true" if config.think_enabled else "false"
+    os.environ["PRODUCT_REPO"] = config.product_repo
+    os.environ["PRODUCT_REPO_DIR"] = str(config.product_repo_dir)
+    if config.initial_goals_file:
+        os.environ["INITIAL_GOALS_FILE"] = str(config.initial_goals_file)
 
     from app.agents import AGENTS
 

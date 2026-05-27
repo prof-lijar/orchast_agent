@@ -22,6 +22,7 @@ class Config:
     ollama_api_key: str = "ollama"
     num_ctx: int = 32768
     temperature: float = 0.7
+    think_enabled: bool = True
 
     product_repo: str = "user/my-app"
     product_repo_dir: Path = field(
@@ -35,6 +36,7 @@ class Config:
         default_factory=lambda: (Path(__file__).parent / "skills").resolve()
     )
     trusted_skill_sources: list[str] = field(default_factory=list)
+    initial_goals_file: Path | None = None
 
     cycle_interval_seconds: int = 0
     agent_timeout_seconds: int = 1800
@@ -59,6 +61,12 @@ class Config:
     def from_env(cls, cli_overrides: dict | None = None) -> Config:
         cli = {k: v for k, v in (cli_overrides or {}).items() if v is not None}
 
+        def _as_bool(raw: str, default: bool = True) -> bool:
+            val = (raw or "").strip().lower()
+            if not val:
+                return default
+            return val in {"1", "true", "yes", "on"}
+
         trusted_raw = os.environ.get("TRUSTED_SKILL_SOURCES", "")
         trusted = [s.strip() for s in trusted_raw.split(",") if s.strip()] if trusted_raw else []
 
@@ -73,6 +81,11 @@ class Config:
 
         return cls(
             model_name=cli.get("model_name") or os.environ.get("AGENT_MODEL", cls.model_name),
+            think_enabled=(
+                cli.get("think_enabled")
+                if "think_enabled" in cli
+                else _as_bool(os.environ.get("AGENT_THINK", ""), cls.think_enabled)
+            ),
             product_repo=product_repo,
             product_repo_dir=product_repo_dir,
             default_branch=cli.get("default_branch") or os.environ.get("DEFAULT_BRANCH", cls.default_branch),
@@ -84,4 +97,12 @@ class Config:
                 str((Path(__file__).parent / "skills").resolve()),
             )).resolve(),
             trusted_skill_sources=trusted,
+            initial_goals_file=(
+                Path(
+                    cli.get("initial_goals_file")
+                    or os.environ.get("INITIAL_GOALS_FILE", "")
+                ).resolve()
+                if (cli.get("initial_goals_file") or os.environ.get("INITIAL_GOALS_FILE", "")).strip()
+                else None
+            ),
         )
