@@ -513,6 +513,15 @@ async def main() -> None:
 
         completed = set(progress.get("completed", []))
 
+        out_path = Path(output_dir)
+        for chapter in toc["chapters"]:
+            ch_num = chapter["number"]
+            if ch_num not in completed and list(out_path.glob(f"chapter-{ch_num:02d}-*.md")):
+                completed.add(ch_num)
+                if ch_num not in progress["completed"]:
+                    progress["completed"].append(ch_num)
+                    save_progress(output_dir, progress)
+
         logger.info("=" * 60)
         logger.info("Starting book generation: %s", toc["title"])
         logger.info("Chapters: %d | Already done: %d", len(toc["chapters"]), len(completed))
