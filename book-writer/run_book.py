@@ -368,8 +368,8 @@ async def main() -> None:
         help="Repetition penalty (default: 1.2, use 1.5+ for small models)",
     )
     parser.add_argument(
-        "--agents", default="outline,writer,reviewer,finalizer",
-        help="Comma-separated pipeline stages (default: outline,writer,reviewer,finalizer)",
+        "--agents", default="outline,writer,reviewer,finalizer,publisher",
+        help="Comma-separated pipeline stages (default: outline,writer,reviewer,finalizer,publisher)",
     )
     parser.add_argument(
         "--lang", default=None,
