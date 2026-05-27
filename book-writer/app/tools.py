@@ -321,6 +321,29 @@ blockquote {
 """
 
 _CHAPTER_TITLE_RE = re.compile(r"<h1[^>]*>(.*?)</h1>", re.IGNORECASE)
+_DISPLAY_MATH_RE = re.compile(r"\$\$(.+?)\$\$", re.DOTALL)
+_INLINE_MATH_RE = re.compile(r"(?<!\$)\$(?!\$|\d)([^$\n]+?)(?<!\$)\$(?!\$)")
+
+
+def _convert_latex_math(html: str) -> str:
+    """Replace $...$ and $$...$$ with MathML."""
+    from latex2mathml.converter import convert as latex_to_mathml
+
+    def _replace_display(m: re.Match) -> str:
+        try:
+            return f'<div class="math-block">{latex_to_mathml(m.group(1).strip())}</div>'
+        except Exception:
+            return m.group(0)
+
+    def _replace_inline(m: re.Match) -> str:
+        try:
+            return latex_to_mathml(m.group(1).strip())
+        except Exception:
+            return m.group(0)
+
+    html = _DISPLAY_MATH_RE.sub(_replace_display, html)
+    html = _INLINE_MATH_RE.sub(_replace_inline, html)
+    return html
 
 
 def publish_to_pdf(
@@ -359,6 +382,7 @@ def publish_to_pdf(
         body = _FRONT_MATTER_RE.sub("", raw, count=1).strip()
         total_words += len(body.split())
         chapter_html = md.markdown(body, extensions=["extra", "toc"])
+        chapter_html = _convert_latex_math(chapter_html)
 
         ch_id = f"chapter-{idx + 1}"
         m = _CHAPTER_TITLE_RE.search(chapter_html)

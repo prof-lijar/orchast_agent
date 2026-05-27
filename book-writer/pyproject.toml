@@ -12,6 +12,7 @@ dependencies = [
     "python-slugify>=8.0.0",
     "markdown>=3.6",
     "weasyprint>=62.0",
+    "latex2mathml>=3.77",
 ]
 requires-python = ">=3.11,<3.14"
 
