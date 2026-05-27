@@ -76,6 +76,9 @@ def save_chapter_to_disk(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
+    for old in out.glob(f"chapter-{chapter_number:02d}-*.md"):
+        old.unlink()
+
     slug = slugify(title, max_length=60)
     filename = f"chapter-{chapter_number:02d}-{slug}.md"
     filepath = out / filename
