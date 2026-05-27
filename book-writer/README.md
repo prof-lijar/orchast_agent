@@ -212,6 +212,12 @@ python run_book.py --toc my-book-toc.json --model gemma4:31b --repo https://gith
 python run_book.py --toc my-book-toc.json --model gemma4:31b --output-dir ./my-book --branch draft
 ```
 
+**Rewrite all chapters from scratch** (for completed books):
+
+```bash
+python run_book.py --toc my-book-toc.json --model gemma4:31b --rewrite-all
+```
+
 **Resume after interruption**:
 
 ```bash
@@ -274,7 +280,8 @@ Options:
                          Use "--agents publisher" alone to publish existing chapters (no LLM needed).
                          The publisher always git commits and pushes the PDF regardless of --no-push.
   --lang CODE            Language for book content (e.g. my, es, fr). Overrides TOC language field.
-  --rewrite N [N ...]    Rewrite specific chapter(s) then stop (e.g. --rewrite 1 or --rewrite 1 3 5)
+  --rewrite N [N ...]    Rewrite specific chapter(s) (e.g. --rewrite 1 or --rewrite 1 3 5)
+  --rewrite-all          Rewrite all chapters from scratch, ignoring existing progress
   --resume               Resume from .progress.json (skip completed chapters)
   --no-push              Skip git operations (save files only)
 ```

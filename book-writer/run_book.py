@@ -378,6 +378,10 @@ async def main() -> None:
         help="Rewrite specific chapter(s) then stop (e.g. --rewrite 1 or --rewrite 1 3 5)",
     )
     parser.add_argument(
+        "--rewrite-all", action="store_true",
+        help="Rewrite all chapters from scratch, ignoring existing progress",
+    )
+    parser.add_argument(
         "--no-push", action="store_true", help="Skip git push (commit only)"
     )
     args = parser.parse_args()
@@ -460,7 +464,10 @@ async def main() -> None:
             session_service=session_service,
         )
 
-        rewrite_set = set(args.rewrite) if args.rewrite else None
+        if args.rewrite_all:
+            rewrite_set = {ch["number"] for ch in toc["chapters"]}
+        else:
+            rewrite_set = set(args.rewrite) if args.rewrite else None
 
         if rewrite_set:
             progress = load_progress(output_dir)
