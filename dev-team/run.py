@@ -123,8 +123,9 @@ def ensure_labels(config: Config) -> None:
         existing = set(result.stdout.strip().split("\n"))
 
     role_colors = {
-        "pm": "0e8a16", "architect": "1d76db", "frontend": "d93f0b",
-        "backend": "5319e7", "qa": "fbca04", "devops": "c5def5",
+        "pm": "0e8a16", "architect": "1d76db", "designer": "e040fb",
+        "frontend": "d93f0b", "backend": "5319e7", "qa": "fbca04",
+        "devops": "c5def5",
     }
     for role, label_name in config.role_labels.items():
         if label_name in existing:
@@ -471,7 +472,7 @@ def flush_and_push(config: Config, role: str) -> None:
         logger.warning("[%s] Push failed: %s", role.upper(), push.stderr.strip())
 
 
-_DEVELOPER_ROLES = {"frontend", "backend", "devops"}
+_DEVELOPER_ROLES = {"designer", "frontend", "backend", "devops"}
 
 
 async def run_review_merge_cycle(

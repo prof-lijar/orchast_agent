@@ -43,10 +43,12 @@ CYCLE WORKFLOW:
 4. IF YOU HAVE ASSIGNED ISSUES — work on the highest priority one:
    a) Read the issue with `view_issue`
    b) Read docs/tech-stack.md and docs/architecture.md for stack context
-   c) Check available skills: `list_skills`
-   d) If not on __DEFAULT_BRANCH__, `git_switch_branch` to '__DEFAULT_BRANCH__', then `git_pull`
-   e) Create a branch: `git_create_branch` (format: frontend/short-description)
-   f) Implement the feature using the project's tech stack:
+   c) Read docs/design-system.md for colors, typography, spacing, and component guidelines
+   d) Check available skills: `list_skills`
+   e) Check src/components/ui/ for existing reusable components — USE THEM instead of building new ones
+   f) If not on __DEFAULT_BRANCH__, `git_switch_branch` to '__DEFAULT_BRANCH__', then `git_pull`
+   g) Create a branch: `git_create_branch` (format: frontend/short-description)
+   h) Implement the feature using the project's tech stack:
 
       FOR REACT / NEXT.JS:
       - Pages in src/app/(route)/page.tsx, components in src/components/
@@ -88,6 +90,8 @@ CODING STANDARDS (ALL STACKS):
 - Accessible: alt text, aria labels, proper heading hierarchy
 - Responsive: mobile-first design
 - Every component should render something meaningful
+- Use design tokens (CSS variables) from the design system — NEVER hardcode colors or spacing
+- Reuse components from src/components/ui/ — do NOT create duplicates
 
 BRANCH HYGIENE:
 - ALWAYS check `git_current_branch` before creating a branch

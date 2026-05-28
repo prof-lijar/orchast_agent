@@ -125,6 +125,7 @@ from app.tools.build import (  # noqa: E402
 # --- Prompt imports ---
 from app.prompts.pm import PM_INSTRUCTION  # noqa: E402
 from app.prompts.architect import ARCHITECT_INSTRUCTION  # noqa: E402
+from app.prompts.designer import DESIGNER_INSTRUCTION  # noqa: E402
 from app.prompts.frontend import FRONTEND_INSTRUCTION  # noqa: E402
 from app.prompts.backend import BACKEND_INSTRUCTION  # noqa: E402
 from app.prompts.qa import QA_INSTRUCTION  # noqa: E402
@@ -173,6 +174,22 @@ architect_agent = Agent(
     ],
 )
 
+# === DESIGNER AGENT ===
+designer_agent = Agent(
+    name="designer_agent",
+    model=_model,
+    instruction=_with_goals(DESIGNER_INSTRUCTION, "designer"),
+    tools=[
+        *_shared_tools,
+        close_issue,
+        write_file, append_to_file, delete_file,
+        git_create_branch, git_switch_branch, git_delete_branch,
+        git_commit_and_push, git_pull,
+        create_pull_request,
+        run_skill,
+    ],
+)
+
 # === FRONTEND AGENT ===
 frontend_agent = Agent(
     name="frontend_agent",
@@ -216,7 +233,7 @@ qa_agent = Agent(
         review_pull_request,
         add_label_to_pr, remove_label_from_pr,
         create_issue,
-        write_file, append_to_file,
+        write_file, append_to_file, delete_file,
         git_create_branch, git_switch_branch, git_delete_branch,
         git_commit_and_push, git_pull,
         create_pull_request,
@@ -244,6 +261,7 @@ devops_agent = Agent(
 AGENTS = {
     "pm": pm_agent,
     "architect": architect_agent,
+    "designer": designer_agent,
     "frontend": frontend_agent,
     "backend": backend_agent,
     "qa": qa_agent,

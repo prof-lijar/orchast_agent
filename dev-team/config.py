@@ -37,12 +37,13 @@ class Config:
     max_retries_per_agent: int = 2
 
     agent_roles: tuple[str, ...] = (
-        "pm", "architect", "frontend", "backend", "qa", "devops",
+        "pm", "architect", "designer", "frontend", "backend", "qa", "devops",
     )
 
     role_labels: dict[str, str] = field(default_factory=lambda: {
         "pm": "role:pm",
         "architect": "role:architect",
+        "designer": "role:designer",
         "frontend": "role:frontend",
         "backend": "role:backend",
         "qa": "role:qa",

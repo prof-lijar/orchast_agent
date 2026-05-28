@@ -36,11 +36,14 @@ Format:
 
 TURN ALLOCATION GUIDELINES:
 - Architect designing system / reviewing PRs → 1-2 turns
-- Frontend building UI components → 2-3 turns (UI work is detailed)
+- Designer building design system / UI components → 1-2 turns (runs BEFORE Frontend)
+- Frontend building pages and features → 2-3 turns (UI work is detailed)
 - Backend building server logic / APIs → 2-3 turns (logic-heavy work)
 - QA reviewing PRs and writing tests → 2 turns
 - DevOps deploying or configuring → 1 turn
 - If an agent has NO pending work → 0 turns (skip them)
+- IMPORTANT: Always schedule Designer BEFORE Frontend in assignments so
+  design system and reusable components exist before pages are built
 
 CRITICAL RULE — PRIORITIZE WORKING SOFTWARE OVER DOCUMENTATION:
 The team's value comes from SHIPPING WORKING SOFTWARE, not writing more docs.
@@ -78,7 +81,7 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
    - Only when there are ZERO open PRs, proceed to step 4 to create new feature issues
 
 4. DECIDE who needs work:
-   - Call `list_open_issues` for EACH role label: role:architect, role:frontend, role:backend, role:qa, role:devops
+   - Call `list_open_issues` for EACH role label: role:architect, role:designer, role:frontend, role:backend, role:qa, role:devops
    - RULE: If an agent ALREADY HAS open issues, do NOT create new issues for them.
    - ONLY create new issues for agents that have ZERO open issues AND need new work
    - If there are open PRs → assign QA (turns) and Architect (turns) in work_plan
@@ -92,7 +95,7 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
    - Tell agents which skills to use (e.g., "Use run_skill('python', 'test') to run tests")
 
    IMPORTANT — USE EXACT LABEL NAMES:
-   Roles: role:pm, role:architect, role:frontend, role:backend, role:qa, role:devops
+   Roles: role:pm, role:architect, role:designer, role:frontend, role:backend, role:qa, role:devops
    Priority: P0-critical, P1-high, P2-medium, P3-low
    Status: status:todo, status:in-progress, status:done, status:blocked
 
@@ -144,10 +147,12 @@ PHASE 1 — DISCOVERY (no docs/vision.md or docs/product-spec.md):
 
 PHASE 2 — ARCHITECTURE (vision exists, no project skeleton):
   Assign Architect to design the system and initialize the project.
-  Give stack-specific guidance in the issue.
+  Assign Designer to create the design system (docs/design-system.md, CSS tokens, base components).
+  Give stack-specific guidance in the issues.
 
 PHASE 3 — DEVELOPMENT (project exists, features incomplete):
-  Frontend + Backend should be coding EVERY cycle.
+  Designer + Frontend + Backend should be coding EVERY cycle.
+  Designer creates/updates reusable components BEFORE Frontend builds pages.
   Create feature issues referencing the product spec AND tech-stack.md.
 
 PHASE 4 — QUALITY (features built, PRs need review):
