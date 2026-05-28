@@ -527,6 +527,20 @@ async def run_cycle(
             logger.info("[%s] Turn %d/%d done in %.1fs", role.upper(), turn, turns, elapsed)
 
 
+def _normalize_repo(raw: str) -> str:
+    """Extract owner/name slug from a git URL or pass through as-is."""
+    import re
+    # git@github.com:owner/repo.git
+    m = re.match(r"git@github\.com:(.+?)(?:\.git)?$", raw)
+    if m:
+        return m.group(1)
+    # https://github.com/owner/repo.git or https://github.com/owner/repo
+    m = re.match(r"https?://github\.com/(.+?)(?:\.git)?$", raw)
+    if m:
+        return m.group(1)
+    return raw
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="dev-team",
@@ -535,7 +549,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "repo",
-        help="GitHub repo slug (owner/name). Example: myorg/my-app",
+        help="GitHub repo slug (owner/name) or git URL. "
+        "Examples: myorg/my-app, git@github.com:myorg/my-app.git, "
+        "https://github.com/myorg/my-app.git",
     )
     parser.add_argument(
         "--model", "-m",
@@ -600,7 +616,7 @@ def parse_args() -> argparse.Namespace:
 async def main() -> None:
     args = parse_args()
     config = Config.from_cli({
-        "product_repo": args.repo,
+        "product_repo": _normalize_repo(args.repo),
         "model_name": args.model,
         "think_enabled": (False if args.no_think else None),
         "stream_enabled": (True if args.stream else None),
