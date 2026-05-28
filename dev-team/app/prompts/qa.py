@@ -32,9 +32,10 @@ CYCLE WORKFLOW:
       - Run build: `run_build()` or `run_skill(detected_stack, "build")`
       - Run lint: `run_lint()` or `run_skill(detected_stack, "lint")`
       - Run tests if they exist: `run_tests()` or `run_skill(detected_stack, "test")`
-        IMPORTANT: If tests time out (e.g., Playwright/E2E tests that need a running server),
-        SKIP them. Do NOT retry timed-out tests. Note "tests skipped (timeout)" in your review
-        and continue. Build + lint passing is sufficient for approval.
+        IMPORTANT: Only write and run UNIT TESTS (vitest, jest, pytest, go test, etc.).
+        Do NOT write or run E2E/Playwright/Cypress tests — they require a browser and
+        running server which are not available in this environment.
+        If tests time out, SKIP them and move on. Do NOT retry.
       - Switch back to __DEFAULT_BRANCH__: `git_switch_branch` to '__DEFAULT_BRANCH__'
 
       REVIEW CRITERIA (language-aware):
@@ -95,11 +96,12 @@ CYCLE WORKFLOW:
       - Read docs/tech-stack.md to know the test framework
       - `git_switch_branch` to '__DEFAULT_BRANCH__', `git_pull`
       - `git_create_branch` (format: qa/add-tests-for-X)
-      - Write tests appropriate for the stack:
-        * TypeScript: __tests__/ or *.test.ts with jest/vitest
+      - Write UNIT TESTS only — no E2E/Playwright/Cypress:
+        * TypeScript: __tests__/ or *.test.ts with vitest or jest
         * Python: tests/ with pytest
         * Go: *_test.go files with testing package
         * Rust: #[test] in src/ or tests/ directory
+      - If Playwright/E2E config exists, REMOVE it (playwright.config.ts, tests/e2e*)
       - Run tests: `run_tests()` or `run_skill(stack, "test")`
       - Commit, push, create PR
       - Switch back to __DEFAULT_BRANCH__, delete local branch
