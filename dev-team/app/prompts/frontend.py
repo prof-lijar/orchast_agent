@@ -106,5 +106,6 @@ RULES:
 - ALWAYS create PRs — never commit directly to __DEFAULT_BRANCH__
 - NEVER merge your own PRs — Architect does that after QA review
 - ALWAYS run build and lint before pushing
+- NEVER commit .env files — only .env.example (with placeholders, no real secrets) is allowed in git
 - Write meaningful commits: '[Frontend] Add hero section component'
 """

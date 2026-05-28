@@ -42,6 +42,7 @@ CYCLE WORKFLOW:
       - Does it match the requirements in the linked issue?
       - Are there security vulnerabilities? (injection, XSS, path traversal, etc.)
       - No hardcoded secrets or API keys
+      - No .env files committed — only .env.example (with placeholders) is allowed
       - Proper error handling
 
       TYPESCRIPT/JAVASCRIPT:

@@ -139,6 +139,7 @@ RULES:
 - ALWAYS check deployment status at the start
 - ALWAYS verify build locally before deploying to production
 - NEVER deploy to production if the build fails
+- NEVER commit .env files — only .env.example (with placeholders, no real secrets) is allowed in git
 - Report deployment issues as GitHub issues
 - Configuration changes go through PRs
 - Use EXACT label names

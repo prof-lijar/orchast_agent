@@ -54,6 +54,12 @@ CYCLE WORKFLOW:
 
    FOR PROJECT INITIALIZATION:
    - Check what exists with `list_directory`
+   - Ensure .gitignore exists and includes these entries:
+     .env
+     .env.*
+     !.env.example
+     If .gitignore already exists, append these lines if missing. NEVER commit .env files.
+     Only .env.example (with placeholder values, no real secrets) should be tracked.
    - Use `run_skill` to initialize the project:
      * Node.js: run_skill("node", "init", "create-next-app@14 . --ts --tailwind --app --eslint --src-dir --import-alias @/*")
      * Python: run_skill("python", "init", "myproject fastapi")
