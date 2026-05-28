@@ -149,7 +149,10 @@ def git_list_branches() -> str:
 
 
 def git_cleanup_branches() -> str:
-    """Delete ALL local branches except main and the current branch.
+    """Delete local branches that have no open PRs.
+
+    Protects the default branch, current branch, and any branch that is the head
+    of an open PR.
 
     Returns:
         JSON string with count of deleted branches and any that failed.
@@ -162,6 +165,19 @@ def git_cleanup_branches() -> str:
         return json.dumps(list_result)
 
     protected = {"master", "main", _config.default_branch, current}
+
+    pr_result = subprocess.run(
+        ["gh", "pr", "list", "--state", "open", "--json", "headRefName",
+         "-R", _config.product_repo],
+        capture_output=True, text=True, timeout=30,
+    )
+    if pr_result.returncode == 0 and pr_result.stdout.strip():
+        try:
+            for pr in json.loads(pr_result.stdout):
+                protected.add(pr["headRefName"])
+        except (json.JSONDecodeError, KeyError):
+            pass
+
     deleted = []
     failed = []
 
@@ -185,7 +201,9 @@ def git_cleanup_branches() -> str:
 
 
 def git_cleanup_remote_branches() -> str:
-    """Delete ALL remote branches except main/master on the origin remote.
+    """Delete remote branches that have no open PRs.
+
+    Protects the default branch and any branch that is the head of an open PR.
 
     Returns:
         JSON string with count of deleted remote branches.
@@ -195,14 +213,31 @@ def git_cleanup_remote_branches() -> str:
         return json.dumps(list_result)
 
     protected = {"origin/master", "origin/main", f"origin/{_config.default_branch}", "origin/HEAD"}
+
+    pr_result = subprocess.run(
+        ["gh", "pr", "list", "--state", "open", "--json", "headRefName",
+         "-R", _config.product_repo],
+        capture_output=True, text=True, timeout=30,
+    )
+    if pr_result.returncode == 0 and pr_result.stdout.strip():
+        try:
+            for pr in json.loads(pr_result.stdout):
+                protected.add(f"origin/{pr['headRefName']}")
+        except (json.JSONDecodeError, KeyError):
+            pass
+
     deleted = []
     failed = []
+    skipped_pr = []
 
     for line in list_result["output"].split("\n"):
         ref = line.strip()
         if not ref or ref in protected or "->" in ref:
             continue
         if not ref.startswith("origin/"):
+            continue
+        if ref in protected:
+            skipped_pr.append(ref.replace("origin/", "", 1))
             continue
         branch_name = ref.replace("origin/", "", 1)
         result = _run_git(["push", "origin", "--delete", branch_name], timeout=30)
@@ -219,6 +254,7 @@ def git_cleanup_remote_branches() -> str:
         "failed_count": len(failed),
         "deleted": deleted[:20],
         "failed": failed[:5],
+        "skipped_open_prs": skipped_pr[:10],
     })
 
 
