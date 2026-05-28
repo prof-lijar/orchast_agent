@@ -32,6 +32,9 @@ CYCLE WORKFLOW:
       - Run build: `run_build()` or `run_skill(detected_stack, "build")`
       - Run lint: `run_lint()` or `run_skill(detected_stack, "lint")`
       - Run tests if they exist: `run_tests()` or `run_skill(detected_stack, "test")`
+        IMPORTANT: If tests time out (e.g., Playwright/E2E tests that need a running server),
+        SKIP them. Do NOT retry timed-out tests. Note "tests skipped (timeout)" in your review
+        and continue. Build + lint passing is sufficient for approval.
       - Switch back to __DEFAULT_BRANCH__: `git_switch_branch` to '__DEFAULT_BRANCH__'
 
       REVIEW CRITERIA (language-aware):
