@@ -299,6 +299,22 @@ def has_open_prs(config: Config) -> bool:
         return False
 
 
+def has_open_issues(config: Config, role: str) -> bool:
+    """Check if an agent has open issues assigned to it."""
+    label = config.role_labels.get(role, f"role:{role}")
+    result = subprocess.run(
+        ["gh", "issue", "list", "--state", "open", "--label", label,
+         "--json", "number", "--limit", "1", "-R", config.product_repo],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0:
+        return False
+    try:
+        return len(json.loads(result.stdout)) > 0
+    except (json.JSONDecodeError, TypeError):
+        return False
+
+
 def ensure_main_branch(config: Config) -> None:
     cwd = str(config.product_repo_dir)
     subprocess.run(
@@ -608,7 +624,17 @@ async def run_cycle(
             if _shutdown_requested:
                 break
 
+            # Auto-merge approved PRs before every agent turn
             ensure_main_branch(config)
+            merged = merge_approved_prs(config)
+            if merged:
+                logger.info("Pre-turn merge: %d PR(s) merged into %s", merged, config.default_branch)
+
+            # Skip remaining turns if agent has no work
+            if turn > 1 and not has_open_issues(config, role) and not (role == "architect" and has_open_prs(config)):
+                logger.info("[%s] No open issues — skipping remaining %d turn(s).", role.upper(), turns - turn + 1)
+                break
+
             logger.info("--- Cycle %d | %s (turn %d/%d) ---", cycle_number, role.upper(), turn, turns)
 
             start = time.time()
