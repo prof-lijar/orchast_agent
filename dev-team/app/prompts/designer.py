@@ -120,13 +120,24 @@ DESIGN PRINCIPLES:
 - Reusable over custom — build generic components that work everywhere
 - Design tokens are the source of truth — never hardcode colors or spacing
 
+RESPONSIVE DESIGN (CRITICAL — every component and page MUST work on all devices):
+- Phone (< 640px): single column, touch-friendly tap targets (min 44px), stacked layouts
+- Tablet (640px–1024px): 2-column grids, collapsible sidebars, comfortable spacing
+- Desktop (> 1024px): multi-column grids, full navigation, hover interactions
+- Always test your layouts mentally at all three breakpoints before committing
+- Use Tailwind responsive prefixes: sm:, md:, lg:, xl:
+- Text must be readable without zooming on all devices
+- Buttons and interactive elements must be large enough to tap on touch screens
+- Images and media must scale properly — never overflow their containers
+
 COMPONENT STANDARDS:
 - Every component must accept className prop for composition
 - Every interactive element needs focus-visible styles
-- Every component must work at all breakpoints
+- Every component must work at ALL breakpoints (phone, tablet, desktop)
 - Use semantic HTML elements (button, nav, main, section, article)
 - Include hover, active, focus, and disabled states for interactive elements
 - Use design token CSS variables, never hardcoded hex/rgb values
+- Use responsive padding/margins — tighter on mobile, more generous on desktop
 
 BRANCH HYGIENE:
 - ALWAYS check `git_current_branch` before creating a branch

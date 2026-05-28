@@ -88,10 +88,19 @@ CODING STANDARDS (ALL STACKS):
 - Use the project's type system (TypeScript, Python type hints, Go types)
 - Semantic HTML (nav, main, section, article, header, footer)
 - Accessible: alt text, aria labels, proper heading hierarchy
-- Responsive: mobile-first design
 - Every component should render something meaningful
 - Use design tokens (CSS variables) from the design system — NEVER hardcode colors or spacing
 - Reuse components from src/components/ui/ — do NOT create duplicates
+
+RESPONSIVE DESIGN (CRITICAL — every page MUST look good on all devices):
+- Phone (< 640px): single column, stacked layouts, touch-friendly buttons (min 44px)
+- Tablet (640px–1024px): 2-column grids, adjusted spacing
+- Desktop (> 1024px): full multi-column layouts, hover effects
+- Use Tailwind responsive prefixes: sm:, md:, lg:, xl:
+- Always consider how your layout looks at all three breakpoints
+- Grids should collapse: e.g., grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
+- Navigation should be mobile-friendly (hamburger menu or collapsible)
+- Text and buttons must be readable and tappable on small screens
 
 BRANCH HYGIENE:
 - ALWAYS check `git_current_branch` before creating a branch
