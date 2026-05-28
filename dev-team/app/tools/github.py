@@ -6,7 +6,7 @@ import subprocess
 
 from config import Config
 
-_config = Config.from_env()
+_config = Config.get()
 _REPO = _config.product_repo
 _TIMEOUT = 30
 

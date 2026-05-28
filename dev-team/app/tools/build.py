@@ -8,7 +8,7 @@ from pathlib import Path
 from app.tools.skills import run_skill
 from config import Config
 
-_config = Config.from_env()
+_config = Config.get()
 _REPO_DIR = _config.product_repo_dir
 
 

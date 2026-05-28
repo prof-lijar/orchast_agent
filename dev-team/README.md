@@ -35,26 +35,32 @@ uv run python run.py owner/repo-name
 
 ```
 dev-team [-h] [--model MODEL] [--branch BRANCH] [--timeout TIMEOUT]
-         [--interval INTERVAL] [--cycles CYCLES] [--no-think] [--stream] [--goals GOALS]
-         [repo]
+         [--interval INTERVAL] [--cycles CYCLES] [--no-think] [--stream]
+         [--goals GOALS] [--repo-dir REPO_DIR] [--num-ctx NUM_CTX]
+         [--skills-dir SKILLS_DIR] [--trusted-sources TRUSTED_SOURCES]
+         repo
 ```
 
-| Argument | Short | Description |
-|----------|-------|-------------|
-| `repo` | | GitHub repo slug (`owner/name`). Overrides `PRODUCT_REPO` env var. |
-| `--model` | `-m` | Ollama model name (default: `gemma4:31b`) |
-| `--branch` | `-b` | Default branch (default: `main`) |
-| `--timeout` | `-t` | Per-agent timeout in seconds (default: `1800`) |
-| `--interval` | `-i` | Seconds between cycles (default: `0` = continuous) |
-| `--cycles` | `-n` | Max cycles to run (default: `0` = unlimited) |
-| `--no-think` | | Disable model thinking mode for all agents |
-| `--stream` | | Stream agent thought/text/tool activity live |
-| `--goals` | | Path to a Markdown file with human-defined initial goals/requirements |
+| Argument | Short | Description | Default |
+|----------|-------|-------------|---------|
+| `repo` | | GitHub repo slug (`owner/name`). **Required.** | — |
+| `--model` | `-m` | Ollama model name | `gemma4:31b` |
+| `--branch` | `-b` | Default branch | `main` |
+| `--timeout` | `-t` | Per-agent timeout in seconds | `1800` |
+| `--interval` | `-i` | Seconds between cycles | `0` (continuous) |
+| `--cycles` | `-n` | Max cycles to run | `0` (unlimited) |
+| `--no-think` | | Disable model thinking mode for all agents | think on |
+| `--stream` | | Stream agent thought/text/tool activity live | off |
+| `--goals` | | Path to a Markdown file with initial goals/requirements | — |
+| `--repo-dir` | | Local path for cloning the product repo | `./repos/<repo-slug>` |
+| `--num-ctx` | | LLM context window size | `32768` |
+| `--skills-dir` | | Path to skills directory | `./skills` |
+| `--trusted-sources` | | Comma-separated trusted skill source URL prefixes | — |
 
 ### Examples
 
 ```bash
-# Run on a repo, unlimited cycles
+# Minimal — just the repo (all defaults)
 uv run python run.py myorg/my-api
 
 # Run 3 cycles then stop
@@ -74,28 +80,31 @@ uv run python run.py myorg/my-api --stream
 
 # Anchor planning/build to a human goals file
 uv run python run.py myorg/my-api --goals ./goals.md
+
+# Clone the repo to a specific directory
+uv run python run.py myorg/my-api --repo-dir /tmp/my-api-checkout
+
+# Larger context window + custom skills directory
+uv run python run.py myorg/my-api --num-ctx 65536 --skills-dir ~/my-skills
+
+# Allow runtime skill installation from trusted sources
+uv run python run.py myorg/my-api --trusted-sources "https://raw.githubusercontent.com/myorg/skills/main/"
+
+# Full example with all options
+uv run python run.py myorg/my-api \
+  -m qwen3:32b \
+  -b develop \
+  -t 3600 \
+  -i 120 \
+  -n 5 \
+  --no-think \
+  --stream \
+  --goals ./goals.md \
+  --repo-dir ./repos/my-api \
+  --num-ctx 65536 \
+  --skills-dir ./skills \
+  --trusted-sources "https://raw.githubusercontent.com/myorg/skills/main/"
 ```
-
-## Environment variables
-
-You can also configure via `.env` (see `.env.example`):
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PRODUCT_REPO` | GitHub repo slug | — |
-| `PRODUCT_REPO_DIR` | Local clone path (auto-generated if unset) | `./repos/{owner-name}` |
-| `DEFAULT_BRANCH` | Default branch | `main` |
-| `AGENT_MODEL` | Ollama model name | `gemma4:31b` |
-| `AGENT_THINK` | Enable think mode (`true`/`false`) | `true` |
-| `AGENT_STREAM` | Stream verbose agent activity (`true`/`false`) | `false` |
-| `CYCLE_INTERVAL` | Seconds between cycles | `0` |
-| `AGENT_TIMEOUT` | Per-agent timeout (seconds) | `1800` |
-| `NUM_CTX` | Context window size | `32768` |
-| `SKILLS_DIR` | Path to skill scripts | `./skills` |
-| `TRUSTED_SKILL_SOURCES` | Comma-separated URL prefixes for `install_skill` | — |
-| `INITIAL_GOALS_FILE` | Path to Markdown goals/requirements file used by all agents | — |
-
-CLI arguments override env vars, which override defaults.
 
 ## Guiding agents with human goals
 
@@ -177,8 +186,8 @@ Drop it in `skills/` and add it to `skills/registry.json`, or install from a tru
 Agents can install skills from URLs at runtime, but only from **whitelisted sources** (security first):
 
 ```bash
-# In .env
-TRUSTED_SKILL_SOURCES=https://raw.githubusercontent.com/myorg/skills/main/
+uv run python run.py myorg/my-api \
+  --trusted-sources "https://raw.githubusercontent.com/myorg/skills/main/"
 ```
 
 Then agents can call `install_skill("https://raw.githubusercontent.com/myorg/skills/main/terraform.sh")` and the skill becomes available immediately.
@@ -228,7 +237,7 @@ For new repos, the PM chooses the best stack for the project requirements.
 ```
 dev-team/
 ├── run.py                  # CLI entrypoint and cycle runner
-├── config.py               # Configuration (env + CLI args)
+├── config.py               # Configuration (CLI args)
 ├── app/
 │   ├── agents.py           # Agent definitions and tool wiring
 │   ├── prompts/            # Agent system prompts (one per role)

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from config import Config
 
-_config = Config.from_env()
+_config = Config.get()
 
 
 def _detect_stack(repo_dir: Path) -> dict:

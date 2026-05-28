@@ -13,15 +13,14 @@ from google.adk.models import LiteLlm  # noqa: E402
 
 from config import Config  # noqa: E402
 
-_config = Config.from_env()
+_config = Config.get()
 
 
 def _load_initial_goals_markdown() -> str:
-    goals_path = os.environ.get("INITIAL_GOALS_FILE", "").strip()
-    if not goals_path:
+    if not _config.initial_goals_file:
         return ""
     try:
-        content = Path(goals_path).read_text(encoding="utf-8").strip()
+        content = _config.initial_goals_file.read_text(encoding="utf-8").strip()
     except Exception:
         return ""
     return content

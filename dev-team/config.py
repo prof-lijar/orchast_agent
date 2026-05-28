@@ -1,18 +1,11 @@
 """Dev-team configuration. All tunables in one place."""
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-_ENV_FILE = Path(__file__).parent / ".env"
-if _ENV_FILE.exists():
-    for line in _ENV_FILE.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip())
+
+_instance: "Config | None" = None
 
 
 @dataclass(frozen=True)
@@ -59,56 +52,46 @@ class Config:
     status_labels: tuple[str, ...] = ("status:todo", "status:in-progress", "status:done", "status:blocked")
 
     @classmethod
-    def from_env(cls, cli_overrides: dict | None = None) -> Config:
-        cli = {k: v for k, v in (cli_overrides or {}).items() if v is not None}
+    def from_cli(cls, cli: dict) -> Config:
+        global _instance
 
-        def _as_bool(raw: str, default: bool = True) -> bool:
-            val = (raw or "").strip().lower()
-            if not val:
-                return default
-            return val in {"1", "true", "yes", "on"}
+        product_repo = cli["product_repo"]
 
-        trusted_raw = os.environ.get("TRUSTED_SKILL_SOURCES", "")
-        trusted = [s.strip() for s in trusted_raw.split(",") if s.strip()] if trusted_raw else []
-
-        product_repo = cli.get("product_repo") or os.environ.get("PRODUCT_REPO", cls.product_repo)
-
-        repo_dir_env = os.environ.get("PRODUCT_REPO_DIR", "")
-        if repo_dir_env:
-            product_repo_dir = Path(repo_dir_env).resolve()
+        repo_dir = cli.get("product_repo_dir")
+        if repo_dir:
+            product_repo_dir = Path(repo_dir).resolve()
         else:
             repo_slug = product_repo.replace("/", "-")
             product_repo_dir = (Path(__file__).parent / "repos" / repo_slug).resolve()
 
-        return cls(
-            model_name=cli.get("model_name") or os.environ.get("AGENT_MODEL", cls.model_name),
-            think_enabled=(
-                cli.get("think_enabled")
-                if "think_enabled" in cli
-                else _as_bool(os.environ.get("AGENT_THINK", ""), cls.think_enabled)
-            ),
-            stream_enabled=(
-                cli.get("stream_enabled")
-                if "stream_enabled" in cli
-                else _as_bool(os.environ.get("AGENT_STREAM", ""), cls.stream_enabled)
-            ),
+        trusted_raw = cli.get("trusted_skill_sources") or ""
+        trusted = [s.strip() for s in trusted_raw.split(",") if s.strip()] if trusted_raw else []
+
+        goals_raw = (cli.get("initial_goals_file") or "").strip()
+
+        _instance = cls(
+            model_name=cli.get("model_name") or cls.model_name,
+            think_enabled=cli.get("think_enabled") if cli.get("think_enabled") is not None else cls.think_enabled,
+            stream_enabled=cli.get("stream_enabled") if cli.get("stream_enabled") is not None else cls.stream_enabled,
             product_repo=product_repo,
             product_repo_dir=product_repo_dir,
-            default_branch=cli.get("default_branch") or os.environ.get("DEFAULT_BRANCH", cls.default_branch),
-            cycle_interval_seconds=cli.get("cycle_interval_seconds") or int(os.environ.get("CYCLE_INTERVAL", str(cls.cycle_interval_seconds))),
-            agent_timeout_seconds=cli.get("agent_timeout_seconds") or int(os.environ.get("AGENT_TIMEOUT", str(cls.agent_timeout_seconds))),
-            num_ctx=int(os.environ.get("NUM_CTX", str(cls.num_ctx))),
-            skills_dir=Path(os.environ.get(
-                "SKILLS_DIR",
-                str((Path(__file__).parent / "skills").resolve()),
-            )).resolve(),
+            default_branch=cli.get("default_branch") or cls.default_branch,
+            cycle_interval_seconds=cli.get("cycle_interval_seconds") or cls.cycle_interval_seconds,
+            agent_timeout_seconds=cli.get("agent_timeout_seconds") or cls.agent_timeout_seconds,
+            num_ctx=cli.get("num_ctx") or cls.num_ctx,
+            skills_dir=Path(cli.get("skills_dir") or str((Path(__file__).parent / "skills").resolve())).resolve(),
             trusted_skill_sources=trusted,
-            initial_goals_file=(
-                Path(
-                    cli.get("initial_goals_file")
-                    or os.environ.get("INITIAL_GOALS_FILE", "")
-                ).resolve()
-                if (cli.get("initial_goals_file") or os.environ.get("INITIAL_GOALS_FILE", "")).strip()
-                else None
-            ),
+            initial_goals_file=Path(goals_raw).resolve() if goals_raw else None,
         )
+        return _instance
+
+    @classmethod
+    def get(cls) -> Config:
+        if _instance is None:
+            raise RuntimeError(
+                "Config not initialized. Required argument missing.\n\n"
+                "Usage: python run.py <repo> [options]\n\n"
+                "  repo              GitHub repo slug (owner/name)\n\n"
+                "Run 'python run.py --help' for all options."
+            )
+        return _instance

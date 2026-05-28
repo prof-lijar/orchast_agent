@@ -10,7 +10,7 @@ from pathlib import Path
 
 from config import Config
 
-_config = Config.from_env()
+_config = Config.get()
 _SKILLS_DIR = _config.skills_dir
 _REPO_DIR = str(_config.product_repo_dir)
 _TIMEOUT = 120
@@ -196,7 +196,7 @@ def install_skill(url: str) -> str:
     if not trusted:
         return json.dumps({
             "success": False,
-            "error": "No trusted skill sources configured. Set TRUSTED_SKILL_SOURCES in .env to a comma-separated list of allowed URL prefixes.",
+            "error": "No trusted skill sources configured. Pass --trusted-sources to set allowed URL prefixes.",
         })
 
     is_trusted = any(url.startswith(source) for source in trusted)

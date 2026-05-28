@@ -7,7 +7,7 @@ from pathlib import Path
 
 from config import Config
 
-_config = Config.from_env()
+_config = Config.get()
 _REPO_DIR = _config.product_repo_dir
 
 _PROTECTED_NAMES = {".git", ".env", ".env.local", "package-lock.json", "yarn.lock"}

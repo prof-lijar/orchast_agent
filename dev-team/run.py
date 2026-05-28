@@ -535,12 +535,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "repo",
-        nargs="?",
-        help="GitHub repo slug (owner/name). Overrides PRODUCT_REPO env var.",
+        help="GitHub repo slug (owner/name). Example: myorg/my-app",
     )
     parser.add_argument(
         "--model", "-m",
-        help="Ollama model name (default: from AGENT_MODEL env or gemma4:31b).",
+        help="Ollama model name (default: gemma4:31b).",
     )
     parser.add_argument(
         "--branch", "-b",
@@ -578,12 +577,29 @@ def parse_args() -> argparse.Namespace:
         "--goals",
         help="Path to a markdown file with initial product goals/requirements.",
     )
+    parser.add_argument(
+        "--repo-dir",
+        help="Local path for cloning the product repo (default: ./repos/<repo-slug>).",
+    )
+    parser.add_argument(
+        "--num-ctx",
+        type=int,
+        help="LLM context window size (default: 32768).",
+    )
+    parser.add_argument(
+        "--skills-dir",
+        help="Path to skills directory (default: ./skills).",
+    )
+    parser.add_argument(
+        "--trusted-sources",
+        help="Comma-separated trusted skill source URL prefixes.",
+    )
     return parser.parse_args()
 
 
 async def main() -> None:
     args = parse_args()
-    config = Config.from_env(cli_overrides={
+    config = Config.from_cli({
         "product_repo": args.repo,
         "model_name": args.model,
         "think_enabled": (False if args.no_think else None),
@@ -592,6 +608,10 @@ async def main() -> None:
         "agent_timeout_seconds": args.timeout,
         "cycle_interval_seconds": args.interval,
         "initial_goals_file": args.goals,
+        "product_repo_dir": args.repo_dir,
+        "num_ctx": args.num_ctx,
+        "skills_dir": args.skills_dir,
+        "trusted_skill_sources": args.trusted_sources,
     })
 
     logger.info("=" * 60)
