@@ -174,6 +174,41 @@ def ensure_labels(config: Config) -> None:
     logger.info("Labels ready.")
 
 
+def ensure_gitignore_env(config: Config) -> None:
+    """Ensure .gitignore in product repo blocks .env files."""
+    gitignore = config.product_repo_dir / ".gitignore"
+    entries = [".env", ".env.*", "!.env.example"]
+
+    existing = ""
+    if gitignore.exists():
+        existing = gitignore.read_text(encoding="utf-8")
+
+    missing = [e for e in entries if e not in existing]
+    if not missing:
+        return
+
+    with open(gitignore, "a", encoding="utf-8") as f:
+        if existing and not existing.endswith("\n"):
+            f.write("\n")
+        f.write("\n".join(missing) + "\n")
+
+    cwd = str(config.product_repo_dir)
+    subprocess.run(["git", "add", ".gitignore"], cwd=cwd, capture_output=True, text=True, timeout=10)
+    subprocess.run(
+        ["git", "rm", "-r", "--cached", ".env"], cwd=cwd,
+        capture_output=True, text=True, timeout=10,
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "Add .env to .gitignore"],
+        cwd=cwd, capture_output=True, text=True, timeout=10,
+    )
+    subprocess.run(
+        ["git", "push", "origin", "HEAD"],
+        cwd=cwd, capture_output=True, text=True, timeout=30,
+    )
+    logger.info("Added .env entries to product repo .gitignore.")
+
+
 def bootstrap_repo(config: Config) -> None:
     result = subprocess.run(
         ["gh", "issue", "list", "--state", "all",
@@ -471,6 +506,10 @@ def flush_and_push(config: Config, role: str) -> None:
         return
 
     subprocess.run(["git", "add", "."], cwd=cwd, capture_output=True, text=True, timeout=10)
+    subprocess.run(
+        ["git", "reset", "HEAD", "--", ".env", ".env.*"],
+        cwd=cwd, capture_output=True, text=True, timeout=10,
+    )
     result = subprocess.run(
         ["git", "commit", "-m", f"[{role.upper()}] auto-push updates"],
         cwd=cwd, capture_output=True, text=True, timeout=30,
@@ -810,6 +849,7 @@ async def main() -> None:
         sys.exit(1)
 
     ensure_product_repo_cloned(config)
+    ensure_gitignore_env(config)
     ensure_labels(config)
     bootstrap_repo(config)
 

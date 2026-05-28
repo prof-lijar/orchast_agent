@@ -41,6 +41,8 @@ def git_commit_and_push(message: str, files: str = ".") -> str:
     if not add_result["success"]:
         return json.dumps(add_result)
 
+    _run_git(["reset", "HEAD", "--", ".env", ".env.*"])
+
     commit_result = _run_git(["commit", "-m", message])
     if not commit_result["success"]:
         if "nothing to commit" in commit_result.get("error", ""):
