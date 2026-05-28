@@ -3,7 +3,7 @@
 # SKILL_DESC="Node.js project management — npm, pnpm, yarn, build, test, lint, scaffold"
 # SKILL_VERSION="1.0.0"
 # SKILL_REQUIRES="node,npm"
-# SKILL_COMMANDS="install,run,build,test,lint,init,add_package,add_dev_package"
+# SKILL_COMMANDS="install,run,build,test,lint,init,add_package,add_dev_package,remove_package"
 
 set -euo pipefail
 REPO_DIR="${SKILL_REPO_DIR:-.}"
@@ -85,6 +85,18 @@ cmd_add_dev_package() {
         yarn) yarn add -D "$@" ;;
         bun)  bun add -d "$@" ;;
         *)    npm install --save-dev "$@" ;;
+    esac
+}
+
+cmd_remove_package() {
+    cd "$REPO_DIR"
+    local pm
+    pm=$(_detect_pm)
+    case "$pm" in
+        pnpm) pnpm remove "$@" ;;
+        yarn) yarn remove "$@" ;;
+        bun)  bun remove "$@" ;;
+        *)    npm uninstall "$@" ;;
     esac
 }
 
