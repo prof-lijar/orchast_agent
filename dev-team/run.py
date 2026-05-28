@@ -527,18 +527,33 @@ async def run_cycle(
             logger.info("[%s] Turn %d/%d done in %.1fs", role.upper(), turn, turns, elapsed)
 
 
-def _normalize_repo(raw: str) -> str:
-    """Extract owner/name slug from a git URL or pass through as-is."""
+def _normalize_repo(raw: str | list[str]) -> str:
+    """Extract owner/name slug from a git URL or pass through as-is.
+
+    Accepts a single string or a list (e.g. ["repo", "git@github.com:o/r.git"]).
+    When given a list, picks the entry that looks like a valid repo identifier.
+    """
     import re
-    # git@github.com:owner/repo.git
-    m = re.match(r"git@github\.com:(.+?)(?:\.git)?$", raw)
-    if m:
-        return m.group(1)
-    # https://github.com/owner/repo.git or https://github.com/owner/repo
-    m = re.match(r"https?://github\.com/(.+?)(?:\.git)?$", raw)
-    if m:
-        return m.group(1)
-    return raw
+
+    def _parse_one(val: str) -> str | None:
+        m = re.match(r"git@github\.com:(.+?)(?:\.git)?$", val)
+        if m:
+            return m.group(1)
+        m = re.match(r"https?://github\.com/(.+?)(?:\.git)?$", val)
+        if m:
+            return m.group(1)
+        if "/" in val:
+            return val
+        return None
+
+    if isinstance(raw, list):
+        for entry in reversed(raw):
+            result = _parse_one(entry)
+            if result:
+                return result
+        return raw[-1]
+
+    return _parse_one(raw) or raw
 
 
 def parse_args() -> argparse.Namespace:
@@ -549,6 +564,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "repo",
+        nargs="+",
         help="GitHub repo slug (owner/name) or git URL. "
         "Examples: myorg/my-app, git@github.com:myorg/my-app.git, "
         "https://github.com/myorg/my-app.git",
