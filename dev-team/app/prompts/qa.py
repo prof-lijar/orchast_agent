@@ -32,7 +32,7 @@ CYCLE WORKFLOW:
       - Run build: `run_build()` or `run_skill(detected_stack, "build")`
       - Run lint: `run_lint()` or `run_skill(detected_stack, "lint")`
       - Run tests if they exist: `run_tests()` or `run_skill(detected_stack, "test")`
-      - Switch back to main: `git_switch_branch` to 'main'
+      - Switch back to __DEFAULT_BRANCH__: `git_switch_branch` to '__DEFAULT_BRANCH__'
 
       REVIEW CRITERIA (language-aware):
 
@@ -89,7 +89,7 @@ CYCLE WORKFLOW:
    a) Read the issue with `view_issue`
    b) If it's about writing tests:
       - Read docs/tech-stack.md to know the test framework
-      - `git_switch_branch` to 'main', `git_pull`
+      - `git_switch_branch` to '__DEFAULT_BRANCH__', `git_pull`
       - `git_create_branch` (format: qa/add-tests-for-X)
       - Write tests appropriate for the stack:
         * TypeScript: __tests__/ or *.test.ts with jest/vitest
@@ -98,14 +98,14 @@ CYCLE WORKFLOW:
         * Rust: #[test] in src/ or tests/ directory
       - Run tests: `run_tests()` or `run_skill(stack, "test")`
       - Commit, push, create PR
-      - Switch back to main, delete local branch
+      - Switch back to __DEFAULT_BRANCH__, delete local branch
    c) Comment and close the issue
 
 5. IF NO WORK — STOP immediately.
-   ALWAYS make sure you are on main before stopping.
+   ALWAYS make sure you are on __DEFAULT_BRANCH__ before stopping.
 
 BRANCH HYGIENE:
-- ALWAYS switch back to main after reviewing PRs on their branches
+- ALWAYS switch back to __DEFAULT_BRANCH__ after reviewing PRs on their branches
 - ALWAYS delete local branches after your PR is created
 
 RULES:
@@ -115,5 +115,5 @@ RULES:
 - ALWAYS run build/lint/tests as part of your review
 - Report bugs as GitHub issues with the appropriate role label
 - Use EXACT label names: role:frontend, role:backend, P0-critical, P1-high, P2-medium, P3-low
-- ALWAYS switch back to main
+- ALWAYS switch back to __DEFAULT_BRANCH__
 """

@@ -52,7 +52,7 @@ CYCLE WORKFLOW:
    - Or create a custom workflow appropriate for the project
    - Create a branch: `git_create_branch` (format: devops/short-description)
    - Commit, push, create PR
-   - Switch back to main, delete local branch
+   - Switch back to __DEFAULT_BRANCH__, delete local branch
 
    FOR DOCKERIZATION:
    - Write Dockerfile appropriate for the project's stack
@@ -67,7 +67,7 @@ CYCLE WORKFLOW:
    e) Comment on the issue and call `close_issue`
 
 5. IF YOU HAVE NO ASSIGNED ISSUES — STOP immediately.
-   ALWAYS make sure you are on main before stopping.
+   ALWAYS make sure you are on __DEFAULT_BRANCH__ before stopping.
 
 DEPLOYMENT GUIDELINES:
 - Preview deployments for testing (non-production)
@@ -132,7 +132,7 @@ Rust:
   ```
 
 BRANCH HYGIENE:
-- ALWAYS switch back to main after branch work
+- ALWAYS switch back to __DEFAULT_BRANCH__ after branch work
 - ALWAYS delete local branches after PR is created
 
 RULES:
@@ -142,5 +142,5 @@ RULES:
 - Report deployment issues as GitHub issues
 - Configuration changes go through PRs
 - Use EXACT label names
-- ALWAYS switch back to main
+- ALWAYS switch back to __DEFAULT_BRANCH__
 """

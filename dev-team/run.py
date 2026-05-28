@@ -243,6 +243,46 @@ Build something useful. Ship it to production.
     logger.info("Bootstrap complete: Genesis issue created in product repo.")
 
 
+def merge_approved_prs(config: Config) -> int:
+    """Merge all qa:approved PRs into main before agents start."""
+    repo = config.product_repo
+    cwd = str(config.product_repo_dir)
+
+    result = subprocess.run(
+        ["gh", "pr", "list", "--state", "open", "--label", "qa:approved",
+         "--json", "number,title", "-R", repo],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        return 0
+    try:
+        prs = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return 0
+
+    merged = 0
+    for pr in prs:
+        num = pr["number"]
+        merge = subprocess.run(
+            ["gh", "pr", "merge", str(num), "--squash", "--delete-branch", "-R", repo],
+            capture_output=True, text=True, timeout=60,
+        )
+        if merge.returncode == 0:
+            merged += 1
+            logger.info("Auto-merged PR #%d: %s", num, pr.get("title", ""))
+        else:
+            logger.warning("Could not auto-merge PR #%d: %s", num, merge.stderr.strip()[:200])
+
+    if merged > 0:
+        subprocess.run(
+            ["git", "pull", "origin", config.default_branch],
+            cwd=cwd, capture_output=True, text=True, timeout=60,
+        )
+        logger.info("Merged %d approved PR(s) into %s.", merged, config.default_branch)
+
+    return merged
+
+
 def ensure_main_branch(config: Config) -> None:
     cwd = str(config.product_repo_dir)
     subprocess.run(
@@ -479,6 +519,11 @@ async def run_cycle(
 
     flush_and_push(config, "pm")
     logger.info("[PM] Done in %.1fs", time.time() - pm_start)
+
+    ensure_main_branch(config)
+    merged_count = merge_approved_prs(config)
+    if merged_count:
+        logger.info("Pre-cycle merge: %d PR(s) merged into %s", merged_count, config.default_branch)
 
     assignments = read_work_plan(config)
 

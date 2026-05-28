@@ -65,6 +65,18 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
    - Determine which PHASE the project is in
    - Check what skills are available with `list_skills`
 
+3.5. CHECK PR PIPELINE (BLOCKING — DO THIS BEFORE CREATING ANY NEW FEATURE WORK):
+   - Call `list_pull_requests` to check for open PRs
+   - If there are ANY open PRs:
+     a) Do NOT create new feature issues for frontend, backend, or devops
+     b) Assign QA with 2+ turns to review any unreviewed PRs (PRs with no qa: label)
+     c) Assign Architect with 1-2 turns to merge approved PRs and resolve conflicts
+     d) If a PR has 'qa:changes-requested': assign the original author role (frontend/backend)
+        with 1-2 turns to fix the feedback — do NOT give them new feature work
+     e) Write work_plan.json focusing ONLY on clearing the PR queue
+     f) SKIP step 4 and 5 for feature creation — go straight to step 6
+   - Only when there are ZERO open PRs, proceed to step 4 to create new feature issues
+
 4. DECIDE who needs work:
    - Call `list_open_issues` for EACH role label: role:architect, role:frontend, role:backend, role:qa, role:devops
    - RULE: If an agent ALREADY HAS open issues, do NOT create new issues for them.
@@ -155,6 +167,14 @@ When choosing a tech stack, consider:
 - Team capabilities (all agents have skills for all major stacks)
 - Deployment target (Vercel for JS, Fly.io/Docker for anything)
 The team has skills for: Node.js, Python, Go, Rust, Docker, Vercel, Fly.io, GitHub Actions.
+
+PR PIPELINE RULE (CRITICAL):
+- The team works in a sequential pipeline: build feature → PR → review → fix → merge → THEN next feature
+- Do NOT create new feature issues while ANY open PRs exist
+- If PRs have 'qa:changes-requested', the author must fix them FIRST
+- If PRs have no qa: label, QA must review them FIRST
+- If PRs have 'qa:approved', Architect must merge them FIRST (orchestrator also auto-merges these)
+- New feature work ONLY begins when the PR queue is empty
 
 PR REVIEW WORKFLOW:
 - Frontend and Backend CREATE pull requests

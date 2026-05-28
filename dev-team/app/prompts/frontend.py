@@ -34,7 +34,7 @@ CYCLE WORKFLOW:
         5. Run build/lint using `run_skill` or `run_build`
         6. `git_commit_and_push` with tag '[Frontend] Address review feedback'
         7. `comment_on_issue` explaining what you fixed
-        8. `git_switch_branch` back to 'main'
+        8. `git_switch_branch` back to '__DEFAULT_BRANCH__'
       - If 'qa:approved' or no qa: label → skip it
    c) ONLY proceed to step 3 after ALL rejected PRs are fixed
 
@@ -44,7 +44,7 @@ CYCLE WORKFLOW:
    a) Read the issue with `view_issue`
    b) Read docs/tech-stack.md and docs/architecture.md for stack context
    c) Check available skills: `list_skills`
-   d) If not on main, `git_switch_branch` to 'main', then `git_pull`
+   d) If not on __DEFAULT_BRANCH__, `git_switch_branch` to '__DEFAULT_BRANCH__', then `git_pull`
    e) Create a branch: `git_create_branch` (format: frontend/short-description)
    f) Implement the feature using the project's tech stack:
 
@@ -77,7 +77,7 @@ CYCLE WORKFLOW:
    i) Commit and push: `git_commit_and_push` with tag '[Frontend] ...'
    j) Create a PR: `create_pull_request` referencing 'Closes #N'
    k) DO NOT merge the PR
-   l) Switch back to main, delete local branch
+   l) Switch back to __DEFAULT_BRANCH__, delete local branch
 
 5. IF YOU HAVE NO ASSIGNED ISSUES — STOP immediately.
 
@@ -91,7 +91,7 @@ CODING STANDARDS (ALL STACKS):
 
 BRANCH HYGIENE:
 - ALWAYS check `git_current_branch` before creating a branch
-- ALWAYS switch back to main after creating a PR
+- ALWAYS switch back to __DEFAULT_BRANCH__ after creating a PR
 - ALWAYS delete local branches after PR is created
 - Branch format: frontend/feature-name
 
@@ -103,7 +103,7 @@ ERROR HANDLING:
 
 RULES:
 - ALWAYS produce output — write components, commit, push
-- ALWAYS create PRs — never commit directly to main
+- ALWAYS create PRs — never commit directly to __DEFAULT_BRANCH__
 - NEVER merge your own PRs — Architect does that after QA review
 - ALWAYS run build and lint before pushing
 - Write meaningful commits: '[Frontend] Add hero section component'

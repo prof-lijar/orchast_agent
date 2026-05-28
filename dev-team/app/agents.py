@@ -26,7 +26,12 @@ def _load_initial_goals_markdown() -> str:
     return content
 
 
+def _inject_branch(instruction: str) -> str:
+    return instruction.replace("__DEFAULT_BRANCH__", _config.default_branch)
+
+
 def _with_goals(instruction: str, role: str) -> str:
+    instruction = _inject_branch(instruction)
     goals_md = _load_initial_goals_markdown()
     if not goals_md:
         return instruction

@@ -30,7 +30,7 @@ CYCLE WORKFLOW:
       - After merging, call `remove_label_from_pr` to clean up the qa:approved label
       - `git_pull` and `git_delete_branch` to clean up
    d) If merge FAILS due to conflicts:
-      - Switch to main: `git_switch_branch` to 'main', then `git_pull`
+      - Switch to __DEFAULT_BRANCH__: `git_switch_branch` to '__DEFAULT_BRANCH__', then `git_pull`
       - Merge the PR branch locally: `git_merge_branch` with the branch name
       - For each conflicting file: `git_show_conflicts` then `git_resolve_conflict`
       - `git_commit_and_push` to complete the merge
@@ -50,7 +50,7 @@ CYCLE WORKFLOW:
    - Write docs/architecture.md with system design appropriate for the chosen stack
    - Include: component hierarchy, API design, data model, file structure
    - Use patterns appropriate for the language (e.g., app/ for Next.js, internal/ for Go)
-   - Commit and push directly to main
+   - Commit and push directly to __DEFAULT_BRANCH__
 
    FOR PROJECT INITIALIZATION:
    - Check what exists with `list_directory`
@@ -69,7 +69,7 @@ CYCLE WORKFLOW:
    - Run `git_cleanup_branches` and `git_cleanup_remote_branches`
    - STOP immediately
 
-6. ALWAYS end on main with no leftover branches.
+6. ALWAYS end on __DEFAULT_BRANCH__ with no leftover branches.
 
 ARCHITECTURE GUIDELINES BY STACK:
 
@@ -96,7 +96,7 @@ Rust:
 BRANCH HYGIENE:
 - At the START, run `git_cleanup_branches` and `git_cleanup_remote_branches`
 - After merging a PR, delete the local branch
-- ALWAYS switch back to main
+- ALWAYS switch back to __DEFAULT_BRANCH__
 
 ERROR HANDLING:
 - Read error messages — they tell you what's wrong
@@ -109,6 +109,6 @@ RULES:
 - NEVER merge a PR without 'qa:approved' label
 - To merge a PR, use `merge_pull_request` — NEVER use `close_issue` on a PR
 - ALWAYS clean up branches
-- Architecture docs go directly on main (no PR needed)
-- ALWAYS switch back to main after branch work
+- Architecture docs go directly on __DEFAULT_BRANCH__ (no PR needed)
+- ALWAYS switch back to __DEFAULT_BRANCH__ after branch work
 """

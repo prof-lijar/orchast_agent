@@ -113,8 +113,8 @@ def git_delete_branch(branch_name: str) -> str:
     Returns:
         JSON string indicating success or failure.
     """
-    if branch_name in ("master", "main"):
-        return json.dumps({"success": False, "error": "Cannot delete the main branch"})
+    if branch_name in ("master", "main", _config.default_branch):
+        return json.dumps({"success": False, "error": f"Cannot delete the default branch '{_config.default_branch}'"})
     current = _run_git(["rev-parse", "--abbrev-ref", "HEAD"])
     if current.get("output") == branch_name:
         return json.dumps({"success": False, "error": "Cannot delete the branch you are currently on"})
@@ -155,13 +155,13 @@ def git_cleanup_branches() -> str:
         JSON string with count of deleted branches and any that failed.
     """
     current_result = _run_git(["rev-parse", "--abbrev-ref", "HEAD"])
-    current = current_result.get("output", "main").strip()
+    current = current_result.get("output", _config.default_branch).strip()
 
     list_result = _run_git(["branch", "--list"])
     if not list_result["success"]:
         return json.dumps(list_result)
 
-    protected = {"master", "main", current}
+    protected = {"master", "main", _config.default_branch, current}
     deleted = []
     failed = []
 
@@ -194,7 +194,7 @@ def git_cleanup_remote_branches() -> str:
     if not list_result["success"]:
         return json.dumps(list_result)
 
-    protected = {"origin/master", "origin/main", "origin/HEAD"}
+    protected = {"origin/master", "origin/main", f"origin/{_config.default_branch}", "origin/HEAD"}
     deleted = []
     failed = []
 
