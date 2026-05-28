@@ -283,6 +283,21 @@ def merge_approved_prs(config: Config) -> int:
     return merged
 
 
+def has_open_prs(config: Config) -> bool:
+    """Check if there are any open PRs in the product repo."""
+    result = subprocess.run(
+        ["gh", "pr", "list", "--state", "open",
+         "--json", "number", "--limit", "1", "-R", config.product_repo],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0:
+        return False
+    try:
+        return len(json.loads(result.stdout)) > 0
+    except (json.JSONDecodeError, TypeError):
+        return False
+
+
 def ensure_main_branch(config: Config) -> None:
     cwd = str(config.product_repo_dir)
     subprocess.run(
@@ -456,6 +471,50 @@ def flush_and_push(config: Config, role: str) -> None:
         logger.warning("[%s] Push failed: %s", role.upper(), push.stderr.strip())
 
 
+_DEVELOPER_ROLES = {"frontend", "backend", "devops"}
+
+
+async def run_review_merge_cycle(
+    runners: dict,
+    session_service: InMemorySessionService,
+    config: Config,
+    cycle_number: int,
+) -> None:
+    """Run QA review + Architect merge to clear open PRs between developer turns."""
+    if "qa" in runners:
+        ensure_main_branch(config)
+        logger.info("--- Review cycle | QA ---")
+        try:
+            await asyncio.wait_for(
+                run_agent_turn(runners["qa"], session_service, "qa", config, cycle_number),
+                timeout=config.agent_timeout_seconds,
+            )
+        except (asyncio.TimeoutError, GeneratorExit, ValueError):
+            pass
+        except Exception:
+            logger.exception("[QA] Review cycle failed")
+        flush_and_push(config, "qa")
+
+    if "architect" in runners:
+        ensure_main_branch(config)
+        logger.info("--- Review cycle | ARCHITECT (merge) ---")
+        try:
+            await asyncio.wait_for(
+                run_agent_turn(runners["architect"], session_service, "architect", config, cycle_number),
+                timeout=config.agent_timeout_seconds,
+            )
+        except (asyncio.TimeoutError, GeneratorExit, ValueError):
+            pass
+        except Exception:
+            logger.exception("[ARCHITECT] Review cycle failed")
+        flush_and_push(config, "architect")
+
+    ensure_main_branch(config)
+    merged = merge_approved_prs(config)
+    if merged:
+        logger.info("Review cycle merged %d PR(s).", merged)
+
+
 def read_work_plan(config: Config) -> list[dict]:
     """Read the PM's work plan for this cycle."""
     plan_path = config.product_repo_dir / "work_plan.json"
@@ -570,6 +629,15 @@ async def run_cycle(
             flush_and_push(config, role)
             elapsed = time.time() - start
             logger.info("[%s] Turn %d/%d done in %.1fs", role.upper(), turn, turns, elapsed)
+
+            if role in _DEVELOPER_ROLES and turn < turns and has_open_prs(config):
+                logger.info(
+                    "Open PRs after %s turn %d — running review-merge cycle before next turn",
+                    role.upper(), turn,
+                )
+                await run_review_merge_cycle(
+                    runners, session_service, config, cycle_number,
+                )
 
 
 def _normalize_repo(raw: str | list[str]) -> str:
