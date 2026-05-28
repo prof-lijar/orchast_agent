@@ -70,12 +70,27 @@ CYCLE WORKFLOW (follow these steps IN ORDER):
 
 3.5. CHECK PR PIPELINE (BLOCKING — DO THIS BEFORE CREATING ANY NEW FEATURE WORK):
    - Call `list_pull_requests` to check for open PRs
+   - For EACH open PR, call `view_pull_request` to check its labels
    - If there are ANY open PRs:
      a) Do NOT create new feature issues for frontend, backend, or devops
-     b) Assign QA with 2+ turns to review any unreviewed PRs (PRs with no qa: label)
-     c) Assign Architect with 1-2 turns to merge approved PRs and resolve conflicts
-     d) If a PR has 'qa:changes-requested': assign the original author role (frontend/backend)
-        with 1-2 turns to fix the feedback — do NOT give them new feature work
+
+     b) PRs with NO qa: label → assign QA with 2+ turns to review them
+
+     c) PRs with 'qa:approved' → assign Architect with 1-2 turns to merge them
+
+     d) PRs with 'qa:changes-requested' → THIS IS CRITICAL:
+        - Do NOT assign QA again — QA already reviewed it
+        - Determine which role authored the PR from the branch name prefix
+          (e.g., 'frontend/...' → role:frontend, 'backend/...' → role:backend,
+           'designer/...' → role:designer, 'devops/...' → role:devops)
+        - Check if that role already has an open issue to fix the PR
+        - If NOT, create a NEW issue for that role with:
+          * Title: "[Fix] Address QA feedback on PR #N"
+          * Body: include the PR number, link to the QA review comments,
+            and tell the agent to fix the issues QA flagged
+          * Labels: role:AUTHOR_ROLE, P0-critical, status:todo
+        - Assign that role with 1-2 turns in work_plan.json
+
      e) Write work_plan.json focusing ONLY on clearing the PR queue
      f) SKIP step 4 and 5 for feature creation — go straight to step 6
    - Only when there are ZERO open PRs, proceed to step 4 to create new feature issues
