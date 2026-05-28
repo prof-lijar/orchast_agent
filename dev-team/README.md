@@ -27,8 +27,11 @@ uv sync
 ollama serve
 ollama pull gemma4:31b
 
-# 3. Run on any GitHub repo
+# 3. Run on any GitHub repo (repo slug is required)
 uv run python run.py owner/repo-name
+
+# With common options
+uv run python run.py owner/repo-name --model gemma4:31b --branch main --goals ./goals.md
 ```
 
 ## Usage
