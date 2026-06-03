@@ -1,0 +1,17 @@
+{
+  "title": "Self-Evolving Agents: A Framework for Dynamic Tool Generation in Manufacturing AI",
+  "description": "This paper proposes a self-evolving agent architecture that can autonomously design, build, and register its own tools to adapt to new manufacturing tasks without human intervention.",
+  "authors": ["Author Name"],
+  "structure": "generic",
+  "sources": [
+    "./research-notes/"
+  ],
+  "target_word_count": "5000-8000",
+  "language": "en",
+  "writing_guidelines": [
+    "Use formal academic tone",
+    "Include quantitative results where available",
+    "Cite relevant prior work in multi-agent systems and manufacturing AI",
+    "Focus on the novelty of dynamic tool generation"
+  ]
+}
