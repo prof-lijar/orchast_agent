@@ -493,14 +493,20 @@ async def main() -> None:
             session_service=session_service,
         )
 
+        skip_set = set(args.skip) if args.skip else set()
+
         if args.rewrite_all:
-            rewrite_set = {ch["number"] for ch in toc["chapters"]}
+            rewrite_set = {
+                ch["number"] for ch in toc["chapters"] if ch["number"] not in skip_set
+            }
         else:
             rewrite_set = set(args.rewrite) if args.rewrite else None
 
         if rewrite_set:
             progress = load_progress(output_dir)
-            progress["completed"] = [c for c in progress.get("completed", []) if c not in rewrite_set]
+            progress["completed"] = [
+                c for c in progress.get("completed", []) if c not in rewrite_set
+            ]
         elif args.resume:
             progress = load_progress(output_dir)
         else:
@@ -516,6 +522,8 @@ async def main() -> None:
         out_path = Path(output_dir)
         for chapter in toc["chapters"]:
             ch_num = chapter["number"]
+            if rewrite_set and ch_num in rewrite_set:
+                continue
             if ch_num not in completed and list(out_path.glob(f"chapter-{ch_num:02d}-*.md")):
                 completed.add(ch_num)
                 if ch_num not in progress["completed"]:
@@ -528,8 +536,6 @@ async def main() -> None:
         if rewrite_set:
             logger.info("Rewriting chapter(s): %s", ", ".join(str(c) for c in sorted(rewrite_set)))
         logger.info("=" * 60)
-
-        skip_set = set(args.skip) if args.skip else set()
 
         for chapter in toc["chapters"]:
             ch_num = chapter["number"]
