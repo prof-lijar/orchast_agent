@@ -1,6 +1,4 @@
-# Book Writer Agent
-
-An AI agent that writes entire books overnight using locally-running LLM models via [Ollama](https://ollama.com/). Give it a table of contents, start it before bed, and wake up to a finished book committed to GitHub chapter by chapter.
+# Book Writer Agent\n\n[For information in Korean, please see [README_KR.md](README_KR.md)].\n\nAn AI agent that writes entire books overnight using locally-running LLM models via [Ollama](https://ollama.com/). Give it a table of contents, start it before bed, and wake up to a finished book committed to GitHub chapter by chapter.\n
 
 Built with [Google ADK](https://github.com/google/adk-python) (Agent Development Kit).
 
