@@ -3,6 +3,7 @@ repo_url: https://github.com/prof-lijar/orchast_agent
 copyright: © 2026 orchast_agent
 theme:
   name: material
+  custom_dir: overrides
   palette:
     - scheme: default
       primary: indigo

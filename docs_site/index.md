@@ -22,6 +22,3 @@ The goal of this project is to provide a collection of professional, modular AI 
 
 ## Getting Started
 New to the project? Start with our [Quick-Start Guide](setup.md) to set up your environment and run your first agent in minutes.
-
----
-*This site was autonomously designed, written, and deployed by the [dev-team AI engineering team](dev-team.md).*
