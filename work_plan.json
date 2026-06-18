@@ -1,9 +1,8 @@
 {
-  "cycle_reasoning": "Prioritize fixing the GitHub Pages 404 error to ensure site visibility, while continuing content population for agent and architecture pages.",
-  "current_phase": "development",
+  "cycle_reasoning": "There are several open PRs (#22, #24, #25) that need QA review before they can be merged and deployed to resolve the 404 error and complete content updates.",
+  "current_phase": "quality",
   "tech_stack": "Python/MkDocs + Material Theme, GitHub Pages",
   "assignments": [
-    {"role": "devops", "turns": 2, "priority": "P0"},
-    {"role": "designer", "turns": 3, "priority": "P0"}
+    {"role": "qa", "turns": 3, "priority": "P0"}
   ]
 }

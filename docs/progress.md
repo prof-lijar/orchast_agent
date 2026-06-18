@@ -1,35 +1,33 @@
 # Project Progress
 
 ## Current Phase
-development — Populating documentation content and resolving deployment configuration issues.
+quality — Reviewing content and deployment fixes to ensure the site is live and accurate.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Identified a 404 error on the live production site (Issue #20).
-- Created a critical fix issue for DevOps to resolve the GitHub Pages hosting configuration (Issue #21).
+- Designer submitted PRs for all remaining documentation pages (Agents, Architecture, Dev Team, Contributing Guide).
+- DevOps submitted a fix for the GitHub Pages 404 error by updating the deployment workflow to use artifacts.
 
 ## What Is In Progress
-- [P0] Resolving GitHub Pages 404 error (Issue #21)
-- [P0] Creating individual agent documentation pages (Issue #16)
-- [P1] Drafting Architecture and Dev Team overview pages (Issue #17)
-- [P2] Updating the Contributing Guide (Issue #18)
+- [P0] Reviewing and merging Fix for GH Pages 404 (PR #22)
+- [P1] Reviewing Architecture and Dev Team pages (PR #24)
+- [P2] Reviewing Contributing Guide update (PR #25)
 
 ## What Is Blocked
-- Public visibility of the site is currently blocked by a 404 error.
+- Final deployment is blocked until PR #22 is reviewed and merged.
 
 ## Next Cycle Plan
-- DevOps will fix the deployment pipeline/settings to make the site live.
-- Designer will continue drafting and submitting PRs for agent, architecture, and contributing pages.
-- QA will begin reviewing content as soon as PRs are opened.
+- QA will review the open PRs (#22, #24, #25).
+- Architect will merge approved PRs to make the site live and complete.
 
 ## Feature Checklist
-- [x] GitHub Pages deployment automation — done (but requires config fix)
-- [ ] Documentation homepage — not started (Issue #15)
-- [ ] Setup & Installation guide — not started (Issue #15)
-- [ ] Configuration & Runtime docs — not started (Issue #15)
-- [ ] Architecture documentation — not started (Issue #17)
-- [ ] Individual Agent pages — not started (Issue #16)
-- [ ] Dev Team explanation page — not started (Issue #17)
-- [ ] Contribution guidelines — not started (Issue #18)
+- [x] GitHub Pages deployment automation — done (PR #22 pending merge)
+- [x] Documentation homepage — done (merged)
+- [x] Setup & Installation guide — done (merged)
+- [x] Configuration & Runtime docs — done (merged)
+- [ ] Architecture documentation — in progress (PR #24)
+- [ ] Individual Agent pages — done (merged)
+- [ ] Dev Team explanation page — in progress (PR #24)
+- [ ] Contribution guidelines — in progress (PR #25)
