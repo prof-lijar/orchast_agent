@@ -1,26 +1,27 @@
 # Project Progress
 
 ## Current Phase
-Iteration — Updating documentation to reflect updated model support across all agents.
+Deployment — Fixing the GitHub Pages build failure to make the site public.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Identified the need to update agent model lists as per Issue #37.
-- Created Issue #38 for Architect to implement these changes.
+- Verified and closed Issue #37 (Ollama support in docs).
+- Verified and closed Issue #38 (Architect's update of model lists).
+- Triaged Issue #39 (Build failure) and converted it into a detailed DevOps task (#40).
 
 ## What Is In Progress
-- [ ] Update all agents to include Ollama support in docs (Issue #38)
+- [ ] Fix GitHub Pages deployment build failure (Issue #40)
 
 ## What Is Blocked
 - None.
 
 ## Next Cycle Plan
-- Architect will update `docs_site/index.md` and individual agent pages to list Ollama as a primary model for all agents.
+- The DevOps agent will investigate the CI/CD pipeline, fix the `mkdocs build` error, and ensure the site deploys successfully to GitHub Pages.
 
 ## Feature Checklist
-- [x] GitHub Pages deployment automation — done
+- [x] GitHub Pages deployment automation — needs fix (Issue #40)
 - [x] Documentation homepage — done
 - [x] Setup & Installation guide — done
 - [x] Configuration & Runtime docs — done
@@ -31,4 +32,4 @@ Python/MkDocs + Material Theme, GitHub Pages for deployment.
 - [x] GitHub Repository Link in Navbar — done
 - [x] Credit to dev-team on homepage — done
 - [x] Global Footer across all pages — done
-- [ ] All agents support Ollama documentation update — in progress (Issue #38)
+- [x] All agents support Ollama documentation update — done
