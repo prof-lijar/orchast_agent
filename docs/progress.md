@@ -1,27 +1,26 @@
 # Project Progress
 
 ## Current Phase
-Deployment — Fixing the GitHub Pages build failure to make the site public.
+Iteration — Final polishing of the documentation website based on stakeholder feedback.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Verified and closed Issue #37 (Ollama support in docs).
-- Verified and closed Issue #38 (Architect's update of model lists).
-- Triaged Issue #39 (Build failure) and converted it into a detailed DevOps task (#40).
+- Triaged CEO feedback regarding footer font size (Issue #42).
+- Created a detailed fix issue for the Architect (Issue #43).
 
 ## What Is In Progress
-- [ ] Fix GitHub Pages deployment build failure (Issue #40)
+- [ ] Increase footer font size for readability (Issue #43)
 
 ## What Is Blocked
 - None.
 
 ## Next Cycle Plan
-- The DevOps agent will investigate the CI/CD pipeline, fix the `mkdocs build` error, and ensure the site deploys successfully to GitHub Pages.
+- The Architect will adjust the CSS in the overrides to increase the footer font size and ensure it is legible across devices.
 
 ## Feature Checklist
-- [x] GitHub Pages deployment automation — needs fix (Issue #40)
+- [x] GitHub Pages deployment automation — done
 - [x] Documentation homepage — done
 - [x] Setup & Installation guide — done
 - [x] Configuration & Runtime docs — done
@@ -33,3 +32,4 @@ Python/MkDocs + Material Theme, GitHub Pages for deployment.
 - [x] Credit to dev-team on homepage — done
 - [x] Global Footer across all pages — done
 - [x] All agents support Ollama documentation update — done
+- [ ] Footer readability polish — in progress (Issue #43)
