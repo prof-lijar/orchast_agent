@@ -1,8 +1,8 @@
 {
-  "cycle_reasoning": "There are several open PRs (#22, #24, #25) that need QA review before they can be merged and deployed to resolve the 404 error and complete content updates.",
+  "cycle_reasoning": "Address QA feedback on the Architecture and Dev Team pages PR (#24) to move towards final deployment.",
   "current_phase": "quality",
-  "tech_stack": "Python/MkDocs + Material Theme, GitHub Pages",
+  "tech_stack": "Python/MkDocs + Material Theme",
   "assignments": [
-    {"role": "qa", "turns": 3, "priority": "P0"}
+    {"role": "designer", "turns": 3, "priority": "P0"}
   ]
 }
