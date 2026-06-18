@@ -1,33 +1,35 @@
 # Project Progress
 
 ## Current Phase
-development — Populating documentation content and setting up automated deployment.
+development — Populating documentation content and finalizing site structure.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Updated `mkdocs.yml` with the full navigation structure (Home, Getting Started, Agents, Architecture, Dev Team, Contributing).
-- Created detailed content issues for the Designer to populate all site pages (#9, #10, #11, #12).
-- Created a deployment issue for DevOps to automate GitHub Pages publishing (#13).
+- Reorganized documentation tasks into system-labeled issues to ensure agent discovery (#15, #16, #17, #18).
+- Verified that DevOps has successfully automated the site deployment via GitHub Actions (Issue #13 closed).
+- Defined a clear content roadmap for the Designer across Home, Agent guides, Architecture, and Contributing pages.
 
 ## What Is In Progress
-- Documentation content creation (Issues #9, #10, #11, #12)
-- Deployment automation (Issue #13)
+- Home and Getting Started guides (Issue #15)
+- Individual Agent documentation (Issue #16)
+- Architecture and Dev Team overview (Issue #17)
+- Contribution guidelines (Issue #18)
 
 ## What Is Blocked
 - None.
 
 ## Next Cycle Plan
-- Designer will focus on creating the Home and Getting Started guides first, then move to individual agent pages.
-- DevOps will set up the GitHub Actions workflow for automatic deployment.
+- Designer will populate the `docs_site/` directory with real content, replacing placeholders.
+- Once content is drafted, QA will review for accuracy and clarity before final merge.
 
 ## Feature Checklist
-- [ ] Documentation homepage — not started (Issue #9)
-- [ ] Setup & Installation guide — not started (Issue #9)
-- [ ] Configuration & Runtime docs — not started (Issue #9)
-- [ ] Architecture documentation — not started (Issue #11)
-- [ ] Individual Agent pages — not started (Issue #10)
-- [ ] Dev Team explanation page — not started (Issue #11)
-- [ ] Contribution guidelines — not started (Issue #12)
-- [ ] GitHub Pages deployment automation — not started (Issue #13)
+- [x] GitHub Pages deployment automation — done (PR #14)
+- [ ] Documentation homepage — not started (Issue #15)
+- [ ] Setup & Installation guide — not started (Issue #15)
+- [ ] Configuration & Runtime docs — not started (Issue #15)
+- [ ] Architecture documentation — not started (Issue #17)
+- [ ] Individual Agent pages — not started (Issue #16)
+- [ ] Dev Team explanation page — not started (Issue #17)
+- [ ] Contribution guidelines — not started (Issue #18)
