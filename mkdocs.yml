@@ -16,6 +16,16 @@ nav:
   - Getting Started:
       - Installation: setup.md
       - Configuration: config.md
+  - Agents:
+      - Overview: agents/index.md
+      - Self-Evolving Agent: agents/self-evolving.md
+      - Book Writer: agents/book-writer.md
+      - Course Generator: agents/course-generator.md
+      - Caveman Compressor: agents/caveman.md
+      - Tutorial Debug Agent: agents/tutorial-debug.md
+      - Tiny Jarvis: agents/tiny-jarvis.md
+      - Sci Paper Writer: agents/scie-paper.md
+      - Tiny Company: agents/tiny-company.md
   - Architecture: architecture.md
-  - Usage Guide: usage.md
+  - Dev Team: dev-team.md
   - Contributing: contributing.md
