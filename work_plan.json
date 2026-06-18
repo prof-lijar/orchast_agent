@@ -1,0 +1,8 @@
+{
+  "cycle_reasoning": "Project discovery complete. Moving to architecture phase to initialize the MkDocs skeleton.",
+  "current_phase": "architecture",
+  "tech_stack": "Python/MkDocs + Material Theme",
+  "assignments": [
+    {"role": "architect", "turns": 2, "priority": "P0"}
+  ]
+}
