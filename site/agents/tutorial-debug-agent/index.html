@@ -9,28 +9,28 @@
       
       
       
-        <link rel="prev" href="../setup/">
+        <link rel="prev" href="../caveman-compressor/">
       
       
-        <link rel="next" href="../usage/">
+        <link rel="next" href="../tiny-jarvis/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Configuration - orchast_agent Documentation</title>
+        <title>Tutorial Debug Agent - orchast_agent Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,7 +49,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#configuration-reference" class="md-skip">
+        <a href="#tutorial-debug-agent" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="orchast_agent Documentation" class="md-header__button md-logo" aria-label="orchast_agent Documentation" data-md-component="logo">
+    <a href="../.." title="orchast_agent Documentation" class="md-header__button md-logo" aria-label="orchast_agent Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Configuration
+              Tutorial Debug Agent
             
           </span>
         </div>
@@ -206,7 +206,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="orchast_agent Documentation" class="md-nav__button md-logo" aria-label="orchast_agent Documentation" data-md-component="logo">
+    <a href="../.." title="orchast_agent Documentation" class="md-nav__button md-logo" aria-label="orchast_agent Documentation" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -224,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -248,20 +248,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -282,7 +280,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -300,7 +298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../setup/" class="md-nav__link">
+      <a href="../../setup/" class="md-nav__link">
         
   
   
@@ -308,6 +306,258 @@
     
   
     Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../self-evolving-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Self-Evolving Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book-writer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book Writer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../course-generator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Course Generator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../caveman-compressor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Caveman Compressor
   
 
     
@@ -344,7 +594,7 @@
   <span class="md-ellipsis">
     
   
-    Configuration
+    Tutorial Debug Agent
   
 
     
@@ -362,7 +612,7 @@
   <span class="md-ellipsis">
     
   
-    Configuration
+    Tutorial Debug Agent
   
 
     
@@ -388,22 +638,55 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#model-selection" class="md-nav__link">
+  <a href="#purpose" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Selection
+        Purpose
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model Selection">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Example
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Example">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#gemini-flash-cloud" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gemini Flash (Cloud)
+        Setup
       
     </span>
   </a>
@@ -411,10 +694,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ollama-local" class="md-nav__link">
+  <a href="#running-the-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ollama (Local)
+        Running the Agent
       
     </span>
   </a>
@@ -427,88 +710,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
+  <a href="#configuration-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables
+        Configuration Options
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Environment Variables">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-running-with-a-local-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: Running with a Local Model
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#ollama-setup-guide" class="md-nav__link">
+  <a href="#output-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ollama Setup Guide
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Ollama Setup Guide">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-ollama" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install Ollama
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-pull-a-compatible-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Pull a Compatible Model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-verify-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Verify Installation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting Configuration
+        Output Format
       
     </span>
   </a>
@@ -531,257 +747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../usage/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Usage
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Agents
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Agents
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/self-evolving-agent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Self-Evolving Agent
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/book-writer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Book Writer
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/course-generator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Course Generator
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/caveman-compressor/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Caveman Compressor
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/tutorial-debug-agent/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Tutorial Debug Agent
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../agents/tiny-jarvis/" class="md-nav__link">
+      <a href="../tiny-jarvis/" class="md-nav__link">
         
   
   
@@ -809,7 +775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/scie_paper_writer/" class="md-nav__link">
+      <a href="../scie_paper_writer/" class="md-nav__link">
         
   
   
@@ -837,7 +803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tiny-company/" class="md-nav__link">
+      <a href="../tiny-company/" class="md-nav__link">
         
   
   
@@ -872,7 +838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -899,7 +865,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-team/" class="md-nav__link">
+      <a href="../../dev-team/" class="md-nav__link">
         
   
   
@@ -926,7 +892,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../contributing/" class="md-nav__link">
         
   
   
@@ -973,22 +939,55 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#model-selection" class="md-nav__link">
+  <a href="#purpose" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Selection
+        Purpose
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model Selection">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage Example
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Example">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#gemini-flash-cloud" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gemini Flash (Cloud)
+        Setup
       
     </span>
   </a>
@@ -996,10 +995,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ollama-local" class="md-nav__link">
+  <a href="#running-the-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ollama (Local)
+        Running the Agent
       
     </span>
   </a>
@@ -1012,88 +1011,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
+  <a href="#configuration-options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables
+        Configuration Options
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Environment Variables">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#example-running-with-a-local-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: Running with a Local Model
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#ollama-setup-guide" class="md-nav__link">
+  <a href="#output-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ollama Setup Guide
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Ollama Setup Guide">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-ollama" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install Ollama
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-pull-a-compatible-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Pull a Compatible Model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-verify-installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Verify Installation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting Configuration
+        Output Format
       
     </span>
   </a>
@@ -1117,81 +1049,48 @@
 
 
 
-<h1 id="configuration-reference">Configuration Reference</h1>
-<p>This page provides a detailed guide on how to configure the agents in the <code>orchast_agent</code> monorepo, including environment variables and LLM model selection.</p>
-<h2 id="model-selection">Model Selection</h2>
-<p>The agents are designed to be flexible, supporting both high-performance cloud models and privacy-focused local models via the <a href="https://docs.litellm.ai/">LiteLlm</a> abstraction layer.</p>
-<h3 id="gemini-flash-cloud">Gemini Flash (Cloud)</h3>
-<p><strong>Default Choice.</strong> Best for most users due to its high reliability in tool calling and rapid response times.
-- <strong>Requirement:</strong> A Google Cloud Project with the Vertex AI API enabled.
-- <strong>Authentication:</strong> Handled via Application Default Credentials (ADC).
-  <code>bash
-  gcloud auth application-default login</code></p>
-<h3 id="ollama-local">Ollama (Local)</h3>
-<p>Ideal for offline development, privacy-sensitive data, or avoiding cloud costs.
-- <strong>Requirement:</strong> <a href="https://ollama.com/">Ollama</a> installed and running on your local machine or a remote GPU server.
-- <strong>Connectivity:</strong> Agents connect to the OpenAI-compatible endpoint at <code>http://localhost:11434/v1</code>.</p>
-<hr />
-<h2 id="environment-variables">Environment Variables</h2>
-<p>Depending on the agent, you can override default behaviors using environment variables.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">Variable</th>
-<th style="text-align: left;">Description</th>
-<th style="text-align: left;">Example / Default</th>
-<th style="text-align: left;">Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><code>AGENT_MODEL</code></td>
-<td style="text-align: left;">Specifies the model to be used by the agent. If set, it typically triggers local LLM mode (Ollama).</td>
-<td style="text-align: left;"><code>qwen3:32b</code>, <code>gemma4:31b</code></td>
-<td style="text-align: left;">No</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>GOOGLE_CLOUD_PROJECT</code></td>
-<td style="text-align: left;">Your GCP project ID for Vertex AI requests.</td>
-<td style="text-align: left;"><code>my-ai-project-123</code></td>
-<td style="text-align: left;">Yes (for Gemini)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>OLLAMA_HOST</code></td>
-<td style="text-align: left;">The host address of your Ollama server (if not localhost).</td>
-<td style="text-align: left;"><code>http://192.168.1.50:11434</code></td>
-<td style="text-align: left;">No</td>
-</tr>
-</tbody>
-</table>
-<h3 id="example-running-with-a-local-model">Example: Running with a Local Model</h3>
-<p>To run an agent using a specific Ollama model, prefix the execution command:</p>
-<pre><code class="language-bash">AGENT_MODEL=qwen3:32b agents-cli playground
-</code></pre>
-<hr />
-<h2 id="ollama-setup-guide">Ollama Setup Guide</h2>
-<p>If you choose to use local models, follow these steps to prepare your environment:</p>
-<h3 id="1-install-ollama">1. Install Ollama</h3>
-<p>Download and install from <a href="https://ollama.com/">ollama.com</a>.</p>
-<h3 id="2-pull-a-compatible-model">2. Pull a Compatible Model</h3>
-<p>Not all models are equal in their ability to perform tool-calling (function calling). We recommend the following:</p>
-<pre><code class="language-bash"># Highly recommended for tool creation/execution
-ollama pull qwen3:32b
-
-# Alternative option
-ollama pull gemma4:31b
-</code></pre>
-<h3 id="3-verify-installation">3. Verify Installation</h3>
-<p>Ensure Ollama is running by visiting <code>http://localhost:11434</code> in your browser or running:</p>
-<pre><code class="language-bash">ollama list
-</code></pre>
-<h2 id="troubleshooting-configuration">Troubleshooting Configuration</h2>
+<h1 id="tutorial-debug-agent">Tutorial &amp; Debug Agent</h1>
+<p>The <strong>Tutorial &amp; Debug Agent</strong> serves as an interactive mentor for developers using the Google ADK (Agent Development Kit), providing both step-by-step guidance and real-time error diagnosis.</p>
+<h2 id="purpose">Purpose</h2>
+<p>To lower the barrier to entry for new ADK developers by automating the "onboarding" process and reducing the time spent debugging common environment and API errors.</p>
+<h2 id="how-it-works">How it Works</h2>
+<p>The agent operates in two distinct modes:
+1. <strong>Tutorial Mode</strong>: Uses a tool <code>get_tutorial_step</code> to retrieve structured guidance on topics such as installation, authentication, scaffolding, and deployment. It walks users through the ADK lifecycle chronologically.
+2. <strong>Debug Mode</strong>: Uses a tool <code>analyze_terminal_error</code> to parse terminal output. It identifies common error types (e.g., <code>ModuleNotFoundError</code>, <code>AuthenticationError</code>) and provides a plain-language explanation and a copy-pasteable fix.</p>
+<h2 id="prerequisites">Prerequisites</h2>
 <ul>
-<li><strong>Authentication Errors:</strong> If you see "Permission Denied" when using Gemini, ensure you have run <code>gcloud auth application-default login</code> and that the quota for Vertex AI is active.</li>
-<li><strong>Model Loops:</strong> Some local models may enter a loop of calling the same tool repeatedly. The agents include a <code>_limit_tool_loops</code> callback to prevent this, but switching to a larger model (e.g., 32B+) usually resolves the issue.</li>
-<li><strong>Port Conflicts:</strong> If the playground UI fails to start on port 8000, you can specify a different port:
-  <code>bash
-  agents-cli playground --port 8080</code></li>
+<li><a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a> package manager.</li>
+<li><code>agents-cli</code> installed via <code>uv tool install google-agents-cli</code>.</li>
+<li>Google Cloud SDK configured for GCP services.</li>
+</ul>
+<h2 id="usage-example">Usage Example</h2>
+<h3 id="setup">Setup</h3>
+<pre><code class="language-bash">cd tutorial-debug-agent
+agents-cli install
+</code></pre>
+<h3 id="running-the-agent">Running the Agent</h3>
+<p>You can run a single prompt using the CLI:</p>
+<pre><code class="language-bash"># Tutorial example
+agents-cli run &quot;How do I create my first ADK agent?&quot;
+
+# Debug example
+agents-cli run &quot;I'm getting: ModuleNotFoundError: No module named 'google.adk'&quot;
+</code></pre>
+<p>Or launch the interactive playground:</p>
+<pre><code class="language-bash">agents-cli playground
+</code></pre>
+<h2 id="configuration-options">Configuration Options</h2>
+<ul>
+<li><strong>Tutorial Content</strong>: The tutorial steps are managed within the agent's tools and instructions in <code>app/agent.py</code>.</li>
+<li><strong>Error Library</strong>: The supported error types (e.g., <code>ImportError</code>, <code>PermissionDenied</code>) are defined in the logic of <code>analyze_terminal_error</code>.</li>
+</ul>
+<h2 id="output-format">Output Format</h2>
+<ul>
+<li><strong>Tutorial Response</strong>: A step-by-step guide with code blocks and verification commands.</li>
+<li><strong>Debug Response</strong>: A structured report containing:</li>
+<li>Root cause identification.</li>
+<li>A specific, one-line fix.</li>
+<li>A command to verify the fix.</li>
 </ul>
 
 
@@ -1242,10 +1141,10 @@ ollama pull gemma4:31b
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

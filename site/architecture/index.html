@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../config/">
+        <link rel="prev" href="../agents/tiny-company/">
       
       
-        <link rel="next" href="../contributing/">
+        <link rel="next" href="../dev-team/">
       
       
         
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#architecture" class="md-skip">
+        <a href="#architecture-overview" class="md-skip">
           Skip to content
         </a>
       
@@ -347,6 +347,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -408,7 +436,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/index.md" class="md-nav__link">
+      <a href="../agents/" class="md-nav__link">
         
   
   
@@ -436,7 +464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/self-evolving.md" class="md-nav__link">
+      <a href="../agents/self-evolving-agent/" class="md-nav__link">
         
   
   
@@ -464,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/book-writer.md" class="md-nav__link">
+      <a href="../agents/book-writer/" class="md-nav__link">
         
   
   
@@ -492,7 +520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/course-generator.md" class="md-nav__link">
+      <a href="../agents/course-generator/" class="md-nav__link">
         
   
   
@@ -520,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/caveman.md" class="md-nav__link">
+      <a href="../agents/caveman-compressor/" class="md-nav__link">
         
   
   
@@ -548,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tutorial-debug.md" class="md-nav__link">
+      <a href="../agents/tutorial-debug-agent/" class="md-nav__link">
         
   
   
@@ -576,7 +604,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tiny-jarvis.md" class="md-nav__link">
+      <a href="../agents/tiny-jarvis/" class="md-nav__link">
         
   
   
@@ -604,7 +632,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/scie-paper.md" class="md-nav__link">
+      <a href="../agents/scie_paper_writer/" class="md-nav__link">
         
   
   
@@ -632,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tiny-company.md" class="md-nav__link">
+      <a href="../agents/tiny-company/" class="md-nav__link">
         
   
   
@@ -727,10 +755,88 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-design" class="md-nav__link">
+  <a href="#monorepo-structure-agent-independence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System Design
+        Monorepo Structure &amp; Agent Independence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monorepo Structure &amp; Agent Independence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Principles:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-agent-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Agent Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Agent Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequentialagent-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SequentialAgent Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-state-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session State &amp; Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#progress-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Progress Persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-integration-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Integration &amp; Abstraction
       
     </span>
   </a>
@@ -738,24 +844,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#components" class="md-nav__link">
+  <a href="#safety-mechanisms-self-evolving-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        Safety Mechanisms (Self-Evolving Agent)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Safety Mechanisms (Self-Evolving Agent)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ast-static-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. AST Static Analysis
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-risk-classification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow
+        2. Risk Classification
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sandbox-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sandbox Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -774,7 +908,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-team.md" class="md-nav__link">
+      <a href="../dev-team/" class="md-nav__link">
         
   
   
@@ -848,10 +982,88 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-design" class="md-nav__link">
+  <a href="#monorepo-structure-agent-independence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System Design
+        Monorepo Structure &amp; Agent Independence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monorepo Structure &amp; Agent Independence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Principles:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-agent-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Agent Patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Agent Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sequentialagent-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SequentialAgent Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-state-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session State &amp; Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#progress-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Progress Persistence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#llm-integration-abstraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Integration &amp; Abstraction
       
     </span>
   </a>
@@ -859,24 +1071,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#components" class="md-nav__link">
+  <a href="#safety-mechanisms-self-evolving-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Components
+        Safety Mechanisms (Self-Evolving Agent)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Safety Mechanisms (Self-Evolving Agent)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ast-static-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. AST Static Analysis
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-risk-classification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow
+        2. Risk Classification
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sandbox-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Sandbox Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -897,18 +1137,44 @@
 
 
 
-<h1 id="architecture">Architecture</h1>
-<p>This page explains the high-level architecture of <code>orchast_agent</code>.</p>
-<h2 id="system-design">System Design</h2>
-<p>[Insert architecture diagram or description here]</p>
-<h2 id="components">Components</h2>
+<h1 id="architecture-overview">Architecture Overview</h1>
+<p>This page provides a technical deep dive into the architecture of <code>orchast_agent</code>, a monorepo of purpose-built AI agents.</p>
+<h2 id="monorepo-structure-agent-independence">Monorepo Structure &amp; Agent Independence</h2>
+<p><code>orchast_agent</code> is organized as a monorepo where each agent resides in its own top-level directory (e.g., <code>/course-generator</code>, <code>/self-evolving-agent</code>). </p>
+<h3 id="key-principles">Key Principles:</h3>
 <ul>
-<li><strong>Component A</strong>: Description of Component A.</li>
-<li><strong>Component B</strong>: Description of Component B.</li>
-<li><strong>Component C</strong>: Description of Component C.</li>
+<li><strong>Independence</strong>: Each agent is designed to be self-contained with its own <code>pyproject.toml</code> and dependencies, allowing them to be deployed or scaled independently.</li>
+<li><strong>Shared Patterns</strong>: While independent, agents follow common architectural patterns for consistency in development and orchestration.</li>
 </ul>
-<h2 id="data-flow">Data Flow</h2>
-<p>Description of how data flows through the system.</p>
+<h2 id="common-agent-patterns">Common Agent Patterns</h2>
+<h3 id="sequentialagent-pipelines">SequentialAgent Pipelines</h3>
+<p>Many complex agents are implemented using the <code>SequentialAgent</code> pattern from the Google ADK. This allows a high-level task to be broken down into a pipeline of specialized sub-agents.</p>
+<p><strong>Example: Course Generator Pipeline</strong>
+1. <strong>Curriculum Designer</strong>: Validates inputs and creates a high-level plan.
+2. <strong>Content Developer</strong>: Generates detailed lecture content based on the plan.
+3. <strong>Assessment Designer</strong>: Creates quizzes and assignments grounded in the content.
+4. <strong>Course Assembler</strong>: Polishes and assembles all outputs into a final Markdown document.</p>
+<h3 id="session-state-data-flow">Session State &amp; Data Flow</h3>
+<p>Data is passed between agents in a pipeline using <code>output_key</code>. Each agent produces an output associated with a specific key, which becomes available to subsequent agents in the sequence. This ensures a structured flow of information from one specialized role to the next.</p>
+<h3 id="progress-persistence">Progress Persistence</h3>
+<p>To handle long-running tasks or potential failures, agents implement progress persistence via <code>.progress.json</code> files. This allows an agent to resume from the last successful step rather than restarting the entire pipeline.</p>
+<h2 id="llm-integration-abstraction">LLM Integration &amp; Abstraction</h2>
+<p>The system is designed to be model-agnostic, supporting both cloud and local LLMs through a unified abstraction layer (LiteLlm).</p>
+<ul>
+<li><strong>Cloud</strong>: Primary use of <strong>Gemini Flash</strong> for high speed and large context windows.</li>
+<li><strong>Local</strong>: Support for <strong>Ollama</strong>, allowing developers to run agents locally for privacy or offline development.</li>
+<li><strong>Abstraction</strong>: By using an abstraction layer, the underlying model can be swapped via configuration without changing the core agent logic.</li>
+</ul>
+<h2 id="safety-mechanisms-self-evolving-agent">Safety Mechanisms (Self-Evolving Agent)</h2>
+<p>The <code>self-evolving-agent</code> is capable of generating and executing code. To prevent malicious or accidental system damage, it employs a multi-layered safety architecture:</p>
+<h3 id="1-ast-static-analysis">1. AST Static Analysis</h3>
+<p>Before any generated code is executed, the agent performs static analysis using Python's <code>ast</code> (Abstract Syntax Tree) module. It checks for:
+- <strong>Blocked Imports</strong>: Prevents imports of dangerous modules like <code>subprocess</code>, <code>socket</code>, or <code>ctypes</code>.
+- <strong>Blocked Keywords</strong>: Scans for prohibited functions such as <code>eval()</code>, <code>exec()</code>, and <code>__import__()</code>.</p>
+<h3 id="2-risk-classification">2. Risk Classification</h3>
+<p>Code is analyzed to determine its risk profile. Only code that passes the static safety checks and falls within an acceptable risk category is permitted to proceed to execution.</p>
+<h3 id="3-sandbox-execution">3. Sandbox Execution</h3>
+<p>Safe-classified code is executed within a restricted sandbox environment. This isolates the execution from the host system, ensuring that even if a safety check is bypassed, the potential impact on the underlying infrastructure is minimized.</p>
 
 
 

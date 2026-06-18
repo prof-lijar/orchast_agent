@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../architecture/">
+        <link rel="prev" href="../dev-team/">
       
       
       
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing" class="md-skip">
+        <a href="#contributing-to-orchast_agent" class="md-skip">
           Skip to content
         </a>
       
@@ -345,6 +345,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -406,7 +434,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/index.md" class="md-nav__link">
+      <a href="../agents/" class="md-nav__link">
         
   
   
@@ -434,7 +462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/self-evolving.md" class="md-nav__link">
+      <a href="../agents/self-evolving-agent/" class="md-nav__link">
         
   
   
@@ -462,7 +490,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/book-writer.md" class="md-nav__link">
+      <a href="../agents/book-writer/" class="md-nav__link">
         
   
   
@@ -490,7 +518,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/course-generator.md" class="md-nav__link">
+      <a href="../agents/course-generator/" class="md-nav__link">
         
   
   
@@ -518,7 +546,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/caveman.md" class="md-nav__link">
+      <a href="../agents/caveman-compressor/" class="md-nav__link">
         
   
   
@@ -546,7 +574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tutorial-debug.md" class="md-nav__link">
+      <a href="../agents/tutorial-debug-agent/" class="md-nav__link">
         
   
   
@@ -574,7 +602,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tiny-jarvis.md" class="md-nav__link">
+      <a href="../agents/tiny-jarvis/" class="md-nav__link">
         
   
   
@@ -602,7 +630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/scie-paper.md" class="md-nav__link">
+      <a href="../agents/scie_paper_writer/" class="md-nav__link">
         
   
   
@@ -630,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agents/tiny-company.md" class="md-nav__link">
+      <a href="../agents/tiny-company/" class="md-nav__link">
         
   
   
@@ -692,7 +720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dev-team.md" class="md-nav__link">
+      <a href="../dev-team/" class="md-nav__link">
         
   
   
@@ -779,10 +807,110 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-contribute" class="md-nav__link">
+  <a href="#development-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to Contribute
+        Development Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-quality-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Quality Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Quality Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linter-formatter-ruff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linter &amp; Formatter: Ruff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checker-ty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Checker: Ty
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static-analysis-codespell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Static Analysis: Codespell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-pytest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing: Pytest
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pull-request-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pull Request Process
       
     </span>
   </a>
@@ -790,10 +918,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#contribution-guidelines" class="md-nav__link">
+  <a href="#interacting-with-the-autonomous-ai-team" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contribution Guidelines
+        Interacting with the Autonomous AI Team
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interacting with the Autonomous AI Team">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-contribute-as-a-human" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Contribute as a Human
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-contribute-as-an-ai-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Contribute as an AI Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#internal-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal Links
       
     </span>
   </a>
@@ -835,10 +1002,110 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-contribute" class="md-nav__link">
+  <a href="#development-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to Contribute
+        Development Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installing-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-quality-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Quality Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Quality Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linter-formatter-ruff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linter &amp; Formatter: Ruff
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checker-ty" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Checker: Ty
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static-analysis-codespell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Static Analysis: Codespell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-pytest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing: Pytest
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pull-request-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pull Request Process
       
     </span>
   </a>
@@ -846,10 +1113,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#contribution-guidelines" class="md-nav__link">
+  <a href="#interacting-with-the-autonomous-ai-team" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contribution Guidelines
+        Interacting with the Autonomous AI Team
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interacting with the Autonomous AI Team">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-contribute-as-a-human" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Contribute as a Human
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-contribute-as-an-ai-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Contribute as an AI Agent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#internal-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal Links
       
     </span>
   </a>
@@ -873,19 +1179,61 @@
 
 
 
-<h1 id="contributing">Contributing</h1>
-<p>Thank you for your interest in contributing to <code>orchast_agent</code>!</p>
-<h2 id="how-to-contribute">How to Contribute</h2>
+<h1 id="contributing-to-orchast_agent">Contributing to orchast_agent</h1>
+<p>Thank you for your interest in contributing to <code>orchast_agent</code>! We welcome contributions from both human developers and AI agents.</p>
+<h2 id="development-setup">Development Setup</h2>
+<p>To get started with development, ensure you have the following installed:
+- <strong>Python 3.11+</strong>: The project requires Python 3.11 or higher.
+- <strong>uv</strong>: We use <code>uv</code> for extremely fast Python package and project management.</p>
+<h3 id="installing-dependencies">Installing Dependencies</h3>
+<p>For each agent in the monorepo, navigate to the agent's directory and install dependencies using <code>uv</code>:</p>
+<pre><code class="language-bash">cd &lt;agent-directory&gt;
+uv sync
+</code></pre>
+<h3 id="running-locally">Running Locally</h3>
+<p>You can run agents locally by configuring your environment variables (see <a href="../config/">Configuration Guide</a>) and executing the entry point script (e.g., <code>python run_book.py</code> or using the provided FastAPI wrappers).</p>
+<h2 id="code-quality-tools">Code Quality Tools</h2>
+<p>We maintain high code quality standards through a suite of automated tools. All contributors are expected to run these before submitting a PR.</p>
+<h3 id="linter-formatter-ruff">Linter &amp; Formatter: Ruff</h3>
+<p>We use <strong>Ruff</strong> for linting and formatting. It is an extremely fast Rust-based tool that replaces Flake8, isort, and Black.
+- <strong>Run Linter</strong>: <code>uv run ruff check .</code>
+- <strong>Run Formatter</strong>: <code>uv run ruff format .</code></p>
+<h3 id="type-checker-ty">Type Checker: Ty</h3>
+<p>We use <strong>Ty</strong>, Astral's Rust-based type checker, to ensure type safety throughout the project.
+- <strong>Run Type Checker</strong>: <code>uv run ty .</code></p>
+<h3 id="static-analysis-codespell">Static Analysis: Codespell</h3>
+<p>To keep our documentation and code comments professional, we use <strong>codespell</strong> to find and commonly misspelled words.
+- <strong>Run Spell Check</strong>: <code>uv run codespell .</code></p>
+<h3 id="testing-pytest">Testing: Pytest</h3>
+<p>All logic changes should be accompanied by tests. We use <strong>Pytest</strong> for unit and integration testing.
+- <strong>Run Tests</strong>: <code>uv run pytest</code></p>
+<h2 id="pull-request-process">Pull Request Process</h2>
+<p>To ensure stability, we follow a structured PR process:</p>
 <ol>
-<li>Fork the repository.</li>
-<li>Create a feature branch.</li>
-<li>Submit a Pull Request.</li>
+<li><strong>Branching</strong>: Create a feature branch from <code>master</code>.</li>
+<li><strong>Implementation</strong>: Implement your changes and ensure they pass all local quality checks (Ruff, Ty, Codespell, Pytest).</li>
+<li><strong>Submission</strong>: Submit a Pull Request against the <code>master</code> branch.</li>
+<li><strong>Review</strong>: Your PR will be reviewed by the team (or an AI agent in the QA role).</li>
+<li><strong>Fixes</strong>: Address any requested changes in the review comments.</li>
+<li><strong>Merge</strong>: Once approved, the PR is merged into <code>master</code>.</li>
 </ol>
-<h2 id="contribution-guidelines">Contribution Guidelines</h2>
+<h2 id="interacting-with-the-autonomous-ai-team">Interacting with the Autonomous AI Team</h2>
+<p><code>orchast_agent</code> is built using a unique orchestration system where specialized AI agents (PM, Architect, Designer, etc.) collaborate via GitHub issues and PRs.</p>
+<h3 id="how-to-contribute-as-a-human">How to Contribute as a Human</h3>
+<p>If you are a human contributor:
+- <strong>Open an Issue</strong>: If you have a feature request or idea, open a GitHub issue. The PM agent will evaluate it and prioritize it.
+- <strong>Collaborate with Agents</strong>: You can comment on PRs created by AI agents to provide guidance or request changes. Your feedback is integrated into the same workflow as human-to-human review.</p>
+<h3 id="how-to-contribute-as-an-ai-agent">How to Contribute as an AI Agent</h3>
+<p>If you are an autonomous agent:
+- Follow the role-specific instructions provided in your system prompt.
+- Always create a branch and PR for every change.
+- Never merge your own PRs.
+- Ensure all quality tools (Ruff, Ty, Codespell) pass before pushing.</p>
+<h2 id="internal-links">Internal Links</h2>
 <ul>
-<li>Follow the project's coding standards.</li>
-<li>Ensure tests pass before submitting.</li>
-<li>Provide clear descriptions of changes.</li>
+<li><a href="../architecture/">Architecture Overview</a></li>
+<li><a href="../config/">Configuration Guide</a></li>
+<li><a href="../dev-team/">Dev Team Explanation</a></li>
 </ul>
 
 
