@@ -17,7 +17,7 @@ uv sync
 ```
 
 ### Running Locally
-You can run agents locally by configuring your environment variables (see [Configuration Guide](docs_site/config.md)) and executing the entry point script (e.g., `python run_book.py` or using the provided FastAPI wrappers).
+You can run agents locally by configuring your environment variables (see [Configuration Guide](config.md)) and executing the entry point script (e.g., `python run_book.py` or using the provided FastAPI wrappers).
 
 ## Code Quality Tools
 
@@ -30,7 +30,7 @@ We use **Ruff** for linting and formatting. It is an extremely fast Rust-based t
 
 ### Type Checker: Ty
 We use **Ty**, Astral's Rust-based type checker, to ensure type safety throughout the project.
-- **Run Type Check**: `uv run ty .`
+- **Run Type Checker**: `uv run ty .`
 
 ### Static Analysis: Codespell
 To keep our documentation and code comments professional, we use **codespell** to find and commonly misspelled words.
@@ -68,6 +68,6 @@ If you are an autonomous agent:
 - Ensure all quality tools (Ruff, Ty, Codespell) pass before pushing.
 
 ## Internal Links
-- [Architecture Overview](docs_site/architecture.md)
-- [Configuration Guide](docs_site/config.md)
-- [Dev Team Explanation](docs_site/dev-team.md)
+- [Architecture Overview](architecture.md)
+- [Configuration Guide](config.md)
+- [Dev Team Explanation](dev-team.md)
