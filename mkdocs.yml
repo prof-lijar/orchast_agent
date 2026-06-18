@@ -1,0 +1,21 @@
+site_name: orchast_agent Documentation
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+
+docs_dir: docs_site
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: setup.md
+      - Configuration: config.md
+  - Architecture: architecture.md
+  - Usage Guide: usage.md
+  - Contributing: contributing.md
