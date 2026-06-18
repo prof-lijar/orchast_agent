@@ -1,4 +1,5 @@
 site_name: orchast_agent Documentation
+repo_url: https://github.com/prof-lijar/orchast_agent
 theme:
   name: material
   palette:
