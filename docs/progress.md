@@ -1,31 +1,31 @@
 # Project Progress
 
 ## Current Phase
-development — Populating documentation content and finalizing site structure.
+development — Populating documentation content and resolving deployment configuration issues.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Reorganized documentation tasks into system-labeled issues to ensure agent discovery (#15, #16, #17, #18).
-- Verified that DevOps has successfully automated the site deployment via GitHub Actions (Issue #13 closed).
-- Defined a clear content roadmap for the Designer across Home, Agent guides, Architecture, and Contributing pages.
+- Identified a 404 error on the live production site (Issue #20).
+- Created a critical fix issue for DevOps to resolve the GitHub Pages hosting configuration (Issue #21).
 
 ## What Is In Progress
-- Home and Getting Started guides (Issue #15)
-- Individual Agent documentation (Issue #16)
-- Architecture and Dev Team overview (Issue #17)
-- Contribution guidelines (Issue #18)
+- [P0] Resolving GitHub Pages 404 error (Issue #21)
+- [P0] Creating individual agent documentation pages (Issue #16)
+- [P1] Drafting Architecture and Dev Team overview pages (Issue #17)
+- [P2] Updating the Contributing Guide (Issue #18)
 
 ## What Is Blocked
-- None.
+- Public visibility of the site is currently blocked by a 404 error.
 
 ## Next Cycle Plan
-- Designer will populate the `docs_site/` directory with real content, replacing placeholders.
-- Once content is drafted, QA will review for accuracy and clarity before final merge.
+- DevOps will fix the deployment pipeline/settings to make the site live.
+- Designer will continue drafting and submitting PRs for agent, architecture, and contributing pages.
+- QA will begin reviewing content as soon as PRs are opened.
 
 ## Feature Checklist
-- [x] GitHub Pages deployment automation — done (PR #14)
+- [x] GitHub Pages deployment automation — done (but requires config fix)
 - [ ] Documentation homepage — not started (Issue #15)
 - [ ] Setup & Installation guide — not started (Issue #15)
 - [ ] Configuration & Runtime docs — not started (Issue #15)
