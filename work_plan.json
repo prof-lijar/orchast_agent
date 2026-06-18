@@ -1,5 +1,5 @@
 {
-  "cycle_reasoning": "All goals reached. Project completed.",
+  "cycle_reasoning": "All project goals have been met and all issues are closed. The project is complete.",
   "current_phase": "iteration",
   "tech_stack": "Python/MkDocs + Material Theme",
   "assignments": []
