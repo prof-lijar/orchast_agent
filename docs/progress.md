@@ -7,7 +7,8 @@ Completed — The documentation site is fully functional, deployed, and meets al
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Verified and closed Issue #34: Confirmed that the global footer with dev-team credit is correctly implemented via MkDocs overrides across all pages.
+- Verified that all 8 agents have dedicated documentation pages in `docs_site/agents/`.
+- Closed Issue #36: "[ceo] all the agents should be included".
 
 ## What Is In Progress
 - None.
@@ -16,7 +17,7 @@ Python/MkDocs + Material Theme, GitHub Pages for deployment.
 - None.
 
 ## Next Cycle Plan
-- Project is complete. No further cycles required.
+- No further cycles required. Project is complete.
 
 ## Feature Checklist
 - [x] GitHub Pages deployment automation — done
