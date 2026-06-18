@@ -1,0 +1,63 @@
+
+[31m │  ⚠  Warning from the Material for MkDocs team[0m
+[31m │[0m
+[31m │[0m  MkDocs 2.0, the underlying framework of Material for MkDocs,
+[31m │[0m  will introduce backward-incompatible changes, including:
+[31m │[0m
+[31m │  × [0mAll plugins will stop working – the plugin system has been removed
+[31m │  × [0mAll theme overrides will break – the theming system has been rewritten
+[31m │  × [0mNo migration path exists – existing projects cannot be upgraded
+[31m │  × [0mClosed contribution model – community members can't report bugs
+[31m │  × [0mCurrently unlicensed – unsuitable for production use
+[31m │[0m
+[31m │[0m  Our full analysis:
+[31m │[0m
+[31m │[0m  [4mhttps://squidfunk.github.io/mkdocs-material/blog/2026/02/18/mkdocs-2.0/[0m
+[0m
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: /mnt/hdd1/orchestor/lidev/orchast_agent/site
+Traceback (most recent call last):
+  File "/home/orchestor/.local/bin/mkdocs", line 8, in <module>
+    sys.exit(cli())
+  File "/usr/lib/python3/dist-packages/click/core.py", line 1128, in __call__
+    return self.main(*args, **kwargs)
+  File "/usr/lib/python3/dist-packages/click/core.py", line 1053, in main
+    rv = self.invoke(ctx)
+  File "/usr/lib/python3/dist-packages/click/core.py", line 1659, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File "/usr/lib/python3/dist-packages/click/core.py", line 1395, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/usr/lib/python3/dist-packages/click/core.py", line 754, in invoke
+    return __callback(*args, **kwargs)
+  File "/home/orchestor/.local/lib/python3.10/site-packages/mkdocs/__main__.py", line 288, in build_command
+    build.build(cfg, dirty=not clean)
+  File "/home/orchestor/.local/lib/python3.10/site-packages/mkdocs/commands/build.py", line 328, in build
+    _build_theme_template(template, env, files, config, nav)
+  File "/home/orchestor/.local/lib/python3.10/site-packages/mkdocs/commands/build.py", line 103, in _build_theme_template
+    output = _build_template(template_name, template, files, config, nav)
+  File "/home/orchestor/.local/lib/python3.10/site-packages/mkdocs/commands/build.py", line 83, in _build_template
+    output = template.render(context)
+  File "/home/orchestor/.local/lib/python3.10/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/orchestor/.local/lib/python3.10/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/orchestor/.local/lib/python3.10/site-packages/material/templates/404.html", line 4, in top-level template code
+    {% extends "main.html" %}
+  File "/home/orchestor/.local/lib/python3.10/site-packages/material/templates/main.html", line 4, in top-level template code
+    {% extends "base.html" %}
+  File "/home/orchestor/.local/lib/python3.10/site-packages/material/templates/base.html", line 198, in top-level template code
+    {% block footer %}
+  File "/home/orchestor/.local/lib/python3.10/site-packages/material/templates/base.html", line 199, in block 'footer'
+    {% include "partials/footer.html" %}
+  File "/mnt/hdd1/orchestor/lidev/orchast_agent/overrides/partials/footer.html", line 1, in top-level template code
+    {% extends "partials/footer.html" %}
+  File "/mnt/hdd1/orchestor/lidev/orchast_agent/overrides/partials/footer.html", line 1, in top-level template code
+    {% extends "partials/footer.html" %}
+  File "/mnt/hdd1/orchestor/lidev/orchast_agent/overrides/partials/footer.html", line 1, in top-level template code
+    {% extends "partials/footer.html" %}
+  [Previous line repeated 975 more times]
+  File "/home/orchestor/.local/lib/python3.10/site-packages/jinja2/utils.py", line 477, in get
+    return self[key]
+  File "/home/orchestor/.local/lib/python3.10/site-packages/jinja2/utils.py", line 515, in __getitem__
+    rv = self._mapping[key]
+RecursionError: maximum recursion depth exceeded in comparison

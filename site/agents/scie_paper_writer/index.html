@@ -181,6 +181,18 @@
       
     
     
+      <div class="md-header__source">
+        <a href="https://github.com/prof-lijar/orchast_agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
   </nav>
   
 </header>
@@ -214,6 +226,18 @@
     </a>
     orchast_agent Documentation
   </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/prof-lijar/orchast_agent" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
     
@@ -1070,25 +1094,29 @@
                   
 
 
+  
+  
+
 
 <h1 id="sciepaperwriter">SciePaperWriter</h1>
-<p><strong>SciePaperWriter</strong> is a professional multi-agent pipeline designed to generate high-quality, publication-ready scientific papers from raw source materials.</p>
+<p><strong>SciePaperWriter</strong> is a professional multi-agent pipeline designed to generate high-quality, publication-ready scientific papers from raw source materials. It leverages both Gemini Flash (Cloud) and Ollama (Local) to provide flexibility in data privacy and processing power.</p>
 <h2 id="purpose">Purpose</h2>
 <p>To automate the transition from research notes and data to a structured academic paper, ensuring that the final output follows rigorous academic standards and formal tone.</p>
 <h2 id="how-it-works">How it Works</h2>
-<p>The agent uses a <strong>5-phase sequential pipeline</strong> powered by local LLMs via Ollama:
+<p>The agent uses a <strong>5-phase sequential pipeline</strong> powered by LLMs:
 1. <strong>Ingestion Agent</strong>: Analyzes diverse source materials (local files, GitHub repos) and extracts key findings, methodology, and gaps.
 2. <strong>Outline Agent</strong>: Creates a detailed section-by-section outline with target word counts for each part.
 3. <strong>Writer Agent</strong>: Generates the full paper as academic prose following the outline.
 4. <strong>Reviewer Agent</strong>: Checks for clarity, flow, and academic rigor, producing a revised version.
 5. <strong>Finalizer Agent</strong>: Performs final polishing and ensures consistent formatting.</p>
 <p><strong>Source Handling:</strong>
-The system can ingest data from local directories, specific files (<code>.md</code>, <code>.txt</code>, <code>.tex</code>, etc.), or even entire GitHub repositories.</p>
+The system can ingest data from local directories, specific files (<code>.md</code>, <code>.txt</code>, <code>.tex</code>, etc.), atau even entire GitHub repositories.</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
 <li>Python 3.11+</li>
-<li><a href="https://ollama.com/">Ollama</a> installed and running.</li>
-<li>A pulled model (e.g., <code>ollama pull gemma4:31b</code>).</li>
+<li><a href="https://ollama.com/">Ollama</a> installed and running (for local models).</li>
+<li>Google Cloud SDK configured (for Gemini models).</li>
+<li>A pulled model (e.g., <code>ollama pull gemma4:31b</code>) or a GCP project with Vertex AI enabled.</li>
 <li><a href="https://docs.astral.sh/uv/">uv</a> package manager.</li>
 </ul>
 <h2 id="usage-example">Usage Example</h2>
@@ -1098,7 +1126,11 @@ uv sync
 </code></pre>
 <h3 id="running-the-agent">Running the Agent</h3>
 <p>Create a paper specification (<code>spec.json</code>) and run the agent:</p>
-<pre><code class="language-bash">python run_paper.py --spec spec.json --model gemma4:31b
+<pre><code class="language-bash"># Using Ollama (Local)
+python run_paper.py --spec spec.json --model gemma4:31b
+
+# Using Gemini (Cloud)
+python run_paper.py --spec spec.json --model gemini-1.5-flash
 </code></pre>
 <p><strong>To write in another language (e.g., Korean):</strong></p>
 <pre><code class="language-bash">python run_paper.py --spec spec.json --model gemma4:31b --lang ko
@@ -1113,7 +1145,7 @@ uv sync
 </code></pre>
 <h2 id="configuration-options">Configuration Options</h2>
 <ul>
-<li><code>--model</code>: The Ollama model to use (e.g., <code>gemma4:31b</code>, <code>llama3:8b</code>).</li>
+<li><code>--model</code>: The model to use (e.g., <code>gemma4:31b</code> for Ollama, <code>gemini-1.5-flash</code> for Cloud).</li>
 <li><code>--structure</code>: Choose a template (<code>generic</code>, <code>ieee</code>, or <code>acm</code>).</li>
 <li><code>--words</code>: Override the target word count range.</li>
 <li><code>--agents</code>: Control which stages of the pipeline to run (e.g., skipping ingestion if sources are already provided in the spec).</li>
@@ -1145,23 +1177,9 @@ uv sync
         
       </main>
       
-        <footer class="md-footer">
-  
-  <div class="md-footer-meta md-typeset">
-    <div class="md-footer-meta__inner md-grid">
-      <div class="md-copyright">
-  
-  
-    Made with
-    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
-      Material for MkDocs
-    </a>
-  
+        <div style="text-align: center; margin-top: 1rem; font-size: 0.9em;">
+  This site was autonomously designed, written, and deployed by the <a href="../../dev-team.md">dev-team AI engineering team</a>.
 </div>
-      
-    </div>
-  </div>
-</footer>
       
     </div>
     <div class="md-dialog" data-md-component="dialog">
