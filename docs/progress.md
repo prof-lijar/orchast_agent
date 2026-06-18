@@ -1,23 +1,23 @@
 # Project Progress
 
 ## Current Phase
-Completed — The documentation site is fully functional, deployed, and meets all requirements.
+Iteration — Updating documentation to reflect updated model support across all agents.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Verified that all 8 agents have dedicated documentation pages in `docs_site/agents/`.
-- Closed Issue #36: "[ceo] all the agents should be included".
+- Identified the need to update agent model lists as per Issue #37.
+- Created Issue #38 for Architect to implement these changes.
 
 ## What Is In Progress
-- None.
+- [ ] Update all agents to include Ollama support in docs (Issue #38)
 
 ## What Is Blocked
 - None.
 
 ## Next Cycle Plan
-- No further cycles required. Project is complete.
+- Architect will update `docs_site/index.md` and individual agent pages to list Ollama as a primary model for all agents.
 
 ## Feature Checklist
 - [x] GitHub Pages deployment automation — done
@@ -31,3 +31,4 @@ Python/MkDocs + Material Theme, GitHub Pages for deployment.
 - [x] GitHub Repository Link in Navbar — done
 - [x] Credit to dev-team on homepage — done
 - [x] Global Footer across all pages — done
+- [ ] All agents support Ollama documentation update — in progress (Issue #38)
