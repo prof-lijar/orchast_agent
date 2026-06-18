@@ -1,6 +1,6 @@
 # Tutorial & Debug Agent
 
-The **Tutorial & Debug Agent** serves as an interactive mentor for developers using the Google ADK (Agent Development Kit), providing both step-by-step guidance and real-time error diagnosis.
+The **Tutorial & Debug Agent** serves as an interactive mentor for developers using the Google ADK (Agent Development Kit), providing both step-by-step guidance and real-time error diagnosis. It supports both cloud LLMs (Gemini Flash) and local models via Ollama.
 
 ## Purpose
 To lower the barrier to entry for new ADK developers by automating the "onboarding" process and reducing the time spent debugging common environment and API errors.
@@ -8,12 +8,13 @@ To lower the barrier to entry for new ADK developers by automating the "onboardi
 ## How it Works
 The agent operates in two distinct modes:
 1. **Tutorial Mode**: Uses a tool `get_tutorial_step` to retrieve structured guidance on topics such as installation, authentication, scaffolding, and deployment. It walks users through the ADK lifecycle chronologically.
-2. **Debug Mode**: Uses a tool `analyze_terminal_error` to parse terminal output. It identifies common error types (e.g., `ModuleNotFoundError`, `AuthenticationError`) and provides a plain-language explanation and a copy-pasteable fix.
+2. **Debug Mode**: Uses a tool `analyze_terminal_error` to parse terminal output. It identifies common error types (e.g., `ModuleNotFoundError`, `AuthenticationError`) and and provides a plain-language explanation and a copy-pasteable fix.
 
 ## Prerequisites
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager.
 - `agents-cli` installed via `uv tool install google-agents-cli`.
-- Google Cloud SDK configured for GCP services.
+- Google Cloud SDK configured for GCP services (for Gemini).
+- [Ollama](https://ollama.com/) installed and running (for local models).
 
 ## Usage Example
 
@@ -37,6 +38,8 @@ Or launch the interactive playground:
 ```bash
 agents-cli playground
 ```
+
+**To switch between Gemini and Ollama**, configure your environment variables or specify the model in the `agents-cli` configuration.
 
 ## Configuration Options
 - **Tutorial Content**: The tutorial steps are managed within the agent's tools and instructions in `app/agent.py`.

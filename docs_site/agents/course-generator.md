@@ -1,6 +1,6 @@
 # Course Generator
 
-The **Course Generator** is a multi-agent system that transforms high-level course goals into comprehensive, learner-ready educational packages. It uses a sequential pipeline to ensure pedagogical rigor and completeness.
+The **Course Generator** is a multi-agent system that transforms high-level course goals into comprehensive, learner-ready educational packages. It leverages both cloud LLMs (Gemini Flash) and flexible local models via Ollama to ensure pedagogical rigor and completeness.
 
 ## Purpose
 To automate the creation of professional courses, including prerequisites, lecture content, assessments, and grading rubrics, reducing the manual effort required by instructional designers.
@@ -15,7 +15,8 @@ The system employs a **SequentialAgent** architecture consisting of four special
 ## Prerequisites
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager.
 - `agents-cli` installed via `uv tool install google-agents-cli`.
-- Google Cloud SDK configured for GCP services.
+- Google Cloud SDK configured for GCP services (for Gemini).
+- [Ollama](https://ollama.com/) installed and running (for local models).
 
 ## Usage Example
 
@@ -34,8 +35,10 @@ agents-cli playground
 **Example Prompt:**
 > "Generate a complete course package for: Building AI Agents with LLMs. Target Learners: Software engineers. Duration: 8 weeks."
 
+**To use local models via Ollama**, configure your environment variables to point to the Ollama endpoint and specify the model in your prompt or configuration.
+
 ## Configuration Options
-- **Model Selection**: Configured via `agents-cli` and the project's environment settings.
+- **Model Selection**: Configured via `agents-cli` and the project's environment settings (supports Gemini Flash and Ollama).
 - **Evaluation Rubrics**: The system includes an `eval/` directory with 9 quality rubrics (e.g., "Lecture content depth", "Alignment") used to judge generated courses via LLM-as-judge.
 
 ## Output Format

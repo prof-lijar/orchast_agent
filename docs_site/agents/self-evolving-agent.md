@@ -1,6 +1,6 @@
 # Self-Evolving Agent
 
-The **Self-Evolving Agent** is an advanced AI system capable of autonomously extending its own capabilities. Unlike traditional agents that rely on a fixed set of tools, this agent can identify missing functionality, design new tools, generate the necessary Python code, and register those tools for future use.
+The **Self-Evolving Agent** is an advanced AI system capable of autonomously extending its own capabilities. Unlike traditional agents that rely on a fixed set of tools, this agent can identify missing functionality, design new tools, generate the necessary Python code, and register those tools for future use. It leverages both cloud LLMs (Gemini Flash) and flexible local models via Ollama to power its evolutionary loop.
 
 ## Purpose
 To create a system that evolves over time by building its own toolset to solve increasingly complex tasks without manual developer intervention.
@@ -21,7 +21,8 @@ The agent operates on a decision loop managed by a **Root Orchestrator**. When a
 ## Prerequisites
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) package manager
-- Google Cloud credentials (`gcloud auth application-default login`) or an Ollama instance for local LLMs.
+- Google Cloud credentials (`gcloud auth auth application-default login`) (for Gemini).
+- [Ollama](https://ollama.com/) installed and running (for local models).
 
 ## Usage Example
 
@@ -48,7 +49,7 @@ AGENT_MODEL=qwen3:32b agents-cli playground --port 8080
 The agent will realize it lacks a `sentence_count_tool`, create it, validate it, and then provide the answer.
 
 ## Configuration Options
-- **`AGENT_MODEL`**: Environment variable to specify the LLM (e.g., `qwen3:32b`).
+- **`AGENT_MODEL`**: Environment variable to specify the LLM (e.g., `qwen3:32b` for Ollama or `gemini-1.5-flash` for Cloud).
 - **Tool Registry**: Managed in `app/registry/registry.json`.
 - **Safety Policy**: Configured in `app/safety/policy.py` (defines blocked imports and keywords).
 

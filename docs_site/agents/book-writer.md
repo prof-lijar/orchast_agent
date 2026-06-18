@@ -1,9 +1,9 @@
 # Book Writer Agent
 
-The **Book Writer Agent** is an autonomous pipeline designed to generate full-length books overnight. It leverages local LLMs via Ollama to create high-quality, structured content without context overflow issues.
+The **Book Writer Agent** is an autonomous pipeline designed to generate full-length books overnight. It leverages both cutting-edge cloud LLMs (Gemini Flash) and flexible local models via Ollama to create high-quality, structured content without context overflow issues.
 
 ## Purpose
-To automate the end-to-end process of book writing—from a table of contents to a polished Markdown draft or PDF—while maintaining consistency across many chapters.
+To automate the end-to-end process of book writing—from a table of Contents to a polished Markdown draft or PDF—while maintaining consistency across many chapters.
 
 ## How it Works
 The agent uses a **4-phase sequential pipeline** for every chapter defined in the Table of Contents (TOC):
@@ -19,8 +19,9 @@ The agent uses a **4-phase sequential pipeline** for every chapter defined in th
 
 ## Prerequisites
 - Python 3.11+
-- [Ollama](https://ollama.com/) installed and running.
-- A pulled model (e.g., `ollama pull gemma4:31b`).
+- [Ollama](https://ollama.com/) installed and running (for local models).
+- Google Cloud SDK configured (for Gemini models).
+- A pulled model (e.g., `ollama pull gemma4:31b`) or a GCP project with Vertex AI enabled.
 - [uv](https://docs.astral.sh/uv/) package manager.
 
 ## Usage Example
@@ -34,7 +35,11 @@ uv sync
 ### Running the Agent
 Create a `toc.json` file with your book title and chapters, then run:
 ```bash
+# Using Ollama (Local)
 python run_book.py --toc toc.json --model gemma4:31b
+
+# Using Gemini (Cloud)
+python run_book.py --toc toc.json --model gemini-1.5-flash
 ```
 
 **To push to GitHub as you go:**
@@ -57,7 +62,7 @@ python run_book.py --toc toc.json --model gemma4:31b --repo https://github.com/u
 ```
 
 ## Configuration Options
-- `--model`: The Ollama model to use (e.g., `gemma4:31b`, `qwen3.5:0.8b`).
+- `--model`: The model to use (e.g., `gemma4:31b` for Ollama, `gemini-1.5-flash` for Cloud).
 - `--words`: Target word count per chapter (default: 3000-5000).
 - `--agents`: Customize the pipeline stages (e.g., adding `publisher` to generate a PDF).
 - `--lang`: Specify the language for the book content (ISO 639-1 code).
