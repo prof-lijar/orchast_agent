@@ -1,204 +1,83 @@
-K Learning Assistant Goals
+# orchast_agent Documentation Website Goals
 
-Build a production-ready web-based study platform for `prof-lijar/tiny-company` that helps Korean language learners prepare for the TOPIK exam.
+Build a comprehensive documentation website for `prof-lijar/orchast_agent` using MkDocs + Material theme, deployed to GitHub Pages.
 
 ## Core objective
 
-Create a public learning app where users can study TOPIK vocabulary, grammar, reading, writing, and mock tests in one simple, focused platform.
+Create a professional, publicly accessible documentation site that serves as the primary entry point for anyone discovering, using, or contributing to the orchast_agent monorepo. The site should clearly explain what the project is, how each agent works, and how to get started with any of them.
 
-The product should feel useful for real learners, not just like a demo. It should be easy to use, mobile-friendly, and practical for daily study.
+The documentation should make the project approachable for newcomers while remaining a useful reference for experienced users.
 
 ## Functional requirements
 
-1. Provide a clear home page explaining what the TOPIK Learning Assistant does.
-2. Provide vocabulary study features organized by TOPIK level.
-3. Include spaced repetition support for vocabulary review.
-4. Provide grammar lessons organized by TOPIK level.
-5. Provide reading comprehension practice with questions and answers.
-6. Provide writing practice where users can write Korean responses.
-7. Add AI-powered writing feedback when available.
-8. Provide a mock test simulator that resembles the TOPIK IBT experience.
-9. Include a progress tracking dashboard showing:
-
-   * vocabulary progress
-   * grammar progress
-   * reading practice progress
-   * writing practice progress
-   * mock test results
-10. Include loading, empty, and error states for important screens.
-11. Make navigation simple so users can quickly continue studying.
-
-## Product constraints
-
-1. Mobile-friendly and desktop-friendly responsive UI.
-2. Keep implementation simple, maintainable, and fast to ship.
-3. Use practical defaults; avoid over-engineering.
-4. Store study content in a simple structure that can be expanded later.
-5. Make the product useful even before advanced backend features are added.
-6. Avoid features that require heavy infrastructure unless they are clearly necessary.
-7. Prioritize learner experience over technical complexity.
+1. Provide a home page that introduces orchast_agent as a monorepo of purpose-built AI agents powered by Google ADK and Gemini/Ollama.
+2. Include a quick-start guide covering prerequisites (Python 3.11+, uv, gcloud auth, Ollama) and first-run steps.
+3. Provide individual documentation pages for each agent:
+   - **self-evolving-agent** — tool-creating agent with desktop GUI (Zig + Svelte), safety-first code generation with AST analysis and sandbox execution.
+   - **book-writer** — chapter-by-chapter book generation pipeline with GitHub auto-commit and resume capability.
+   - **course-generator** — multilingual course creation with 4-agent sequential pipeline (Curriculum Designer, Content Developer, Assessment Designer, Course Assembler).
+   - **caveman-compressor** — text compression into terse technical summaries.
+   - **tutorial-debug-agent** — ADK tutorials and paste-your-error terminal debugging.
+   - **tiny-jarvis** — Telegram scheduling agent with multi-agent team.
+   - **scie_paper_writer** — scientific paper generation with source ingestion, 5-agent pipeline, and publication-ready output.
+   - **tiny-company** — multi-agent team building a TOPIK learning assistant web app.
+4. Include an architecture overview page explaining:
+   - Monorepo structure and agent independence.
+   - Common patterns: SequentialAgent pipelines, session state flow via `output_key`, progress persistence with `.progress.json`.
+   - LLM integration: Gemini Flash (cloud) and Ollama (local) with LiteLlm abstraction.
+   - Safety mechanisms in self-evolving-agent (AST static analysis, sandbox execution, risk classification).
+5. Include a configuration reference covering environment variables, model selection, and Ollama setup.
+6. Include a contributing guide with development setup, code quality tools (Ruff, Pytest, Ty, codespell), and PR process.
+7. Provide a dev-team page explaining the autonomous AI engineering team system and how it orchestrates agents through GitHub issues and PRs.
+8. Include navigation that groups pages logically: Home, Getting Started, Agents (sub-pages), Architecture, Configuration, Contributing.
+9. Support both light and dark themes via Material theme palette toggle.
+10. Include search functionality via Material theme's built-in search plugin.
 
 ## Content requirements
 
-1. Organize all learning materials by TOPIK level when possible.
-2. Use beginner-friendly explanations for grammar.
-3. Keep vocabulary entries clear and consistent.
-4. Reading practice should include short passages and comprehension questions.
-5. Writing practice should include realistic TOPIK-style prompts.
-6. Mock tests should be structured enough to feel like exam preparation.
+1. Write all documentation in clear, concise English.
+2. Each agent page should include: purpose, how it works, prerequisites, usage example, configuration options, and output format.
+3. Use code blocks for CLI commands, configuration snippets, and example outputs.
+4. Include the agents overview table from the README with links to individual agent pages.
+5. Reference actual file paths and directory structures from the monorepo.
+6. Keep content accurate to the current state of each agent's implementation.
 
 ## Technical requirements
 
-1. Use the existing Next.js + TypeScript + Tailwind CSS product structure.
-2. Keep reusable UI components in the product component system.
-3. Keep data, types, and utilities organized under the product library structure.
-4. Ensure the app builds successfully for production deployment.
-5. Maintain clean TypeScript types for study content, user progress, and test data.
-6. Add basic tests for critical user paths where practical.
-7. Keep deployment suitable for Vercel or equivalent platforms.
-
-## Delivery requirements
-
-1. Include README instructions for setup, local run, and deployment.
-2. Add or maintain basic CI checks for build, lint, and tests.
-3. Ensure the deployed site is publicly accessible.
-4. Keep documentation updated when major features or structure change.
-5. Make sure the app can be run locally with simple commands.
-
-## Definition of done
-
-1. Deployed site publicly accessible.
-2. Home page clearly explains the TOPIK Learning Assistant.
-3. Users can study vocabulary by TOPIK level.
-4. Users can view grammar lessons by TOPIK level.
-5. Users can complete reading comprehension practice.
-6. Users can use writing practice and receive feedback when available.
-7. Users can take a mock TOPIK-style test.
-8. Users can see study progress in a dashboard.
-9. The app works on mobile and desktop.
-10. Build and test steps pass in CI.
-11. README contains clear local development and deployment instructions.
-K Learning Assistant Goals
-
-Build a production-ready web-based study platform for `prof-lijar/tiny-company` that helps Korean language learners prepare for the TOPIK exam.
-
-## Core objective
-
-Create a public learning app where users can study TOPIK vocabulary, grammar, reading, writing, and mock tests in one simple, focused platform.
-
-The product should feel useful for real learners, not just like a demo. It should be easy to use, mobile-friendly, and practical for daily study.
-
-## Functional requirements
-
-1. Provide a clear home page explaining what the TOPIK Learning Assistant does.
-2. Provide vocabulary study features organized by TOPIK level.
-3. Include spaced repetition support for vocabulary review.
-4. Provide grammar lessons organized by TOPIK level.
-5. Provide reading comprehension practice with questions and answers.
-6. Provide writing practice where users can write Korean responses.
-7. Add AI-powered writing feedback when available.
-8. Provide a mock test simulator that resembles the TOPIK IBT experience.
-9. Include a progress tracking dashboard showing:
-
-   * vocabulary progress
-   * grammar progress
-   * reading practice progress
-   * writing practice progress
-   * mock test results
-10. Include loading, empty, and error states for important screens.
-11. Make navigation simple so users can quickly continue studying.
+1. Use the existing MkDocs configuration in `mkdocs.yml` with Material theme.
+2. Source documentation content from the `docs_site/` directory.
+3. Maintain the indigo color scheme for both light (default) and dark (slate) modes.
+4. Ensure the site builds successfully with `mkdocs build`.
+5. Ensure local preview works with `mkdocs serve`.
+6. Deploy to GitHub Pages using the `website/` directory or GitHub Actions.
+7. Keep all documentation in Markdown format, version-controlled in Git.
 
 ## Product constraints
 
-1. Mobile-friendly and desktop-friendly responsive UI.
-2. Keep implementation simple, maintainable, and fast to ship.
-3. Use practical defaults; avoid over-engineering.
-4. Store study content in a simple structure that can be expanded later.
-5. Make the product useful even before advanced backend features are added.
-6. Avoid features that require heavy infrastructure unless they are clearly necessary.
-7. Prioritize learner experience over technical complexity.
-
-## Content requirements
-
-1. Organize all learning materials by TOPIK level when possible.
-2. Use beginner-friendly explanations for grammar.
-3. Keep vocabulary entries clear and consistent.
-4. Reading practice should include short passages and comprehension questions.
-5. Writing practice should include realistic TOPIK-style prompts.
-6. Mock tests should be structured enough to feel like exam preparation.
-
-## Technical requirements
-
-1. Use the existing Next.js + TypeScript + Tailwind CSS product structure.
-2. Keep reusable UI components in the product component system.
-3. Keep data, types, and utilities organized under the product library structure.
-4. Ensure the app builds successfully for production deployment.
-5. Maintain clean TypeScript types for study content, user progress, and test data.
-6. Add basic tests for critical user paths where practical.
-7. Keep deployment suitable for Vercel or equivalent platforms.
+1. Mobile-friendly and desktop-friendly responsive layout (handled by Material theme).
+2. Keep the documentation structure simple and navigable.
+3. Do not duplicate content that already exists in individual agent READMEs; link to them or consolidate.
+4. Avoid generated API documentation for now; focus on user-facing guides.
+5. Keep the build process simple: single `mkdocs build` command with no custom plugins.
 
 ## Delivery requirements
 
-1. Include README instructions for setup, local run, and deployment.
-2. Add or maintain basic CI checks for build, lint, and tests.
-3. Ensure the deployed site is publicly accessible.
-4. Keep documentation updated when major features or structure change.
-5. Make sure the app can be run locally with simple commands.
+1. All placeholder content in `docs_site/` replaced with real documentation.
+2. Site builds without errors using `mkdocs build`.
+3. Local preview works using `mkdocs serve`.
+4. GitHub Actions workflow configured for automatic deployment on push to master.
+5. Site publicly accessible via GitHub Pages.
+6. Navigation structure matches the functional requirements above.
 
 ## Definition of done
 
-1. Deployed site publicly accessible.
-2. Home page clearly explains the TOPIK Learning Assistant.
-3. Users can study vocabulary by TOPIK level.
-4. Users can view grammar lessons by TOPIK level.
-5. Users can complete reading comprehension practice.
-6. Users can use writing practice and receive feedback when available.
-7. Users can take a mock TOPIK-style test.
-8. Users can see study progress in a dashboard.
-9. The app works on mobile and desktop.
-10. Build and test steps pass in CI.
-11. README contains clear local development and deployment instructions.
-# AI-Generated Books Web Platform Goals
-
-Build a production-ready website for `prof-lijar/ai-generated-books-web` that hosts and lets users read books from:
-`https://github.com/prof-lijar/ai-generated-books`
-
-## Core objective
-
-Create a public web app where visitors can browse available books and read each book in an in-browser PDF viewer.
-
-## Functional requirements
-
-1. Source books from the `ai-generated-books` repository.
-2. Provide a books library page showing all available books.
-3. For each book, provide a dedicated reader page with embedded PDF viewing.
-4. PDF viewer must support:
-   - next/previous page navigation
-   - zoom in/out
-   - fit to width
-   - download PDF
-   - open PDF in new tab
-5. Add search/filter on the library page by title and/or filename.
-6. Include loading, empty, and error states for robustness.
-
-## Product constraints
-
-1. Mobile-friendly and desktop-friendly responsive UI.
-2. Keep implementation simple, maintainable, and fast to ship.
-3. Use practical defaults; avoid over-engineering.
-4. Ensure PDFs are served in a way that works reliably in production.
-
-## Delivery requirements
-
-1. Include README instructions for setup, local run, and deployment.
-2. Add basic CI checks and tests for critical paths.
-3. Deploy-ready output (suitable for Vercel/Netlify/Fly or equivalent).
-
-## Definition of done
-
-1. Deployed site publicly accessible.
-2. Library page lists books from the source repository.
-3. Selecting a book opens a working in-browser PDF viewer.
-4. Build and test steps pass in CI.
-
-
+1. Home page clearly introduces orchast_agent and links to all agents.
+2. Quick-start guide covers prerequisites and first-run for at least one agent.
+3. Each of the 8 agents has its own documentation page with purpose, usage, and configuration.
+4. Architecture page explains monorepo structure, agent patterns, and LLM integration.
+5. Configuration reference covers environment setup and model selection.
+6. Contributing guide covers development setup and code quality tooling.
+7. Site builds and serves locally without errors.
+8. GitHub Actions deploys the site to GitHub Pages on push.
+9. Site is publicly accessible and all navigation links work.
+10. Light and dark theme toggle works correctly.
