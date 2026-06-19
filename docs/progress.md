@@ -1,22 +1,25 @@
 # Project Progress
 
 ## Current Phase
-Completion — All functional requirements and CEO requests for polish have been fulfilled.
+Iteration — Addressing critical UI feedback from CEO regarding theme toggle.
 
 ## Tech Stack
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Verified and closed Issue #52 (Dark mode / Light mode feature) as it is already implemented via the MkDocs Material theme palette configuration in `mkdocs.yml`.
+- Identified that the light/dark mode toggle is missing on the live site despite `mkdocs.yml` configuration.
+- Created Issue #53 to investigate and fix the missing theme toggle.
+- Assigned Architect to resolve this as a P0 priority.
 
 ## What Is In Progress
-- None. Project is complete.
+- [ ] Issue #52: [ceo] implement dark mode / light mode feature (re-opened/active)
+- [ ] Issue #53: [Fix] Restore missing Light/Dark mode toggle on live site
 
 ## What Is Blocked
 - None.
 
 ## Next Cycle Plan
-- No further work planned. The documentation site is fully operational and polished.
+- Architect will investigate why the Material theme palette is not rendering on GitHub Pages and implement a fix.
 
 ## Feature Checklist
 - [x] GitHub Pages deployment automation — done
@@ -36,4 +39,4 @@ Python/MkDocs + Material Theme, GitHub Pages for deployment.
 - [x] Footer visibility polish (Italics/Color - Round 3) — done
 - [x] Footer font color adjustment (CEO request #48) — done
 - [x] Correct footer link to rendered page (CEO request #50) — done
-- [x] Dark mode / Light mode toggle — done
+- [ ] Dark mode / Light mode toggle — in progress (Issue #53)

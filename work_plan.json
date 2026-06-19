@@ -1,6 +1,8 @@
 {
-  "cycle_reasoning": "Project complete. Final issue #52 verified as already implemented and closed. No further work required.",
+  "cycle_reasoning": "The CEO reports that the light/dark mode toggle is missing from the live site despite being in mkdocs.yml. This is a P0 critical fix.",
   "current_phase": "iteration",
-  "tech_stack": "MkDocs + Material Theme",
-  "assignments": []
+  "tech_stack": "Python/MkDocs + Material Theme",
+  "assignments": [
+    {"role": "architect", "turns": 3, "priority": "P0"}
+  ]
 }
