@@ -12,6 +12,8 @@ theme:
     - scheme: slate
       primary: indigo
       accent: indigo
+  features:
+    - palette
 
 docs_dir: docs_site
 
