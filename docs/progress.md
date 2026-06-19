@@ -7,7 +7,7 @@ Completion — All functional requirements and CEO requests for polish have been
 Python/MkDocs + Material Theme, GitHub Pages for deployment.
 
 ## What Was Completed This Cycle
-- Verified and closed Issue #52 (Dark mode / Light mode feature) as it is already implemented via the MkDocs Material theme palette configuration.
+- Verified and closed Issue #52 (Dark mode / Light mode feature) as it is already implemented via the MkDocs Material theme palette configuration in `mkdocs.yml`.
 
 ## What Is In Progress
 - None. Project is complete.
