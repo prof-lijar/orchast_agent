@@ -1,8 +1,8 @@
 {
-  "cycle_reasoning": "The CEO reports that the light/dark mode toggle is missing from the live site despite being in mkdocs.yml. This is a P0 critical fix.",
+  "cycle_reasoning": "Focus on finalizing the Light/Dark mode toggle fix (Issue #53) and cleaning up duplicate CEO request (#52).",
   "current_phase": "iteration",
   "tech_stack": "Python/MkDocs + Material Theme",
   "assignments": [
-    {"role": "architect", "turns": 3, "priority": "P0"}
+    {"role": "architect", "turns": 2, "priority": "P0"}
   ]
 }
