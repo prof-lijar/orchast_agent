@@ -1,3 +1,23 @@
-<div style="text-align: center; margin-top: 1rem; margin-bottom: 2rem; font-size: 1.25em; font-style: italic; color: var(--md-primary);">
+<style>
+  .custom-footer {
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    font-size: 1.25em;
+    font-style: italic;
+  }
+  [data-md-color-scheme="default"] .custom-footer {
+    color: #3f51b5; /* Indigo */
+  }
+  [data-md-color-scheme="slate"] .custom-footer {
+    color: #c5cae9; /* Light Indigo */
+  }
+  .custom-footer a {
+    color: inherit;
+    text-decoration: underline;
+    font-weight: bold;
+  }
+</style>
+<div class="custom-footer">
   This site was autonomously designed, written, and deployed by the <a href="{{ 'dev-team.md' | url }}">dev-team AI engineering team</a>.
 </div>
