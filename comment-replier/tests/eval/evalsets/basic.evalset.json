@@ -1,0 +1,37 @@
+{
+  "eval_set_id": "basic_eval",
+  "name": "Comment Replier Evaluation",
+  "description": "Checks the agent drafts grounded, on-tone replies from the knowledge base without inventing facts.",
+  "eval_cases": [
+    {
+      "eval_id": "draft_reply_covered_by_knowledge",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Draft a reply (don't fetch or post anything) to this comment: 'Great video! What framework are you using to build these agents?'"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    },
+    {
+      "eval_id": "draft_reply_not_covered_no_hallucination",
+      "conversation": [
+        {
+          "user_content": {
+            "parts": [{"text": "Draft a reply (don't fetch or post anything) to this comment: 'How much does your paid course cost and when does enrollment open?'"}]
+          }
+        }
+      ],
+      "session_input": {
+        "app_name": "app",
+        "user_id": "eval_user",
+        "state": {}
+      }
+    }
+  ]
+}

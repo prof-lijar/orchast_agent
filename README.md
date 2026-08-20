@@ -15,6 +15,7 @@ A monorepo of purpose-built AI agents. Each agent lives in its own directory wit
 | [course-generator](./course-generator/) | Produces complete multilingual course packages — lectures, assignments, and assessments — from a topic description. | Gemini Flash |
 | [caveman-compressor](./caveman-compressor/) | Compresses verbose text into terse, technical caveman-style grunts. | Gemini Flash |
 | [tutorial-debug-agent](./tutorial-debug-agent/) | Step-by-step ADK tutorials and paste-your-error terminal debugging. | Gemini Flash |
+| [comment-replier](./comment-replier/) | Reads YouTube video comments and replies to each one, grounded in a provided knowledge base. Dry-run by default. | Gemini Flash |
 
 ## Quick Start
 
@@ -44,6 +45,7 @@ orchast_agent/
 ├── course-generator/      # Multi-agent course pipeline
 ├── caveman-compressor/    # Text compression agent
 ├── tutorial-debug-agent/  # ADK tutorial & error debugger
+├── comment-replier/       # YouTube comment auto-replier
 └── assets/                # Shared images
 ```
 

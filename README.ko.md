@@ -15,6 +15,7 @@
 | [course-generator](./course-generator/) | 주제 설명으로부터 강의, 과제, 평가를 포함한 다국어 강좌 패키지 생성. | Gemini Flash |
 | [caveman-compressor](./caveman-compressor/) | 장황한 텍스트를 간결한 원시인 스타일 요약으로 압축. | Gemini Flash |
 | [tutorial-debug-agent](./tutorial-debug-agent/) | 단계별 ADK 튜토리얼 및 터미널 에러 디버깅. | Gemini Flash |
+| [comment-replier](./comment-replier/) | 제공된 지식 베이스를 바탕으로 YouTube 영상 댓글에 자동으로 답글을 답니다. 기본은 드라이런 모드. | Gemini Flash |
 
 ## 빠른 시작
 
@@ -44,6 +45,7 @@ orchast_agent/
 ├── course-generator/      # 다중 에이전트 강좌 파이프라인
 ├── caveman-compressor/    # 텍스트 압축 에이전트
 ├── tutorial-debug-agent/  # ADK 튜토리얼 & 에러 디버거
+├── comment-replier/       # YouTube 댓글 자동 답글 에이전트
 └── assets/                # 공유 이미지
 ```
 
